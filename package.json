@@ -5,42 +5,29 @@
   "main": "main.js",
   "scripts": {
     "start": "NODE_ENV=development PLATFORM=darwin ARCH=x64 VERSION=default electron --inspect .",
-
     "download": "node resources.js --bucket=mongo-node",
-
-    "pack:win:64": "npm download && PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
+    "pack:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
-
     "pack:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default",
-
     "pack:osx:64": "PLATFORM=darwin ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=darwin -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:osx:64": "PLATFORM=darwin ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=darwin -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default ",
-
     "pack:linux:64": "PLATFORM=linux ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:linux:64": "PLATFORM=linux ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
-
     "pack:linux:32": "PLATFORM=linux ARCH=x86 VERSION=default electron-builder -c.extraMetadata.PLATFORM=linux -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
     "dist:linux:32": "PLATFORM=linux ARCH=x86 VERSION=default electron-builder -c.extraMetadata.PLATFORM=linux -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default",
-
     "pack:deb:64": "PLATFORM=deb ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=deb -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:deb:64": "PLATFORM=deb ARCH=x64 VERSION=default electron-builder -c.extraMetadata.PLATFORM=deb -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
-
     "pack:rhel:64:55": "PLATFORM=rhel ARCH=x64 VERSION=55 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=55 --dir",
     "dist:rhel:64:55": "PLATFORM=rhel ARCH=x64 VERSION=55 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=55",
-
     "pack:rhel:64:60": "PLATFORM=rhel ARCH=x64 VERSION=60 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=60 --dir",
     "dist:rhel:64:60": "PLATFORM=rhel ARCH=x64 VERSION=60 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=60",
-
     "pack:rhel:64:70": "PLATFORM=rhel ARCH=x64 VERSION=70 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=70 --dir",
     "dist:rhel:64:70": "PLATFORM=rhel ARCH=x64 VERSION=70 electron-builder -c.extraMetadata.PLATFORM=rhel -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=70",
-
     "pack:ubuntu:64:14": "PLATFORM=ubuntu ARCH=x64 VERSION=14 electron-builder -c.extraMetadata.PLATFORM=ubuntu -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=14 --dir",
     "dist:ubuntu:64:14": "PLATFORM=ubuntu ARCH=x64 VERSION=14 electron-builder -c.extraMetadata.PLATFORM=ubuntu -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=14",
-
     "pack:ubuntu:64:16": "PLATFORM=ubuntu ARCH=x64 VERSION=16 electron-builder -c.extraMetadata.PLATFORM=ubuntu -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=16 --dir",
     "dist:ubuntu:64:16": "PLATFORM=ubuntu ARCH=x64 VERSION=16 electron-builder -c.extraMetadata.PLATFORM=ubuntu -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=16",
-
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
@@ -70,7 +57,8 @@
   "devDependencies": {
     "aws-sdk": "^2.312.0",
     "electron": "^2.0.0",
-    "electron-builder": "^20.28.4"
+    "electron-builder": "^20.28.4",
+    "mkdirp": "^0.5.1"
   },
   "dependencies": {
     "electron-log": "^2.2.17",

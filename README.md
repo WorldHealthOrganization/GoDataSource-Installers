@@ -19,6 +19,7 @@ For instance, a user working on a system with Ubuntu 15 will install the 32-bit 
 2. Run project
 
 Run `npm install`.
+Run `npm run download`. This downloads the `platforms` directory from S3 with resources for mongo and node.
 Create a Webstorm NodeJS configuration with the following settings:
     Node interpreter: ./node_modules/.bin/electron
     Javascript file: main.js
