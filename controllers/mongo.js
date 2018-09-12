@@ -8,7 +8,7 @@ const dbDirectory = path.join(app.getPath('userData'), 'db')
 const logDirectory = path.join(app.getPath('userData'), 'logs/db')
 const logPath = path.join(logDirectory, 'db.log')
 
-const { PLATFORM, ARCH, VERSION: OSVERSION } = require('./../package');
+const { MONGO_PLATFORM, ARCH, VERSION: OSVERSION } = require('./../package');
 
 const logger = require('./../logger/app').logger
 
@@ -41,10 +41,10 @@ function configureDb() {
  * Starts the Mongo database from depending on system configuration
  */
 function startDb() {
-    let mongodPath = path.join(process.resourcesPath, `./platforms/${PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod`)
+    let mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod`)
     // Make sure NODE_ENV is set, electron doesn't accept environmental variables
     if (process.env.NODE_ENV === 'development') {
-        mongodPath = path.join(__dirname, `./../platforms/${process.env.PLATFORM}/${process.env.ARCH}/${process.env.VERSION}/mongodb/bin/mongod`)
+        mongodPath = path.join(__dirname, `./../platforms/${MONGO_PLATFORM}/${ARCH}/${VERSION}/mongodb/bin/mongod`)
     }
 
     logger.info(`Starting Mongo database from path ${mongodPath} ...`)

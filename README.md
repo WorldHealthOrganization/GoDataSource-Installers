@@ -19,13 +19,15 @@ For instance, a user working on a system with Ubuntu 15 will install the 32-bit 
 2. Run project
 
 Run `npm install`.
-Run `npm run download`. This downloads the `platforms` directory from S3 with resources for mongo and node.
+Run `npm run setup:respirces`. This downloads the `platforms` directory from S3 with resources for mongo and node.
+Run `npm run setup:godata`. This downloads the Go.Data project master branch from Github.
 Create a Webstorm NodeJS configuration with the following settings:
     Node interpreter: ./node_modules/.bin/electron
     Javascript file: main.js
     Environment variables:
         ARCH - x64 or x86 - will install 64-bit or 32-bit components
-        PLATFORM - win (for Windows), darwin (for Mac), deb (for Debian), linux (for Linux), rhel (for RHEL) or ubuntu (for Ubuntu)
+        MONGO_PLATFORM - win (for Windows), darwin (for Mac), deb (for Debian), linux (for Linux), rhel (for RHEL) or ubuntu (for Ubuntu)
+        NODE_PLATFORM - win (for Windows), darwin (for Mac), linux (for Linux, Debian, RHEL, Ubuntu)
         VERSION - default (when no OS version is specified) or the OS version (5.5, 6 and 7 for Red Hat and 14 and 16 for Ubuntu)
         NODE_ENV=development
 Note: the above configuration does not work as a package.json script. For some reason, NODE_ENV is undefined when running the configuration from a package.json script.
