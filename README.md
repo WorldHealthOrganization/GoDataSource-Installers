@@ -20,7 +20,7 @@ For instance, a user working on a system with Ubuntu 15 will install the 32-bit 
 
 Run `npm install`.
 Run `npm run setup:respirces`. This downloads the `platforms` directory from S3 with resources for mongo and node.
-Run `npm run setup:godata`. This downloads the Go.Data project master branch from Github.
+Run `npm run setup:godata`. This downloads the Go.Data project master branch from Github. Since it's a private repo, a SSH key must be added to the Github account used to clone the repo (https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/).
 Create a Webstorm NodeJS configuration with the following settings:
     Node interpreter: ./node_modules/.bin/electron
     Javascript file: main.js

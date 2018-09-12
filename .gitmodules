@@ -1,0 +1,3 @@
+[submodule "go-data"]
+	path = go-data
+	url = git@github.com:ClarisoftTechnologies/Go.Data-API.git
