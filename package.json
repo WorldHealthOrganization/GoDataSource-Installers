@@ -6,7 +6,6 @@
   "scripts": {
     "start": "NODE_ENV=development PLATFORM=darwin ARCH=x64 VERSION=default electron --inspect .",
     "setup:resources": "node setup-resources.js --bucket=mongo-node",
-    "setup:godata": "node setup-godata.js --bucket=mongo-node",
     "pack:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
     "pack:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
