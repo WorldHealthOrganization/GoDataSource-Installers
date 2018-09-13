@@ -1,3 +1,6 @@
-[submodule "go-data"]
-	path = go-data
+[submodule "go-data/frontend"]
+	path = go-data/frontend
+	url = git@github.com:ClarisoftTechnologies/Go.Data-Front-End.git
+[submodule "go-data/api"]
+	path = go-data/api
 	url = git@github.com:ClarisoftTechnologies/Go.Data-API.git
