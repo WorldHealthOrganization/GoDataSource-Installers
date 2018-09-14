@@ -7,7 +7,6 @@
 
 const {Transform} = require('stream')
 const fs = require('fs')
-const readline = require('readline')
 
 const argv = require('minimist')(process.argv.slice(2))
 const AWS = require('aws-sdk')
@@ -17,7 +16,6 @@ const mkdirp = require('mkdirp')
 
 const async = require('async')
 const _ = require('lodash')
-var ProgressBar = require('progress')
 
 AWS.config = new AWS.Config()
 AWS.config.accessKeyId = "AKIAJV62UMHLODGQ6J7A"
@@ -79,8 +77,9 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                 }
                 mkdirp.sync(objectPath)
             }
-            // Check if the file already exists?
-            fs.stat(path.join(__dirname, currentValue.Key), (err, stats) => {
+
+            const objectPath = path.join(__dirname, currentValue.Key)
+            fs.stat(objectPath, (err, stats) => {
                 if (err && err.code !== 'ENOENT') {
                     console.log(`Error retrieving status for ${currentValue.Key}: ${err.message}`)
                     return callback(err)
@@ -107,12 +106,13 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                     Key: currentValue.Key
                 }).createReadStream()
                     .pipe(logProgress)
-                    .pipe(fs.createWriteStream(path.join(__dirname, currentValue.Key)))
+                    .pipe(fs.createWriteStream(objectPath))
                     .on('error', (err) => {
                         callback(err)
                     })
                     .on('finish', () => {
-                        callback()
+                        console.log(`Downloading ${currentValue.Key} complete!`)
+                        fs.chmod(objectPath, '755', callback);
                     })
             })
         },

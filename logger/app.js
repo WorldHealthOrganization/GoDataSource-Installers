@@ -22,5 +22,5 @@ const init = () => {
 }
 
 module.exports = {
-    init, logger
+    init, logger, logDirectory
 }

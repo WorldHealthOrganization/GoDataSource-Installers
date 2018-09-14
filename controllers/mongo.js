@@ -8,11 +8,11 @@ const dbDirectory = path.join(app.getPath('userData'), 'db')
 const logDirectory = path.join(app.getPath('userData'), 'logs/db')
 const logPath = path.join(logDirectory, 'db.log')
 
-const { MONGO_PLATFORM, ARCH, VERSION: OSVERSION } = require('./../package');
+const { MONGO_PLATFORM, ARCH, OSVERSION } = require('./../package');
 
 const logger = require('./../logger/app').logger
 
-const init = () => {
+const init = (events) => {
     configureDb()
     startDb()
 }
@@ -41,21 +41,24 @@ function configureDb() {
  * Starts the Mongo database from depending on system configuration
  */
 function startDb() {
-    let mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod`)
-    // Make sure NODE_ENV is set, electron doesn't accept environmental variables
+    let mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
+    // Make sure NODE_ENV is set, electron doesn't accept custom environmental variables
     if (process.env.NODE_ENV === 'development') {
-        mongodPath = path.join(__dirname, `./../platforms/${MONGO_PLATFORM}/${ARCH}/${VERSION}/mongodb/bin/mongod`)
+        mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     }
 
-    logger.info(`Starting Mongo database from path ${mongodPath} ...`)
+    logger.info(`Starting Mongo service from path ${mongodPath} ...`)
     const child = spawn(mongodPath, [`--dbpath=${dbDirectory}`, `--logpath=${logPath}`])
 
     child.stdout.on('close', (code) => {
-        logger.info(`Mongo process exited with code ${code}`)
-        if (code) {
-            throw new Error(`Mongo process exited with code ${code}`)
-        }
+        throw new Error(`Mongo process exited with code ${code}`)
     })
+
+    child.stdout.on('disconnect', () => {
+        console.log('disconnect')
+    })
+
+    logger.info(`Mongo service successfully started!`)
 }
 
 module.exports = {

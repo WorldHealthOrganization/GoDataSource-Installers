@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "NODE_ENV=development PLATFORM=darwin ARCH=x64 VERSION=default electron --inspect .",
+    "setup": "npm run setup:resources && npm run setup:forever",
     "setup:resources": "node setup-resources.js --bucket=mongo-node",
+    "setup:forever": "npm install --prefix app-management -g pm2",
     "pack:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
     "pack:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
@@ -38,16 +40,21 @@
       "controllers/*",
       "resources/*",
       "logger/*",
-      "go-data/**/*",
       "main.js",
       "index.html",
       "renderer.js"
     ],
     "extraResources": [
+      "app-management/**/*",
+      "go-data/build/**/*",
       "platforms/${env.PLATFORM}/${env.ARCH}/${env.VERSION}"
     ],
     "mac": {
-      "category": "public.app-category.healthcare-fitness"
+      "category": "public.app-category.healthcare-fitness",
+      "target": "pkg"
+    },
+    "pkg": {
+      
     },
     "win": {
       "target": "nsis"
@@ -61,12 +68,13 @@
     "electron": "^2.0.0",
     "electron-builder": "^20.28.4",
     "lodash": "^4.17.10",
-    "mkdirp": "^0.5.1",
-    "progress": "^2.0.0"
+    "mkdirp": "^0.5.1"
   },
   "dependencies": {
     "electron-log": "^2.2.17",
-    "electron-updater": "^3.1.2"
+    "electron-updater": "^3.1.2",
+    "forever-monitor": "^1.7.1",
+    "pm2": "^3.1.2"
   },
   "publish": {
     "provider": "generic",

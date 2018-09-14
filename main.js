@@ -26,7 +26,7 @@ const createTray = () => {
 app.on('ready', () => {
     createTray()
     logger.init()
-    db.init()
+    db.init((event) => {})
     goData.init()
 })
 
