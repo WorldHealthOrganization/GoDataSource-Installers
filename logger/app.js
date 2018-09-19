@@ -1,10 +1,11 @@
 'use strict'
 
-const {app} = require('electron')
-const path = require('path')
 const {spawnSync} = require('child_process')
-const logDirectory = path.join(app.getPath('userData'), 'logs/app')
-const logPath = path.join(logDirectory, 'app.log')
+
+const AppPaths = require('./../utils/paths')
+
+const logDirectory = AppPaths.appLogDirectory
+const logPath = AppPaths.appLogFile
 
 var logger = require('electron-log')
 
@@ -22,5 +23,6 @@ const init = () => {
 }
 
 module.exports = {
-    init, logger, logDirectory
+    init,
+    logger
 }

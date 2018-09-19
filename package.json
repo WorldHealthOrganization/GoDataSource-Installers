@@ -40,6 +40,7 @@
       "controllers/*",
       "resources/*",
       "logger/*",
+      "utils/*",
       "main.js",
       "index.html",
       "renderer.js"
@@ -50,11 +51,7 @@
       "platforms/${env.PLATFORM}/${env.ARCH}/${env.VERSION}"
     ],
     "mac": {
-      "category": "public.app-category.healthcare-fitness",
-      "target": "pkg"
-    },
-    "pkg": {
-      
+      "category": "public.app-category.healthcare-fitness"
     },
     "win": {
       "target": "nsis"
@@ -63,18 +60,23 @@
   "author": "Clarisoft",
   "license": "CC0-1.0",
   "devDependencies": {
-    "async": "^2.6.1",
     "aws-sdk": "^2.312.0",
     "electron": "^2.0.0",
     "electron-builder": "^20.28.4",
+    "electron-rebuild": "^1.8.2",
     "lodash": "^4.17.10",
     "mkdirp": "^0.5.1"
   },
   "dependencies": {
+    "async": "^2.6.1",
     "electron-log": "^2.2.17",
+    "electron-progressbar": "^1.1.0",
     "electron-updater": "^3.1.2",
+    "find-process": "^1.1.3",
     "forever-monitor": "^1.7.1",
-    "pm2": "^3.1.2"
+    "pm2": "^3.1.2",
+    "ps-node": "^0.1.6",
+    "tail": "^1.4.0"
   },
   "publish": {
     "provider": "generic",

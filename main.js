@@ -1,10 +1,15 @@
 // Modules to control application life and create native browser window
-const {app, Tray} = require('electron')
+const {app, Tray, shell} = require('electron')
+const ProgressBar = require('electron-progressbar')
 const path = require('path')
+const rl = require('readline')
+const os = require('os')
 
 const resourceDirectory = path.join(__dirname, 'resources')
 
-const db = require('./controllers/mongo')
+const settings = require('./controllers/settings')
+const prelaunch = require('./controllers/prelaunch')
+const mongo = require('./controllers/mongo')
 const goData = require('./controllers/goData')
 const logger = require('./logger/app')
 
@@ -19,15 +24,80 @@ const createTray = () => {
     })
 }
 
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+
+    let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+        goData.api.getPort((err, port) => {
+            if (!err) {
+                shell.openExternal(`http://localhost:${port}`)
+            }
+        })
+    })
+
+    if (shouldQuit) {
+        app.quit()
+        return
+    }
+
+    var progressBar = new ProgressBar({
+        title: 'Launching GoData...'
+    })
     createTray()
+
+    progressBar.detail = 'Configuring logging...'
     logger.init()
-    db.init((event) => {})
-    goData.init()
+
+    progressBar.detail = 'Cleaning up...'
+    prelaunch.cleanUp(
+        (event) => {
+
+        },
+        () => {
+            progressBar.detail = 'Creating database...'
+            mongo.init(
+                (event) => {
+                    if (progressBar.isInProgress()) {
+                        if (event.detail) {
+                            progressBar.detail = event.detail
+                        }
+                        if (event.text) {
+                            progressBar.text = event.text
+                        }
+                    }
+                },
+                () => {
+                    goData.init(
+                        (event) => {
+                            if (progressBar.isInProgress()) {
+                                if (event.detail) {
+                                    progressBar.detail = event.detail
+                                }
+                                if (event.text) {
+                                    progressBar.text = event.text
+                                }
+                            }
+                        },
+                        (err, appURL) => {
+                            if (appURL) {
+                                logger.logger.info(`Opening GoData at ${appURL}`)
+                                shell.openExternal(appURL)
+                            }
+                            progressBar.close()
+                        })
+                })
+        })
+
+    let readline = rl.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    })
+    readline.on('SIGINT', () => {
+        process.emit('SIGINT')
+    })
+
 })
 
 // Quit when all windows are closed.
@@ -44,5 +114,37 @@ app.on('activate', function () {
     // dock icon is clicked and there are no other windows open.
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('will-quit', function () {
+    console.log('about to ma ia dracu')
+})
+
+const cleanup = (code) => {
+    logger.logger.log(`Exiting program with code ${code}.`)
+    mongo.killMongo()
+    goData.killGoData()
+    process.exit()
+}
+
+//do something when app is closing
+process.on('exit', () => {
+    cleanup('EXIT')
+})
+
+//catches ctrl+c event
+process.on('SIGINT', () => {
+    cleanup('SIGINT')
+})
+
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', () => {
+    cleanup('SIGUSR1')
+})
+process.on('SIGUSR2', () => {
+    cleanup('SIGUSR2')
+})
+
+//catches uncaught exceptions
+// process.on('uncaughtException', (exc) => {
+    // console.log(exc)
+    // cleanup('uncaughtException')
+// });
