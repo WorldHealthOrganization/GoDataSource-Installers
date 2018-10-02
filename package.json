@@ -1,5 +1,5 @@
 {
-  "name": "GoData",
+  "name": "Go.Data",
   "version": "1.0.0",
   "description": "Go.Data",
   "main": "main.js",
@@ -38,9 +38,10 @@
     "copyright": "Copyright © 2018 World Health Organization",
     "files": [
       "controllers/*",
-      "resources/*",
+      "resources/**/*",
       "logger/*",
       "utils/*",
+      "windows/*",
       "main.js",
       "index.html",
       "renderer.js"

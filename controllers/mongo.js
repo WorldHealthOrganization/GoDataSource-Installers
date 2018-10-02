@@ -12,6 +12,7 @@ const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
 const appVersion = require('./../utils/appVersion')
 const settings = require('./settings')
+const goDataAPI = require('./goDataAPI')
 
 const AppPaths = require('./../utils/paths')
 
@@ -21,8 +22,9 @@ const DatabaseLogFile = AppPaths.databaseLogFile
 
 const init = (events, callback) => {
     configureMongo(events)
-    startMongo(events)
-    startDatabase(events, callback)
+    startMongo(events, (err) => {
+        startDatabase(events, callback)
+    })
 }
 
 /**
@@ -51,17 +53,27 @@ function configureMongo(events) {
 /**
  * Starts the Mongo database from depending on system configuration
  */
-function startMongo(events) {
+function startMongo(events, callback) {
     logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} ...`)
     events({text: `Starting Mongo service from path ${AppPaths.mongodFile} ...`})
-    const startDbProcess = spawn(AppPaths.mongodFile, [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`])
 
-    startDbProcess.stdout.on('close', (code) => {
-        throw new Error(`Mongo process exited with code ${code}`)
+    settings.getMongoPort((err, port) => {
+        if (err) {
+            throw new Error(`Error retrieving Mongo port: ${err.message}`)
+        }
+
+        const startDbProcess = spawn(AppPaths.mongodFile, [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`])
+
+        startDbProcess.stdout.on('close', (code) => {
+            throw new Error(`Error: Mongo process exited with code ${code}`)
+        })
+
+        logger.info(`Mongo service successfully started!`)
+        events({text: `Mongo service successfully started!`})
+
+        callback()
+
     })
-
-    logger.info(`Mongo service successfully started!`)
-    events({text: `Mongo service successfully started!`})
 }
 
 /**
@@ -126,9 +138,10 @@ function migrateDatabase(events, callback) {
  * @param callback Invoked with (err, result)
  */
 function killMongo(callback) {
-    settings.getMongoPort((err, port) => {
+    goDataAPI.getDbPort((err, port) => {
         if (err) {
             logger.error(`Error reading Mongo port: ${err.message}`)
+            callback()
             throw new Error(`Error reading Mongo port: ${err.message}`)
         }
         processUtil.findPortInUse(port, (err, processes) => {

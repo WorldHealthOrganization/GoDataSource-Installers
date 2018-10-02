@@ -30,7 +30,7 @@ const findPortInUse = (port, callback) => {
 }
 
 const killProcess = (pid, callback) => {
-    logger.info(`Terminatind processes with PID ${pid}...`)
+    logger.info(`Terminating processes with PID ${pid}...`)
     ps.kill(
         pid,
         'SIGINT',    // send kill -2, includes graceful kill as advised by Mongo

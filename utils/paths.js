@@ -11,6 +11,9 @@ const dbLogPath = path.join(dbLogDirectory, 'db.log')
 const appLogDirectory = path.join(app.getPath('userData'), 'logs/app')
 const appLogPath = path.join(appLogDirectory, 'web-app.log')
 
+const resourceDirectory = path.join(__dirname, './../resources')
+const windowsDirectory = path.join(__dirname, './../windows')
+
 let webAppDirectory = undefined
 let mongodPath = undefined
 let mongoPath = undefined
@@ -52,7 +55,7 @@ module.exports = {
     },
     desktopApp: {
         package: desktopAppPackage,                 // Location of package.json for Go.Data desktop app
-        settingsFile: settingsFile                  // Location of the settigns file for Go.Data desktop app
+        settingsFile: settingsFile                  // Location of the settings file for Go.Data desktop app
     },
     databaseDirectory: dbDirectory,                 // Location of the Go.Data database
     databaseLogDirectory: dbLogDirectory,           // Location of the Go.Data database logs directory
@@ -64,5 +67,7 @@ module.exports = {
     mongodFile: mongodPath,                         // Location of the Mongod executable
     mongoFile: mongoPath,
     pm2Module: pm2Module,                           // Location of the PM2 module (to be used programatically)
-    pm2File: pm2File                                // Location of the PM2 executable (to be used with child process)
+    pm2File: pm2File,                               // Location of the PM2 executable (to be used with child process)
+    resourcesDirectory: resourceDirectory,
+    windowsDirectory: windowsDirectory
 }

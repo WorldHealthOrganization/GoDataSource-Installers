@@ -14,6 +14,7 @@ const mongo = require('./mongo')
 const goData = require('./goData')
 
 const cleanUp = (events, callback) => {
+    logger.log('Cleaning up...')
     async.series([
             mongo.killMongo,
             goData.killGoData
@@ -21,6 +22,8 @@ const cleanUp = (events, callback) => {
         (err, results) => {
             if (err) {
                 logger.error(`Error performing cleanup: ${err.message}`)
+            } else {
+                logger.info('Completed cleanup!')
             }
             callback(null, results)
         })

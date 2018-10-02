@@ -1,27 +1,47 @@
 // Modules to control application life and create native browser window
-const {app, Tray, shell} = require('electron')
+const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
 const ProgressBar = require('electron-progressbar')
 const path = require('path')
 const rl = require('readline')
-const os = require('os')
 
-const resourceDirectory = path.join(__dirname, 'resources')
+const async = require('async')
+
+const appVersion = require('./utils/appVersion')
+const AppPaths = require('./utils/paths')
+const productName = AppPaths.desktopApp.package.name
 
 const settings = require('./controllers/settings')
+const ipcMain = require('./controllers/ipcMain')
 const prelaunch = require('./controllers/prelaunch')
 const mongo = require('./controllers/mongo')
 const goData = require('./controllers/goData')
+const goDataAPI = require('./controllers/goDataAPI')
 const logger = require('./logger/app')
+const constants = require('./utils/constants')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let tray = undefined
+let tray = null
+let settingsWindow = null
+let progressBar = null
 
 const createTray = () => {
-    tray = new Tray(path.join(resourceDirectory, 'icon.png'))
-    tray.on('click', (event) => {
-        console.log('tray clicked')
-    })
+    tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: `Open ${productName}`, click: () => {
+                openWebApp()
+            }
+        },
+        {
+            label: `Settings`, click: () => {
+                openSettings(constants.SETTINGS_WINDOW_SETTING)
+            }
+        },
+        {type: 'separator'},
+        {label: `Quit ${productName}`, role: 'quit'}
+    ])
+    tray.setContextMenu(contextMenu)
 }
 
 // This method will be called when Electron has finished
@@ -30,25 +50,71 @@ const createTray = () => {
 app.on('ready', () => {
 
     let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
-        goData.api.getPort((err, port) => {
-            if (!err) {
-                shell.openExternal(`http://localhost:${port}`)
-            }
-        })
+        openWebApp()
     })
 
     if (shouldQuit) {
+        logger.logger.info(`Detected previous ${productName} instance, will quit app...`)
         app.quit()
         return
     }
 
-    var progressBar = new ProgressBar({
-        title: 'Launching GoData...'
-    })
-    createTray()
-
-    progressBar.detail = 'Configuring logging...'
     logger.init()
+
+    appVersion.getVersion((err, version) => {
+
+        ipcMain.init((mongoPort, goDataPort, state) => {
+            switch (state) {
+                case constants.SETTINGS_WINDOW_LAUNCH:
+                    setPortsInSettings(true, () => {
+                        settingsWindow.close()
+                        launchGoData()
+                    })
+                    break
+                case constants.SETTINGS_WINDOW_SETTING:
+                    setPortsInSettings(false, () => {
+                        settingsWindow.close()
+                    })
+                    break
+            }
+
+            function setPortsInSettings(immediately, callback) {
+                async.series([
+                        (callback) => {
+                            settings.setMongoPort(mongoPort, callback)
+                        },
+                        (callback) => {
+                            settings.setAppPort(goDataPort, callback)
+                        }
+                    ],
+                    callback)
+            }
+        })
+
+        if (err && err.code === 'ENOENT') {
+            // fresh install, no app version set => set version and perform population with early exit
+            openSettings(constants.SETTINGS_WINDOW_LAUNCH)
+        } else {
+            launchGoData()
+        }
+    })
+
+    let readline = rl.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    })
+    readline.on('SIGINT', () => {
+        process.emit('SIGINT')
+    })
+
+})
+
+function launchGoData() {
+    progressBar = new ProgressBar({
+        title: `Launching ${productName}...`
+    })
+
+    progressBar._window.webContents.openDevTools()
 
     progressBar.detail = 'Cleaning up...'
     prelaunch.cleanUp(
@@ -82,23 +148,51 @@ app.on('ready', () => {
                         },
                         (err, appURL) => {
                             if (appURL) {
-                                logger.logger.info(`Opening GoData at ${appURL}`)
-                                shell.openExternal(appURL)
+                                logger.logger.info(`Opening ${productName} at ${appURL}`)
+                                openWebApp(appURL)
                             }
                             progressBar.close()
+                            createTray()
                         })
                 })
         })
+}
 
-    let readline = rl.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    })
-    readline.on('SIGINT', () => {
-        process.emit('SIGINT')
-    })
+function openWebApp(appURL) {
+    if (appURL) {
+        shell.openExternal(appURL)
+    } else {
+        goDataAPI.getAppPort((err, port) => {
+            if (!err) {
+                shell.openExternal(`http://localhost:${port}`)
+            }
+        })
+    }
+}
 
-})
+function openSettings(settingType) {
+    ipcMain.setState(settingType)
+    if (settingsWindow) {
+        settingsWindow.show()
+        return
+    }
+    settingsWindow = new BrowserWindow({
+        width: 900,
+        height: 400,
+        // resizable: false,
+        center: true,
+        frame: false,
+        show: false
+    })
+    settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings.html'))
+    settingsWindow.on('closed', () => {
+        settingsWindow = null
+    })
+    settingsWindow.once('ready-to-show', () => {
+        settingsWindow.show()
+        settingsWindow.webContents.openDevTools()
+    })
+}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -115,7 +209,7 @@ app.on('activate', function () {
 })
 
 app.on('will-quit', function () {
-    console.log('about to ma ia dracu')
+    logger.logger.info('App will now quit!')
 })
 
 const cleanup = (code) => {
@@ -145,6 +239,6 @@ process.on('SIGUSR2', () => {
 
 //catches uncaught exceptions
 // process.on('uncaughtException', (exc) => {
-    // console.log(exc)
-    // cleanup('uncaughtException')
+// console.log(exc)
+// cleanup('uncaughtException')
 // });
