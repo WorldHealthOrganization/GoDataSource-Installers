@@ -138,6 +138,7 @@ function migrateDatabase(events, callback) {
  * @param callback Invoked with (err, result)
  */
 function killMongo(callback) {
+    logger.info('Attempt to terminate previous Mongo process...')
     goDataAPI.getDbPort((err, port) => {
         if (err) {
             logger.error(`Error reading Mongo port: ${err.message}`)

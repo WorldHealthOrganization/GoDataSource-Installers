@@ -17,7 +17,9 @@ const cleanUp = (events, callback) => {
     logger.log('Cleaning up...')
     async.series([
             mongo.killMongo,
-            goData.killGoData
+            goData.killGoData,
+            goData.setAppPort,
+            goData.setDbPort
         ],
         (err, results) => {
             if (err) {

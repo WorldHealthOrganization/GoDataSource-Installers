@@ -24,7 +24,7 @@ const findPortInUse = (port, callback) => {
                 callback(null, processes)
             },
             (err) => {
-                logger.error(`Erorr retrieving processes running on port ${port}`)
+                logger.error(`Error retrieving processes running on port ${port}`)
                 callback(err, null)
             })
 }
@@ -36,9 +36,9 @@ const killProcess = (pid, callback) => {
         'SIGINT',    // send kill -2, includes graceful kill as advised by Mongo
         (err) => {
             if (err) {
-                logger.log(`Error killing process with PID ${pid}: ${err.message}`)
+                logger.info(`Error killing process with PID ${pid}: ${err.message}`)
             } else {
-                logger.log(`Process with PID ${pid} terminated!`)
+                logger.info(`Process with PID ${pid} terminated!`)
             }
             callback()
         })

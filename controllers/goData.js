@@ -21,19 +21,7 @@ const productName = AppPaths.desktopApp.package.name
 const pm2 = require(AppPaths.pm2Module)
 
 const init = (events, callback) => {
-    async.series([
-            setAppPort,
-            setDbPort,
-            (callback) => {
-                startGoData(events, callback)
-            }
-        ],
-        (err, result) => {
-            if (err) {
-                return callback(err)
-            }
-            callback(null, result[2])
-        })
+    startGoData(events, callback)
 }
 
 function setAppPort(callback) {
@@ -120,6 +108,7 @@ function startGoData(events, callback) {
  */
 function killGoData(callback) {
     // delete the PM2 process
+    logger.info('Attempt to terminate previous Go.Data process...')
     pm2.connect(true, (err) => {
         if (err) {
             logger.error(`Error connecting PM2 process: ${err.message}`)
@@ -156,5 +145,7 @@ function killGoData(callback) {
 
 module.exports = {
     init,
+    setAppPort,
+    setDbPort,
     killGoData,
 }
