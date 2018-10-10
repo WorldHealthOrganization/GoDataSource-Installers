@@ -8,18 +8,22 @@ const logDirectory = AppPaths.appLogDirectory
 const logPath = AppPaths.appLogFile
 
 var logger = require('electron-log')
+const mkdirp = require('mkdirp')
 
 /**
  * Configures the app logger to write to AppData/logs/app/app.log.
  */
-const init = () => {
-    const logPathResult = spawnSync('mkdir', ['-p', `${logDirectory}`]).stderr.toString()
-    if (logPathResult.length) {
-        throw new Error(logPathResult)
-    }
-    logger.transports.file.level = 'info';
-    logger.transports.file.file = logPath
-    logger.info('Successfully initialized logger!')
+const init = (callback) => {
+    mkdirp(logDirectory, (err) => {
+        if (err) {
+            callback(err)
+            throw err
+        }
+        logger.transports.file.level = 'info';
+        logger.transports.file.file = logPath
+        logger.info('Successfully initialized logger!')
+        callback()
+    })
 }
 
 module.exports = {

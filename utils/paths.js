@@ -26,7 +26,7 @@ if (process.env.NODE_ENV === 'development') {
     mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     mongoPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongo${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     nodePath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/node${process.env.NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`)
-    pm2Module = path.join(__dirname, './../app-management/lib/node_modules/pm2')
+    pm2Module = process.platform === 'win32' ? path.join(__dirname, './../app-management/node_modules/pm2') : path.join(__dirname, './../app-management/lib/node_modules/pm2')
     dbScript = path.join(__dirname, './../go-data/build/server/install/install.js')
     configScript = path.join(__dirname, './../go-data/build/installer/common/config.js')
 } else {
@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
     mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     mongoPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongo${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     nodePath = path.join(process.resourcesPath, `./platforms/${NODE_PLATFORM}/${ARCH}/default/node${NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`)
-    pm2Module = path.join(process.resourcesPath, './app-management/lib/node_modules/pm2')
+    pm2Module = process.platform === 'win32' ?  path.join(process.resourcesPath, './app-management/node_modules/pm2') : path.join(process.resourcesPath, './app-management/lib/node_modules/pm2')
     dbScript = path.join(process.resourcesPath, './go-data/build/server/install/install.js')
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js')
 }

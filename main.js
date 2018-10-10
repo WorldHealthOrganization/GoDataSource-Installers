@@ -59,43 +59,45 @@ app.on('ready', () => {
         return
     }
 
-    logger.init()
+    // set up logger
+    logger.init((err) => {
+        if (!err) {
+            appVersion.getVersion((err, version) => {
+                ipcMain.init((mongoPort, goDataPort, state) => {
+                    switch (state) {
+                        case constants.SETTINGS_WINDOW_LAUNCH:
+                            setPortsInSettings(true, () => {
+                                launchGoData()
+                                settingsWindow.close()
+                            })
+                            break
+                        case constants.SETTINGS_WINDOW_SETTING:
+                            setPortsInSettings(false, () => {
+                                settingsWindow.close()
+                            })
+                            break
+                    }
 
-    appVersion.getVersion((err, version) => {
+                    function setPortsInSettings(immediately, callback) {
+                        async.series([
+                                (callback) => {
+                                    settings.setMongoPort(mongoPort, callback)
+                                },
+                                (callback) => {
+                                    settings.setAppPort(goDataPort, callback)
+                                }
+                            ],
+                            callback)
+                    }
+                })
 
-        ipcMain.init((mongoPort, goDataPort, state) => {
-            switch (state) {
-                case constants.SETTINGS_WINDOW_LAUNCH:
-                    setPortsInSettings(true, () => {
-                        settingsWindow.close()
-                        launchGoData()
-                    })
-                    break
-                case constants.SETTINGS_WINDOW_SETTING:
-                    setPortsInSettings(false, () => {
-                        settingsWindow.close()
-                    })
-                    break
-            }
-
-            function setPortsInSettings(immediately, callback) {
-                async.series([
-                        (callback) => {
-                            settings.setMongoPort(mongoPort, callback)
-                        },
-                        (callback) => {
-                            settings.setAppPort(goDataPort, callback)
-                        }
-                    ],
-                    callback)
-            }
-        })
-
-        if (err && err.code === 'ENOENT') {
-            // fresh install, no app version set => set version and perform population with early exit
-            openSettings(constants.SETTINGS_WINDOW_LAUNCH)
-        } else {
-            launchGoData()
+                if (err && err.code === 'ENOENT') {
+                    // fresh install, no app version set => set version and perform population with early exit
+                    openSettings(constants.SETTINGS_WINDOW_LAUNCH)
+                } else {
+                    launchGoData()
+                }
+            })
         }
     })
 
@@ -198,9 +200,9 @@ function openSettings(settingType) {
 app.on('window-all-closed', function () {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
+    // if (process.platform !== 'darwin') {
+    //     app.quit()
+    // }
 })
 
 app.on('activate', function () {

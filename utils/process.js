@@ -33,7 +33,10 @@ const killProcess = (pid, callback) => {
     logger.info(`Terminating processes with PID ${pid}...`)
     ps.kill(
         pid,
-        'SIGINT',    // send kill -2, includes graceful kill as advised by Mongo
+        {
+            signal: 'SIGINT',    // send kill -2, includes graceful kill as advised by Mongo
+            timeout: 5
+        },
         (err) => {
             if (err) {
                 logger.info(`Error killing process with PID ${pid}: ${err.message}`)

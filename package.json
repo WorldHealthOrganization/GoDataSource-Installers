@@ -5,8 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "NODE_ENV=development PLATFORM=darwin ARCH=x64 VERSION=default electron --inspect .",
+    "start:windows": "set NODE_ENV=development&&set PLATFORM=win&&set ARCH=x64&&set VERSION=default&&electron --inspect .",
     "setup": "npm run setup:resources && npm run setup:forever",
-    "setup:resources": "node setup-resources.js --bucket=mongo-node",
+    "setup:resources": "node setup-resources.js --bucket=com.clarisoft.mongo-node",
     "setup:forever": "npm install --prefix app-management -g pm2",
     "pack:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
@@ -62,11 +63,11 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "^2.312.0",
+    "compressing": "^1.3.1",
     "electron": "^2.0.0",
     "electron-builder": "^20.28.4",
     "electron-rebuild": "^1.8.2",
-    "lodash": "^4.17.10",
-    "mkdirp": "^0.5.1"
+    "lodash": "^4.17.10"
   },
   "dependencies": {
     "async": "^2.6.1",
@@ -75,6 +76,7 @@
     "electron-updater": "^3.1.2",
     "find-process": "^1.1.3",
     "forever-monitor": "^1.7.1",
+    "mkdirp": "^0.5.1",
     "pm2": "^3.1.2",
     "ps-node": "^0.1.6",
     "tail": "^1.4.0"

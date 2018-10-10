@@ -110,10 +110,16 @@ function populateDatabase(events, callback) {
     logger.info(`Populating database...`)
     events({text: `Populating database...`})
     const setupDbProcess = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'init-database'])
+    setupDbProcess.stderr.on('data', (data) => {
+        logger.error(`Error populating database: ${data.toString()}`)
+        events({detail: data.toString()})
+    })
     setupDbProcess.stdout.on('data', (data) => {
+        logger.info(`Populating database: ${data.toString()}`)
         events({detail: data.toString()})
     })
     setupDbProcess.stdout.on('close', (code) => {
+        logger.info(`Completed populating database!`)
         callback()
     })
 }

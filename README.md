@@ -45,6 +45,13 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 	git submodule init
 	git submodule update
+    git submodule foreach git pull origin master
+
+If you want to use a specific commit, ckeckout the submodule by tag or commit id:
+
+    cd go-data/api
+    git checkout 9f3c46a
+
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
 ##### Setup for Go.Data Web app
@@ -111,7 +118,7 @@ Create a Webstorm NodeJS configuration with the following settings:
         ARCH - x64 or x86 - will install 64-bit or 32-bit components
         MONGO_PLATFORM - win (for Windows), darwin (for Mac), deb (for Debian), linux (for Linux), rhel (for RHEL) or ubuntu (for Ubuntu)
         NODE_PLATFORM - win (for Windows), darwin (for Mac), linux (for Linux, Debian, RHEL, Ubuntu)
-        VERSION - default (when no OS version is specified) or the OS version (5.5, 6 and 7 for Red Hat and 14 and 16 for Ubuntu)
+        OSVERSION - default (when no OS version is specified) or the OS version (5.5, 6 and 7 for Red Hat and 14 and 16 for Ubuntu)
         NODE_ENV=development
 Note: the above configuration does not work as a `npm` script. For some reason, NODE_ENV is undefined when running the configuration from a `npm` script.
 
