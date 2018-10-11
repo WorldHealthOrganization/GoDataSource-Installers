@@ -24,7 +24,7 @@ The project requires `node` and `@angular/cli` globally installed.
 
 ##### Clone the installer project
 
-    git clone git@github.com:ClarisoftTechnologies/Go.Data-Installers.git
+    git clone -b s10 git@github.com:ClarisoftTechnologies/Go.Data-Installers.git
 
 ##### Install dependencies for the installer project
 
@@ -45,12 +45,7 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 	git submodule init
 	git submodule update
-    git submodule foreach git pull origin master
-
-If you want to use a specific commit, ckeckout the submodule by tag or commit id:
-
-    cd go-data/api
-    git checkout 9f3c46a
+  git submodule foreach git pull origin s10
 
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
