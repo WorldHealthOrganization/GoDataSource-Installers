@@ -45,7 +45,7 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 	git submodule init
 	git submodule update
-  git submodule foreach git pull origin s10
+    git submodule foreach git pull origin s10
 
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
