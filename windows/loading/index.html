@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rotate / Pulse Loading Animation</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600|Roboto:700" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link rel="stylesheet" href="css/style.css">
+    <style> ::-webkit-scrollbar {
+        display: none;
+    } </style>
+
+</head>
+
+<body>
+
+<div class="e-loadholder">
+    <div class="m-loader">
+        <span class="e-text">Go.Data</span>
+    </div>
+</div>
+
+<div class="e-bottom">
+    <div class="m-loader">
+        <span id="log-area" class="e-text"></span>
+    </div>
+</div>
+
+<div id="particleCanvas-Blue"></div>
+<div id="particleCanvas-White"></div>
+
+<script src='https://code.jquery.com/jquery-3.2.1.js'></script>
+<script src='https://use.fontawesome.com/b5bf1bd49e.js'></script>
+<script src='https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js'></script>
+
+<script src="js/index.js"></script>
+
+<script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+</script>
+
+</body>
+
+</html>

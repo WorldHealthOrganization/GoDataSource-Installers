@@ -24,6 +24,7 @@ const constants = require('./utils/constants')
 let tray = null
 let settingsWindow = null
 let progressBar = null
+let splashScreen = null
 
 const createTray = () => {
     tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
@@ -112,48 +113,75 @@ app.on('ready', () => {
 })
 
 function launchGoData() {
-    progressBar = new ProgressBar({
-        title: `Launching ${productName}...`
+
+    splashScreen = new BrowserWindow({
+        width: 900,
+        height: 475,
+        resizable: false,
+        center: true,
+        frame: false,
+        show: false
+    })
+    splashScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
+
+    splashScreen.on('closed', () => {
+        splashScreen = null
+    })
+    splashScreen.once('ready-to-show', () => {
+        splashScreen.show()
     })
 
-    progressBar._window.webContents.openDevTools()
+    // progressBar = new ProgressBar({
+    //     title: `Launching ${productName}...`
+    // })
 
-    progressBar.detail = 'Cleaning up...'
+    // progressBar._window.webContents.openDevTools()
+
+    // progressBar.detail = 'Cleaning up...'
+    splashScreen.webContents.send('event', 'Cleaning up...')
+
     prelaunch.cleanUp(
         (event) => {
 
         },
         () => {
-            progressBar.detail = 'Creating database...'
+            // progressBar.detail = 'Creating database...'
             mongo.init(
                 (event) => {
-                    if (progressBar.isInProgress()) {
-                        if (event.detail) {
-                            progressBar.detail = event.detail
-                        }
-                        if (event.text) {
-                            progressBar.text = event.text
-                        }
+                    if (event.text) {
+                        splashScreen.webContents.send('event', event.text)
                     }
+                    // if (progressBar.isInProgress()) {
+                    //     if (event.detail) {
+                    //         progressBar.detail = event.detail
+                    //     }
+                    //     if (event.text) {
+                    //         progressBar.text = event.text
+                    //     }
+                    // }
                 },
                 () => {
                     goData.init(
                         (event) => {
-                            if (progressBar.isInProgress()) {
-                                if (event.detail) {
-                                    progressBar.detail = event.detail
-                                }
-                                if (event.text) {
-                                    progressBar.text = event.text
-                                }
+                            if (event.text) {
+                                splashScreen.webContents.send('event', event.text)
                             }
+                            // if (progressBar.isInProgress()) {
+                            //     if (event.detail) {
+                            //         progressBar.detail = event.detail
+                            //     }
+                            //     if (event.text) {
+                            //         progressBar.text = event.text
+                            //     }
+                            // }
                         },
                         (err, appURL) => {
                             if (appURL) {
                                 logger.logger.info(`Opening ${productName} at ${appURL}`)
                                 openWebApp(appURL)
                             }
-                            progressBar.close()
+                            splashScreen.close()
+                            // progressBar.close()
                             createTray()
                         })
                 })
@@ -186,7 +214,7 @@ function openSettings(settingType) {
         frame: false,
         show: false
     })
-    settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings.html'))
+    settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings', 'settings.html'))
     settingsWindow.on('closed', () => {
         settingsWindow = null
     })

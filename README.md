@@ -35,6 +35,10 @@ Download the `platforms` directory from S3 with binaries for `mongo` and `node`.
 
 	npm run setup:resources
 
+On Mac OSX and Linux systems, it may be need to changed the permissions to all the files in the folder:
+
+	chmod -R 755 platforms/
+
 ##### Install forever-monitor
 forever-monitor will be used to launch the Go.Data web app. It will create the `app-management` folder in project root.
 

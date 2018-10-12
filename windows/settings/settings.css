@@ -1,16 +1,16 @@
 @font-face {
     font-family: "Roboto-Thin";
-    src: url('./../resources/fonts/Roboto-Light.ttf') format("truetype");
+    src: url('../../resources/fonts/Roboto-Light.ttf') format("truetype");
 }
 
 @font-face {
     font-family: "Roboto-Medium";
-    src: url('./../resources/fonts/Roboto-Medium.ttf') format("truetype");
+    src: url('../../resources/fonts/Roboto-Medium.ttf') format("truetype");
 }
 
 @font-face {
     font-family: "Roboto";
-    src: url('./../resources/fonts/Roboto-Regular.ttf') format("truetype");
+    src: url('../../resources/fonts/Roboto-Regular.ttf') format("truetype");
 }
 
 body {

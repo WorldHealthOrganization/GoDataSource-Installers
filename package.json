@@ -42,7 +42,7 @@
       "resources/**/*",
       "logger/*",
       "utils/*",
-      "windows/*",
+      "windows/**/*",
       "main.js",
       "index.html",
       "renderer.js"

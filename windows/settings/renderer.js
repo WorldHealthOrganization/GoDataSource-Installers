@@ -3,7 +3,7 @@
 // All of the Node.js APIs are available in this process.
 
 const { ipcRenderer } = require('electron')
-const constants = require('./../utils/constants')
+const constants = require('./../../utils/constants')
 
 // const logger = require('./../logger/app').logger
 
