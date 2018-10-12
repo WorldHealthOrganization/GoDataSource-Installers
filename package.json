@@ -9,10 +9,10 @@
     "setup": "npm run setup:resources && npm run setup:forever",
     "setup:resources": "node setup-resources.js --bucket=com.clarisoft.mongo-node",
     "setup:forever": "npm install --prefix app-management -g pm2",
-    "pack:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
-    "dist:win:64": "PLATFORM=win ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
-    "pack:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
-    "dist:win:32": "PLATFORM=win ARCH=x86 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default",
+    "pack:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
+    "dist:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
+    "pack:win:32": "set PLATFORM=win&& set ARCH=x86&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",
+    "dist:win:32": "set PLATFORM=win&& set ARCH=x86&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default",
     "pack:osx:64": "PLATFORM=darwin ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=darwin -c.extraMetadata.NODE_PLATFORM=darwin -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:osx:64": "PLATFORM=darwin ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=darwin -c.extraMetadata.NODE_PLATFORM=darwin -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default ",
     "pack:linux:64": "PLATFORM=linux ARCH=x64 VERSION=default electron-builder -c.extraMetadata.MONGO_PLATFORM=linux -c.extraMetadata.NODE_PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
@@ -57,6 +57,10 @@
     },
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "author": "Clarisoft",
@@ -71,6 +75,7 @@
   },
   "dependencies": {
     "async": "^2.6.1",
+    "chokidar": "^2.0.4",
     "electron-log": "^2.2.17",
     "electron-progressbar": "^1.1.0",
     "electron-updater": "^3.1.2",
@@ -84,5 +89,6 @@
   "publish": {
     "provider": "generic",
     "url": "http://localhost:3000"
-  }
+  },
+  "postinstall": "electron-builder install-app-deps"
 }

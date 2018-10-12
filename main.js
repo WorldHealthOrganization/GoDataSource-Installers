@@ -1,6 +1,6 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
-const ProgressBar = require('electron-progressbar')
+// const ProgressBar = require('electron-progressbar')
 const path = require('path')
 const rl = require('readline')
 
@@ -23,24 +23,32 @@ const constants = require('./utils/constants')
 // be closed automatically when the JavaScript object is garbage collected.
 let tray = null
 let settingsWindow = null
-let progressBar = null
+// let progressBar = null
 let splashScreen = null
 
 const createTray = () => {
     tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: `Open ${productName}`, click: () => {
+            label: `Open ${productName}`,
+            click: () => {
                 openWebApp()
             }
         },
         {
-            label: `Settings`, click: () => {
+            label: `Settings`,
+            click: () => {
                 openSettings(constants.SETTINGS_WINDOW_SETTING)
             }
         },
         {type: 'separator'},
-        {label: `Quit ${productName}`, role: 'quit'}
+        {
+            label: `Quit ${productName}`,
+            click: () => {
+                cleanup(0)
+                setTimeout(app.quit, 4000)
+            }
+        }
     ])
     tray.setContextMenu(contextMenu)
 }
@@ -149,7 +157,7 @@ function launchGoData() {
             mongo.init(
                 (event) => {
                     if (event.text) {
-                        splashScreen.webContents.send('event', event.text)
+                        splashScreen && splashScreen.webContents.send('event', event.text)
                     }
                     // if (progressBar.isInProgress()) {
                     //     if (event.detail) {
@@ -164,7 +172,7 @@ function launchGoData() {
                     goData.init(
                         (event) => {
                             if (event.text) {
-                                splashScreen.webContents.send('event', event.text)
+                                splashScreen && splashScreen.webContents.send('event', event.text)
                             }
                             // if (progressBar.isInProgress()) {
                             //     if (event.detail) {
@@ -181,6 +189,7 @@ function launchGoData() {
                                 openWebApp(appURL)
                             }
                             splashScreen.close()
+                            splashScreen = null
                             // progressBar.close()
                             createTray()
                         })
@@ -207,9 +216,9 @@ function openSettings(settingType) {
         return
     }
     settingsWindow = new BrowserWindow({
-        width: 900,
+        width: 300,
         height: 400,
-        // resizable: false,
+        resizable: false,
         center: true,
         frame: false,
         show: false
@@ -220,7 +229,7 @@ function openSettings(settingType) {
     })
     settingsWindow.once('ready-to-show', () => {
         settingsWindow.show()
-        settingsWindow.webContents.openDevTools()
+        // settingsWindow.webContents.openDevTools()
     })
 }
 
@@ -242,33 +251,33 @@ app.on('will-quit', function () {
     logger.logger.info('App will now quit!')
 })
 
-const cleanup = (code) => {
-    logger.logger.log(`Exiting program with code ${code}.`)
+const cleanup = () => {
+    mongo.setShouldThrowExceptionOnMongoFailure(false)
     mongo.killMongo()
     goData.killGoData()
-    process.exit()
 }
 
 //do something when app is closing
 process.on('exit', () => {
-    cleanup('EXIT')
+    // cleanup('EXIT')
 })
 
 //catches ctrl+c event
 process.on('SIGINT', () => {
-    cleanup('SIGINT')
+    // cleanup('SIGINT')
 })
 
 // catches "kill pid" (for example: nodemon restart)
 process.on('SIGUSR1', () => {
-    cleanup('SIGUSR1')
+    // cleanup('SIGUSR1')
 })
 process.on('SIGUSR2', () => {
-    cleanup('SIGUSR2')
+    // cleanup('SIGUSR2')
 })
 
 //catches uncaught exceptions
-// process.on('uncaughtException', (exc) => {
-// console.log(exc)
+process.on('uncaughtException', (exc) => {
+    logger.logger.error(exc)
+    setTimeout(process.exit, 3000)
 // cleanup('uncaughtException')
-// });
+})

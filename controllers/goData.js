@@ -9,6 +9,7 @@
  */
 const async = require('async')
 const Tail = require('tail').Tail
+const chokidar = require('chokidar')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -55,7 +56,7 @@ function startGoData(events, callback) {
             throw err
         }
 
-        logger.info(`Starting ${productName} Web App...`)
+        logger.info(`Starting ${productName} PM2 process...`)
         pm2.start({
                 apps: [
                     {
@@ -77,21 +78,41 @@ function startGoData(events, callback) {
                 pm2.disconnect()
             })
 
-        //create a read stream from the log file to detect when the app starts
 
+
+        // There's an OS bug on windows that freezes the files from being read. chokidar will force-poll the logs file.
+        let watcher
+        if (process.platform ==='win32') {
+            watcher = chokidar.watch(AppPaths.appLogFile, {
+                usePolling: true,
+                interval: 1000
+            }).on('all', (event, path) => {
+                console.log(event, path);
+            })
+        }
+
+        //create a read stream from the log file to detect when the app starts
         const tail = new Tail(AppPaths.appLogFile)
 
         tail.on('line', (data) => {
             const log = data.toString()
-            events({detail: log})
+            events({details: log})
             if (log.indexOf('Web server listening at:') > -1) {
+
+                if (watcher) {
+                    watcher.unwatch(AppPaths.appLogFile)
+                    watcher.close()
+                }
+                tail.unwatch()
+
                 logger.info(`Successfully started ${productName} web app!`)
                 events({text: `Successfully started ${productName} web app!`})
+
                 const urlIndex = log.indexOf('http')
                 if (urlIndex > -1) {
                     return callback(null, log.substring(urlIndex))
                 }
-                tail.unwatch()
+
                 callback()
             }
         })
@@ -107,6 +128,9 @@ function startGoData(events, callback) {
  * @param callback Invoked with (err, result)
  */
 function killGoData(callback) {
+
+    callback || (callback = () => {})
+
     // delete the PM2 process
     logger.info('Attempt to terminate previous Go.Data process...')
     pm2.connect(true, (err) => {

@@ -23,8 +23,8 @@ let dbScript = undefined
 let configScript = undefined
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build')
-    mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
-    mongoPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongo${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
+    mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
+    mongoPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongo${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`)
     nodePath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/node${process.env.NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`)
     pm2Module = process.platform === 'win32' ? path.join(__dirname, './../app-management/node_modules/pm2') : path.join(__dirname, './../app-management/lib/node_modules/pm2')
     dbScript = path.join(__dirname, './../go-data/build/server/install/install.js')

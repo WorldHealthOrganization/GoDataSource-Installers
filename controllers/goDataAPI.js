@@ -66,7 +66,7 @@ function setAppPort(port, callback) {
  */
 function getDbPort(callback) {
     let log = true // used to stop logging after script exits
-    logger.info(`Retrieving ${productName} dababase port from ${productName} API...`)
+    logger.info(`Retrieving ${productName} database port from ${productName} API...`)
     let port = null, error = null
     const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'get', 'dbPort'])
         .on('exit', (code) => {
@@ -100,7 +100,7 @@ function setDbPort(port, callback) {
     const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'set', 'dbPort', port])
         .on('exit', (code) => {
             log = false
-            logger.info(`${productName} Web 'set dbPort ${port}' exited with code ${code}`)
+            logger.info(`${productName} 'set dbPort ${port}' exited with code ${code}`)
         })
     goDataConfigProcess.stdout.on('data', (data) => {
         log && logger.info(`${productName} 'set dbPort ${port}' data: ${data.toString()}`)

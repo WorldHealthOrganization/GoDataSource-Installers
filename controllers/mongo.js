@@ -7,6 +7,7 @@
 const {spawn, spawnSync} = require('child_process')
 
 const async = require('async')
+const mkdirp = require('mkdirp')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -21,57 +22,100 @@ const logDirectory = AppPaths.databaseLogDirectory
 const DatabaseLogFile = AppPaths.databaseLogFile
 
 const init = (events, callback) => {
-    configureMongo(events)
-    startMongo(events, (err) => {
-        startDatabase(events, callback)
+    configureMongo(events, (err) => {
+        startMongo(events, (err) => {
+            startDatabase(events, callback)
+        })
     })
+}
+
+let shouldThrowExceptionOnMongoFailure = true;
+function setShouldThrowExceptionOnMongoFailure(value) {
+    shouldThrowExceptionOnMongoFailure = value
 }
 
 /**
  * Creates Mongo folders for database (AppData/db) and database logs (AppData/logs/db/db.log) using mkdir
  */
-function configureMongo(events) {
+function configureMongo(events, callback) {
     logger.info(`Configuring Mongo database...`)
     events({text: `Configuring Mongo database...`})
-    const dbPathResult = spawnSync('mkdir', ['-p', `${databaseDirectory}`]).stderr.toString()
-    if (dbPathResult.length) {
-        logger.error(`Error setting log path ${databaseDirectory} for Mongo database: ${dbPathResult}`)
-        throw new Error(dbPathResult)
-    }
-    logger.info(`Successfully set database path ${databaseDirectory} for Mongo database!`)
-    events({detail: `Successfully set database path ${databaseDirectory} for Mongo database!`})
 
-    const logPathResult = spawnSync('mkdir', ['-p', `${logDirectory}`]).stderr.toString()
-    if (logPathResult.length) {
-        logger.error(`Error setting log path ${logDirectory} for Mongo database: ${logPathResult}`)
-        throw new Error(logPathResult)
+    async.parallel([
+            (callback) => {
+                createDatabaseFolder(events, callback)
+            },
+            (callback) => {
+                createLogFolder(events, callback)
+            }
+        ],
+        callback)
+
+    function createDatabaseFolder(events, callback) {
+        mkdirp(databaseDirectory, (err) => {
+            if (err) {
+                logger.error(`Error setting database path ${databaseDirectory} for Mongo database: ${err.message}`)
+                throw err
+            }
+            logger.info(`Successfully set database path ${databaseDirectory} for Mongo database!`)
+            events({detail: `Successfully set database path ${databaseDirectory} for Mongo database!`})
+            callback()
+        })
     }
-    logger.info(`Successfully set log path ${logDirectory} for Mongo database!`)
-    events({text: `Successfully set log path ${logDirectory} for Mongo database!`})
+
+    function createLogFolder(events, callback) {
+        mkdirp(logDirectory, (err) => {
+            if (err) {
+                logger.error(`Error setting log path ${logDirectory} for Mongo database: ${err.message}`)
+                throw err
+            }
+            logger.info(`Successfully set log path ${logDirectory} for Mongo database!`)
+            events({detail: `Successfully set log path ${logDirectory} for Mongo database!`})
+            callback()
+        })
+    }
 }
 
 /**
  * Starts the Mongo database from depending on system configuration
  */
 function startMongo(events, callback) {
-    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} ...`)
-    events({text: `Starting Mongo service from path ${AppPaths.mongodFile} ...`})
+    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args --dbpath=${databaseDirectory} --logpath=${DatabaseLogFile}...`)
+    events({
+        text: 'Startig database service...',
+        detail: `Starting Mongo service from path ${AppPaths.mongodFile} ...`
+    })
 
     settings.getMongoPort((err, port) => {
         if (err) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        const startDbProcess = spawn(AppPaths.mongodFile, [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`])
+        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`]
+        if (process.env.ARCH === 'x86' && process.env.PLATFORM === 'win') {
+            args.push(`--storageEngine=mmapv1`)
+        }
+        const startDbProcess = spawn(AppPaths.mongodFile, args)
 
         startDbProcess.stdout.on('close', (code) => {
-            throw new Error(`Error: Mongo process exited with code ${code}`)
+            if (shouldThrowExceptionOnMongoFailure) {
+                throw new Error(`Error: Mongo process exited with code ${code}`)
+            }
         })
 
-        logger.info(`Mongo service successfully started!`)
-        events({text: `Mongo service successfully started!`})
+        startDbProcess.stderr.on('data', (data) => {
+            logger.error(data.toString())
+        })
 
-        callback()
+        startDbProcess.stdout.on('data', (data) => {
+            logger.info(data.toString())
+        })
+
+        setTimeout(() => {
+            logger.info(`Mongo service successfully started!`)
+            events({text: `Mongo service successfully started!`})
+            callback()
+        }, 1000)
 
     })
 }
@@ -120,6 +164,7 @@ function populateDatabase(events, callback) {
     })
     setupDbProcess.stdout.on('close', (code) => {
         logger.info(`Completed populating database!`)
+        events({text: `Completed populating database...`})
         callback()
     })
 }
@@ -144,6 +189,9 @@ function migrateDatabase(events, callback) {
  * @param callback Invoked with (err, result)
  */
 function killMongo(callback) {
+
+    callback || (callback = () => {})
+
     logger.info('Attempt to terminate previous Mongo process...')
     goDataAPI.getDbPort((err, port) => {
         if (err) {
@@ -165,8 +213,8 @@ function killMongo(callback) {
     })
 }
 
-
 module.exports = {
     init,
-    killMongo
+    killMongo,
+    setShouldThrowExceptionOnMongoFailure
 }
