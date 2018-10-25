@@ -31,9 +31,9 @@ const init = (events) => {
         })
     })
 
-    ipcMain.on('buttonClick-message', (event, ports) => {
+    ipcMain.on('buttonClick-message', (event, arg) => {
         logger.log('IPCMain received buttonClick-message')
-        events(ports.mongoPort, ports.goDataPort, state)
+        events(arg.mongoPort, arg.goDataPort, arg.appType, state)
     })
 
     logger.info('Initialized IPCMain')

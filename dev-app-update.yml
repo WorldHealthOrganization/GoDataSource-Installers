@@ -1,0 +1,12 @@
+version: 1.11.0
+provider: generic
+url: http://54.164.207.48:42000
+files:
+  - url: Go.Data-1.11.0-mac.zip
+    sha512: dF/Y+v99Gaj98DRmOOc64TRwIn3XyWKIOx69pMMBKTX/Z4UXG0dNVLmn1qHOZL9VoL8r7E6SZSviGAnLne6Qag==
+  - url: Go.Data-1.11.0.dmg
+    sha512: Tm3YS4ufBR1feSNpV/BeOfhsmsD4fpiGBCYPhLajXKQ8ZVL3Jq8FXyA05Byd9jDoV7YRy1dpU9GMoNGT4nTQWQ==
+    size: 277872315
+path: Go.Data-1.11.0-mac.zip
+sha512: dF/Y+v99Gaj98DRmOOc64TRwIn3XyWKIOx69pMMBKTX/Z4UXG0dNVLmn1qHOZL9VoL8r7E6SZSviGAnLne6Qag==
+releaseDate: '2018-10-23T11:48:55.448Z'

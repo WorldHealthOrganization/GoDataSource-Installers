@@ -5,6 +5,8 @@
 const { ipcRenderer } = require('electron')
 const constants = require('./../../utils/constants')
 
+let goDataType = 'hub';
+
 // const logger = require('./../logger/app').logger
 
 ipcRenderer.send('getState-message', '')
@@ -15,6 +17,7 @@ ipcRenderer.on('getState-reply', (event, arg) => {
     // logger.log('IPCRenderer received getState-reply')
     loadView(arg)
     setButtonFunctionality()
+    bindToggle()
 })
 
 ipcRenderer.on('getDBPort-reply', (event, arg) => {
@@ -33,10 +36,18 @@ function setButtonFunctionality() {
         ipcRenderer.send(
             'buttonClick-message', {
                 mongoPort: document.getElementById('mongoPort').value,
-                goDataPort: document.getElementById('goDataPort').value
+                goDataPort: document.getElementById('goDataPort').value,
+                appType: goDataType
             }
         )
     }
+}
+
+function bindToggle() {
+    let goDataHub = document.getElementById('goDataHub')
+    goDataHub.onclick = () => { changeGoDataType(goDataHub) }
+    let goDataConsolidation = document.getElementById('goDataConsolidation')
+    goDataConsolidation.onclick = () => { changeGoDataType(goDataConsolidation) }
 }
 
 function loadView(state) {
@@ -45,12 +56,18 @@ function loadView(state) {
         case constants.SETTINGS_WINDOW_LAUNCH:
             document.getElementById('settingsButton').innerHTML = 'Launch Go.Data'
             document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?'
+            document.getElementById('typeSelector').style.display = 'flex'
 
             break
         case constants.SETTINGS_WINDOW_SETTING:
             document.getElementById('settingsButton').innerHTML = 'Save'
             document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings'
+            document.getElementById('typeSelector').style.display = 'none'
             break
     }
 }
 
+function changeGoDataType(e) {
+    goDataType = e.value
+    console.log(goDataType)
+}

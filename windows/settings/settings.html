@@ -8,7 +8,20 @@
 <body>
 <h1 id="settingsTitle"></h1>
 <div>
+
     <label id="settingDetails"></label>
+
+    <!-- -->
+
+    <div class="toggle" id="typeSelector">
+        <input type="radio" name="sizeBy" value="hub" id="goDataHub" checked="checked"/>
+        <label for="goDataHub">Hub</label>
+        <input type="radio" name="sizeBy" value="consolidation" id="goDataConsolidation"/>
+        <label for="goDataConsolidation">Consolidation Server</label>
+    </div>
+
+    <!-- -->
+
     <div class="setting">
         <label>Mongo Port</label>
         <input type="number" id="mongoPort">
@@ -17,6 +30,7 @@
         <label>Go.Data Port</label>
         <input type="number" id="goDataPort">
     </div>
+
     <button id="settingsButton"></button>
 </div>
 <script>

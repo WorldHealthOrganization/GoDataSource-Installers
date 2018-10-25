@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "1.0.0",
+  "version": "1.11.0",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -61,7 +61,13 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://54.164.207.48:42000/"
+      }
+    ]
   },
   "author": "Clarisoft",
   "license": "CC0-1.0",
@@ -85,10 +91,6 @@
     "pm2": "^3.1.2",
     "ps-node": "^0.1.6",
     "tail": "^1.4.0"
-  },
-  "publish": {
-    "provider": "generic",
-    "url": "http://localhost:3000"
   },
   "postinstall": "electron-builder install-app-deps"
 }

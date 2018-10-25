@@ -1,6 +1,7 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
-// const ProgressBar = require('electron-progressbar')
+const {app, BrowserWindow, Menu, Tray, shell, dialog} = require('electron')
+const {autoUpdater} = require('electron-updater')
+
 const path = require('path')
 const rl = require('readline')
 
@@ -19,12 +20,60 @@ const goDataAPI = require('./controllers/goDataAPI')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
 
+// Auto-updater tasks
+const configureUpdater = () => {
+    let updater
+    autoUpdater.logger = logger.logger
+    autoUpdater.autoDownload = false
+    autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml')
+    autoUpdater.on('checking-for-update', () => {
+        logger.logger.info('Checking for update...')
+    })
+    autoUpdater.on('update-available', () => {
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Found Updates',
+            message: 'Found updates, do you want update now?',
+            buttons: ['Sure', 'No']
+        }, (buttonIndex) => {
+            if (buttonIndex === 0) {
+                autoUpdater.downloadUpdate()
+            }
+            else {
+                updater.enabled = true
+                updater = null
+            }
+        })
+    })
+    autoUpdater.on('update-not-available', () => {
+        logger.logger.info('Current version up to date!')
+        updater.enabled = true
+        updater = null
+    })
+    autoUpdater.on('error', (error) => {
+        dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString())
+    })
+    autoUpdater.on('download-progress', (ev, progressObj) => {
+        logger.logger.info('Download progress...')
+    })
+    autoUpdater.on('update-downloaded', () => {
+        dialog.showMessageBox({
+            title: 'Install Updates',
+            message: 'Updates downloaded, application will be quit for update...'
+        }, () => {
+            setTimeout(() => autoUpdater.quitAndInstall(), 3000)
+        })
+    })
+}
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let tray = null
 let settingsWindow = null
-// let progressBar = null
 let splashScreen = null
+
+// used at first launch to start web app as hub or consolidation server
+let goDataConfiguration = null
 
 const createTray = () => {
     tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
@@ -71,8 +120,14 @@ app.on('ready', () => {
     // set up logger
     logger.init((err) => {
         if (!err) {
+
+            configureUpdater()
+
             appVersion.getVersion((err, version) => {
-                ipcMain.init((mongoPort, goDataPort, state) => {
+                ipcMain.init((mongoPort, goDataPort, appType, state) => {
+
+                    goDataConfiguration = appType
+
                     switch (state) {
                         case constants.SETTINGS_WINDOW_LAUNCH:
                             setPortsInSettings(true, () => {
@@ -139,34 +194,19 @@ function launchGoData() {
         splashScreen.show()
     })
 
-    // progressBar = new ProgressBar({
-    //     title: `Launching ${productName}...`
-    // })
-
-    // progressBar._window.webContents.openDevTools()
-
-    // progressBar.detail = 'Cleaning up...'
     splashScreen.webContents.send('event', 'Cleaning up...')
 
+    prelaunch.setBuildConfiguration(goDataConfiguration)
     prelaunch.cleanUp(
         (event) => {
 
         },
         () => {
-            // progressBar.detail = 'Creating database...'
             mongo.init(
                 (event) => {
                     if (event.text) {
                         splashScreen && splashScreen.webContents.send('event', event.text)
                     }
-                    // if (progressBar.isInProgress()) {
-                    //     if (event.detail) {
-                    //         progressBar.detail = event.detail
-                    //     }
-                    //     if (event.text) {
-                    //         progressBar.text = event.text
-                    //     }
-                    // }
                 },
                 () => {
                     goData.init(
@@ -174,14 +214,6 @@ function launchGoData() {
                             if (event.text) {
                                 splashScreen && splashScreen.webContents.send('event', event.text)
                             }
-                            // if (progressBar.isInProgress()) {
-                            //     if (event.detail) {
-                            //         progressBar.detail = event.detail
-                            //     }
-                            //     if (event.text) {
-                            //         progressBar.text = event.text
-                            //     }
-                            // }
                         },
                         (err, appURL) => {
                             if (appURL) {
@@ -190,7 +222,6 @@ function launchGoData() {
                             }
                             splashScreen.close()
                             splashScreen = null
-                            // progressBar.close()
                             createTray()
                         })
                 })
@@ -217,8 +248,8 @@ function openSettings(settingType) {
     }
     settingsWindow = new BrowserWindow({
         width: 300,
-        height: 400,
-        resizable: false,
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 400 : 450,
+        resizable: true,
         center: true,
         frame: false,
         show: false
