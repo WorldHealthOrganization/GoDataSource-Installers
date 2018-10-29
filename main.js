@@ -1,6 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, Tray, shell, dialog} = require('electron')
-const {autoUpdater} = require('electron-updater')
+const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
 
 const path = require('path')
 const rl = require('readline')
@@ -17,54 +16,10 @@ const prelaunch = require('./controllers/prelaunch')
 const mongo = require('./controllers/mongo')
 const goData = require('./controllers/goData')
 const goDataAPI = require('./controllers/goDataAPI')
+const updater = require('./updater/updater')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
-
-// Auto-updater tasks
-const configureUpdater = () => {
-    let updater
-    autoUpdater.logger = logger.logger
-    autoUpdater.autoDownload = false
-    autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml')
-    autoUpdater.on('checking-for-update', () => {
-        logger.logger.info('Checking for update...')
-    })
-    autoUpdater.on('update-available', () => {
-        dialog.showMessageBox({
-            type: 'info',
-            title: 'Found Updates',
-            message: 'Found updates, do you want update now?',
-            buttons: ['Sure', 'No']
-        }, (buttonIndex) => {
-            if (buttonIndex === 0) {
-                autoUpdater.downloadUpdate()
-            }
-            else {
-                updater.enabled = true
-                updater = null
-            }
-        })
-    })
-    autoUpdater.on('update-not-available', () => {
-        logger.logger.info('Current version up to date!')
-        updater.enabled = true
-        updater = null
-    })
-    autoUpdater.on('error', (error) => {
-        dialog.showErrorBox('Error: ', error == null ? "unknown" : (error.stack || error).toString())
-    })
-    autoUpdater.on('download-progress', (ev, progressObj) => {
-        logger.logger.info('Download progress...')
-    })
-    autoUpdater.on('update-downloaded', () => {
-        dialog.showMessageBox({
-            title: 'Install Updates',
-            message: 'Updates downloaded, application will be quit for update...'
-        }, () => {
-            setTimeout(() => autoUpdater.quitAndInstall(), 3000)
-        })
-    })
-}
+const formatter = require('./utils/formatter')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -120,48 +75,74 @@ app.on('ready', () => {
     // set up logger
     logger.init((err) => {
         if (!err) {
-
-            configureUpdater()
-
-            appVersion.getVersion((err, version) => {
-                ipcMain.init((mongoPort, goDataPort, appType, state) => {
-
-                    goDataConfiguration = appType
-
-                    switch (state) {
-                        case constants.SETTINGS_WINDOW_LAUNCH:
-                            setPortsInSettings(true, () => {
-                                launchGoData()
-                                settingsWindow.close()
-                            })
-                            break
-                        case constants.SETTINGS_WINDOW_SETTING:
-                            setPortsInSettings(false, () => {
-                                settingsWindow.close()
-                            })
-                            break
+            let updateScreen;
+            updater.configureUpdater(
+                (event) => {
+                    let percentage = Math.round(event.percent * 10)/10
+                    if (percentage === 100) {
+                        updateScreen.webContents.send('event', `Please wait while ${productName} relaunches. This may take a few minutes.`)
+                    } else {
+                        updateScreen.webContents.send('event', `Downloading update ${Math.round(event.percent * 10) / 10}% - ${formatter.formatBytes(event.transferred)}/${formatter.formatBytes(event.total)}`)
                     }
+                },
+                (err, updateAvailable) => {
+                    if (updateAvailable) {
+                        updateScreen = new BrowserWindow({
+                            width: 900,
+                            height: 475,
+                            resizable: false,
+                            center: true,
+                            frame: false,
+                            show: false
+                        })
+                        updateScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
 
-                    function setPortsInSettings(immediately, callback) {
-                        async.series([
-                                (callback) => {
-                                    settings.setMongoPort(mongoPort, callback)
-                                },
-                                (callback) => {
-                                    settings.setAppPort(goDataPort, callback)
+                        updateScreen.once('ready-to-show', () => {
+                            updateScreen.show()
+                        })
+                        updateScreen.webContents.send('event', 'Downloading update...')
+                    } else {
+                        appVersion.getVersion((err, version) => {
+                            ipcMain.init((mongoPort, goDataPort, appType, state) => {
+
+                                goDataConfiguration = appType
+
+                                switch (state) {
+                                    case constants.SETTINGS_WINDOW_LAUNCH:
+                                        setPortsInSettings(true, () => {
+                                            launchGoData()
+                                            settingsWindow.close()
+                                        })
+                                        break
+                                    case constants.SETTINGS_WINDOW_SETTING:
+                                        setPortsInSettings(false, () => {
+                                            settingsWindow.close()
+                                        })
+                                        break
                                 }
-                            ],
-                            callback)
+
+                                function setPortsInSettings(immediately, callback) {
+                                    async.series([
+                                            (callback) => {
+                                                settings.setMongoPort(mongoPort, callback)
+                                            },
+                                            (callback) => {
+                                                settings.setAppPort(goDataPort, callback)
+                                            }
+                                        ],
+                                        callback)
+                                }
+                            })
+
+                            if (err && err.code === 'ENOENT') {
+                                // fresh install, no app version set => set version and perform population with early exit
+                                openSettings(constants.SETTINGS_WINDOW_LAUNCH)
+                            } else {
+                                launchGoData()
+                            }
+                        })
                     }
                 })
-
-                if (err && err.code === 'ENOENT') {
-                    // fresh install, no app version set => set version and perform population with early exit
-                    openSettings(constants.SETTINGS_WINDOW_LAUNCH)
-                } else {
-                    launchGoData()
-                }
-            })
         }
     })
 
@@ -248,7 +229,7 @@ function openSettings(settingType) {
     }
     settingsWindow = new BrowserWindow({
         width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 400 : 450,
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 370 : 420,
         resizable: true,
         center: true,
         frame: false,

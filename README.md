@@ -142,3 +142,11 @@ Note: In any script, these variables should have the same value:
     PLATFORM with -c.extraMetadata.PLATFORM
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
+
+#### 4. Auto-updater
+
+The auto-updater is based on the `package.json`version number and `publish.url` key.
+
+To publish a new update, increase the version number in `package.json`, build the app for distribution and upload the following files on the update server:
+- for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
+- for Windows: `.exe` and `latest.yml` files

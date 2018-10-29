@@ -19,8 +19,9 @@ const init = (callback) => {
             callback(err)
             throw err
         }
-        logger.transports.file.level = 'info';
+        logger.transports.file.level = 'info'
         logger.transports.file.file = logPath
+        logger.transports.file.maxSize = 25 * 1024 * 1024
         logger.info('Successfully initialized logger!')
         callback()
     })

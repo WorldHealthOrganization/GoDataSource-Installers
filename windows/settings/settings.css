@@ -15,7 +15,8 @@
 
 body {
     background-color: #fff;
-    padding: 20px;
+    padding: 10px 20px;
+    margin: 0;
 }
 
 h1 {
@@ -43,7 +44,7 @@ input {
 }
 
 button {
-    margin: 40px 0 0 0;
+    margin: 15px 0 15px 0;
     padding: 0;
     border: none;
     border-radius: 5px;
@@ -68,6 +69,9 @@ button {
     display: inline-block;
 }
 
+#productVersoinHolder {
+    text-align: center;
+}
 
 /* TOGGLE STYLING */
 .toggle {

@@ -12,6 +12,7 @@ let goDataType = 'hub';
 ipcRenderer.send('getState-message', '')
 ipcRenderer.send('getDbPort-message', '')
 ipcRenderer.send('getGoDataPort-message', '')
+ipcRenderer.send('getProductVersion-message', '')
 
 ipcRenderer.on('getState-reply', (event, arg) => {
     // logger.log('IPCRenderer received getState-reply')
@@ -28,6 +29,11 @@ ipcRenderer.on('getDBPort-reply', (event, arg) => {
 ipcRenderer.on('getGoDataPort-reply', (event, arg) => {
     // logger.log('IPCRenderer received getGoDataPort-reply')
     document.getElementById('goDataPort').value = arg
+})
+
+ipcRenderer.on('getProductVersion-reply', (event, arg) => {
+    // logger.log('IPCRenderer received getGoDataPort-reply')
+    document.getElementById('productVersion').innerHTML = arg
 })
 
 function setButtonFunctionality() {

@@ -6,6 +6,8 @@ const settings = require('./settings')
 
 const logger = require('./../logger/app').logger
 
+const { name, version } = require('./../package')
+
 let state;
 
 const init = (events) => {
@@ -29,6 +31,11 @@ const init = (events) => {
         settings.getAppPort((err, port) => {
             event.sender.send('getGoDataPort-reply', err ? err.message : port)
         })
+    })
+
+    ipcMain.on('getProductVersion-message', (event, arg) => {
+        logger.log('IPCMain received getProductVersion-message')
+        event.sender.send('getProductVersion-reply', `${name} ${version}`)
     })
 
     ipcMain.on('buttonClick-message', (event, arg) => {
