@@ -45,6 +45,13 @@ const createTray = () => {
                 openSettings(constants.SETTINGS_WINDOW_SETTING)
             }
         },
+        {
+            label: `Check for updates`,
+            click: () => {
+                updater.setState(constants.UPDATER_STATE_MANUAL)
+                updater.checkForUpdates()
+            }
+        },
         {type: 'separator'},
         {
             label: `Quit ${productName}`,

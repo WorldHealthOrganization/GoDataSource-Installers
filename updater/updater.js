@@ -7,6 +7,14 @@ const {autoUpdater} = require('electron-updater')
 const path = require('path')
 
 const logger = require('../logger/app')
+const {ARCH} = require('./../package')
+const { UPDATER_STATE_AUTO } = require('./../utils/constants')
+
+let state = UPDATER_STATE_AUTO
+
+const setState = (newState) => {
+    state = newState
+}
 
 // Auto-updater tasks
 const configureUpdater = (events, callback) => {
@@ -14,12 +22,21 @@ const configureUpdater = (events, callback) => {
     autoUpdater.autoDownload = false
     if (process.env.NODE_ENV === 'development') {
         autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml')
+    } else {
+        switch (ARCH) {
+            case 'x64':
+                autoUpdater.updateConfigPath = path.join(__dirname, 'app-update-x64.yml')
+                break
+            case 'x86':
+                autoUpdater.updateConfigPath = path.join(__dirname, 'app-update-x86.yml')
+                break
+        }
     }
     autoUpdater.on('update-available', () => {
         dialog.showMessageBox({
             type: 'info',
-            title: 'New version available',
-            message: 'A Go.Data update is available, do you want to update now?',
+            title: 'Go.Data Updater',
+            message: 'A new Go.Data version is available, do you want to update now?',
             buttons: ['Yes', 'No']
         }, (buttonIndex) => {
             if (buttonIndex === 0) {
@@ -27,18 +44,34 @@ const configureUpdater = (events, callback) => {
                 callback(null, true)
             }
             else {
-                callback(null, false)
+                if (state === UPDATER_STATE_AUTO) {
+                    callback(null, false)
+                }
             }
         })
     })
     autoUpdater.on('update-not-available', () => {
         logger.logger.info('Current version up to date!')
-        callback(null, false)
+        if (state === UPDATER_STATE_AUTO) {
+            callback(null, false)
+        } else {
+            dialog.showMessageBox({
+                title: 'Go.Data Updater',
+                message: 'Current version up to date'
+            })
+        }
     })
     autoUpdater.on('error', (error) => {
-        logger.logger.error(`Error checking for update: ${error.message}`)
+        logger.logger.error(`Updater error: ${error.message}`)
         if (isNetworkError(error) || isUpdaterError(error)) {
-            callback(null, false)
+            if (state === UPDATER_STATE_AUTO) {
+                callback(null, false)
+            } else {
+                dialog.showMessageBox({
+                    title: 'Go.Data Updater',
+                    message: error.message
+                })
+            }
         } else {
             dialog.showMessageBox({
                 title: 'Error installing update',
@@ -59,7 +92,7 @@ const configureUpdater = (events, callback) => {
         })
         setImmediate(() => autoUpdater.quitAndInstall())
     })
-    autoUpdater.checkForUpdates()
+    checkForUpdates()
 }
 
 function isNetworkError(errorObject) {
@@ -68,13 +101,20 @@ function isNetworkError(errorObject) {
         errorObject.message === "net::ERR_CONNECTION_RESET" ||
         errorObject.message === "net::ERR_CONNECTION_CLOSE" ||
         errorObject.message === "net::ERR_NAME_NOT_RESOLVED" ||
-        errorObject.message === "net::ERR_CONNECTION_TIMED_OUT"
+        errorObject.message === "net::ERR_CONNECTION_TIMED_OUT" ||
+        errorObject.message === "net::ERR_CONNECTION_REFUSED"
 }
 
 function isUpdaterError(errorObject) {
     return errorObject.code === "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND"
 }
 
+const checkForUpdates = () => {
+    autoUpdater.checkForUpdates()
+}
+
 module.exports = {
-    configureUpdater
+    configureUpdater,
+    checkForUpdates,
+    setState
 }

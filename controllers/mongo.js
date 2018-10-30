@@ -82,7 +82,7 @@ function configureMongo(events, callback) {
 function startMongo(events, callback) {
     logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args --dbpath=${databaseDirectory} --logpath=${DatabaseLogFile}...`)
     events({
-        text: 'Startig database service...',
+        text: 'Starting database service...',
         detail: `Starting Mongo service from path ${AppPaths.mongodFile} ...`
     })
 

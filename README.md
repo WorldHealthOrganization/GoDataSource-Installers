@@ -145,7 +145,7 @@ Note: In any script, these variables should have the same value:
 
 #### 4. Auto-updater
 
-The auto-updater is based on the `package.json`version number and `publish.url` key.
+The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
 
 To publish a new update, increase the version number in `package.json`, build the app for distribution and upload the following files on the update server:
 - for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
