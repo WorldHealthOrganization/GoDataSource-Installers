@@ -143,10 +143,71 @@ Note: In any script, these variables should have the same value:
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
 
-#### 4. Auto-updater
+#### 4. Download installer
+
+The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:42000/>
+
+###### 1. Windows installer
+- Download the x86 or x64 installer and run.
+###### 2. Mac installer
+- Download the x64 Mac installer and run.
+###### 3. Linux installer
+- TBD
+###### 4. Linux CLI installer
+- Open Terminal and download the x86 or x64 installer
+
+	`wget http://54.164.207.48:42000/x86/go-data-linux-x86.tar.gz`
+
+    `wget http://54.164.207.48:42000/x64/go-data-linux-x64.tar.gz`
+
+- Unzip the files
+
+	`tar -xvzf go-data-linux-x86.tar.gz`
+
+    `tar -xvzf go-data-linux-x64.tar.gz`
+
+- Run the launch script. Optionally, the following arguments can be passed:
+
+	- --dbport
+		- specifies the port for Mongo
+		- between 1025 and 65535
+		- must be different from `port`
+		- defaults to `27017`
+	- --dbpath
+		- specifies the path for Mongo files
+		- defaults to `db`
+	- --port
+		- specifies the port for Go.Data
+		- between 1025 and 65535
+		- must be different from `dbport`
+		- defaults to `8000`
+	- --type
+		- `hub` or `consolidation`
+		- it is not advised to change this value after the first Go.Data launch
+		- defaults to `hub`
+
+	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000 --type=consolidation`
+
+#### 5. Auto-updater
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
 
 To publish a new update, increase the version number in `package.json`, build the app for distribution and upload the following files on the update server:
 - for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
 - for Windows: `.exe` and `latest.yml` files
+- for Linux: TBD
+- for Linux CLI: Not available
+
+#### 6. Uninstall
+
+###### 1. Windows uninstaller
+- Uninstall Go.Data from Add or Remove Programs
+- Optionally, remove the data folder from `C:\Users\`*`username`*`\AppData\Roaming\GoData`
+###### 2. Mac uninstaller
+- Delete the Go.Data application from /Applications
+- Optionally, remove the data folder from `~/Library/Application Support/Go.Data`
+###### 3. Linux uninstaller
+- TBD
+###### 4. Linux CLI uninstaller
+- Remove the folder where GoData was unarchived
+- Optionally, remove the folder set as `dbpath`
