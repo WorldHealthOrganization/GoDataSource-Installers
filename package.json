@@ -31,6 +31,8 @@
     "dist:ubuntu:64:14": "PLATFORM=ubuntu ARCH=x64 VERSION=14 electron-builder -c.extraMetadata.MONGO_PLATFORM=ubuntu -c.extraMetadata.NODE_PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=14",
     "pack:ubuntu:64:16": "PLATFORM=ubuntu ARCH=x64 VERSION=16 electron-builder -c.extraMetadata.MONGO_PLATFORM=ubuntu -c.extraMetadata.NODE_PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=16 --dir",
     "dist:ubuntu:64:16": "PLATFORM=ubuntu ARCH=x64 VERSION=16 electron-builder -c.extraMetadata.MONGO_PLATFORM=ubuntu -c.extraMetadata.NODE_PLATFORM=linux -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=16",
+    "dist:linux:cli:64": "./build-linux.sh -a=x64",
+    "dist:linux:cli:86": "./build-linux.sh -a=x86",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
