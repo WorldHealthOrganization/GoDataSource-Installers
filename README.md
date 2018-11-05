@@ -91,8 +91,8 @@ At this point, the Go.Data installer project should have the following structure
     ├── controllers             # Source files
     ├── go-data                 # The source code and production version of the Go.Data web app
     │	├── api                 # The source code of Go.Data API
-	│   ├── build               # The production version of the Go.Data web app
-	│   └── frontend            # The source code and of Go.Data frontend
+    │   ├── build               # The production version of the Go.Data web app
+    │   └── frontend            # The source code and of Go.Data frontend
     ├── logger                  # Source files
     ├── platforms				# Downloaded resources for Mongo and Node
     ├── resources				# Contains icons for the installer
@@ -143,17 +143,113 @@ Note: In any script, these variables should have the same value:
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
 
-#### 4. Download installer
+#### 4. Deploy
+
+The files must be deployed on the same server that is used for auto-update (in this case, <http://54.164.207.48:42000/>).
+
+##### 4.1. General deployment
+
+The deployment is split in 2 directories: `x64` and `x86` with their respective builds.
+
+- Mac deployment: x64 only
+- Windows deployment: x86 and x64
+- Linux deployment: x86 and x64
+- Linux CLI deployment: x86 and x64
+
+##### 4.2. Windows deployment
+
+Go to the `x64` directory on the server.
+
+If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following files in the directory:
+
+- Go.Data Setup *version*.exe
+- Go.Data Setup *version*.exe.blockmap
+- latest.yml
+
+Copy the new 64-bit version files on the server `x64` directory:
+
+- Go.Data Setup *new-version*.exe
+- Go.Data Setup *new-version*.exe.blockmap
+- latest.yml
+
+Go to the `x86` directory on the server and repeat the steps above with the new 32-bit build.
+
+##### 4.3. Mac deployment
+
+Go to the `x64` directory on the server.
+
+If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following files in the directory:
+
+- Go.Data-*version*-mac.zip
+- Go.Data-*version*.dmg
+- latest-mac.yml
+
+Copy the new version files on the server `x64` directory:
+
+- Go.Data-*new-version*-mac.zip
+- Go.Data-*new-version*.dmg
+- latest-mac.yml
+
+##### 4.4. Linux deployment
+
+TBD
+
+##### 4.5. Linux CLI deployment
+
+Go to the `x64` directory on the server.
+
+If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following file in the directory:
+
+- go-data-linux-x64.tar.gz
+
+Copy the new 64-bit version file on the server `x64` directory:
+
+- go-data-linux-x64.tar.gz
+
+Go to the `x86` directory on the server and repeat the steps above with the new 32-bit build.
+
+##### 4.6. Overview
+
+The `x86` folder structure should be the following:
+
+    .
+    ├── old-version-directory-1					# i.e. 11.0.0
+    ├── old-version-directory-2					# i.e. 11.1.0
+    ├── old-version-directory-3					# i.e. 11.2.0
+    ├── old-version-directory-4					# i.e. 11.2.1
+    ├── go-data-linux-x86.gz					# Linux 32-bit CLI installer
+    ├── Go.Data Setup version.exe				# Windows 32-bit installer
+    ├── Go.Data Setup version.exe.blockmap		# file used by Windows auto-updater
+    ├── latest.yml								# file used by Windows auto-updater
+    └── TBD.yml									# file used by Linux auto-updater
+
+The `x64` folder structure should be the following:
+
+    .
+    ├── old-version-directory-1					# i.e. 11.0.0
+    ├── old-version-directory-2					# i.e. 11.1.0
+    ├── old-version-directory-3					# i.e. 11.2.0
+    ├── old-version-directory-4					# i.e. 11.2.1
+    ├── go-data-linux-x64.gz					# Linux 64-bit  CLI installer
+    ├── Go.Data Setup version.exe				# Windows 64-bit installer
+    ├── Go.Data Setup version.exe.blockmap		# file used by Windows auto-updater
+    ├── Go.Data-version-mac.zip					# file used by Mac auto-updater
+    ├── Go.Data-version.dmg						# Mac installer
+    ├── latest-mac.yml							# file used by Mac auto-updater
+    ├── latest.yml								# file used by Windows auto-updater
+    └── TBD.yml									# file used by Linux auto-updater
+
+#### 5. Download installer
 
 The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:42000/>
 
-###### 1. Windows installer
+##### 5.1. Windows installer
 - Download the x86 or x64 installer and run.
-###### 2. Mac installer
+##### 5.2. Mac installer
 - Download the x64 Mac installer and run.
-###### 3. Linux installer
+##### 5.3. Linux installer
 - TBD
-###### 4. Linux CLI installer
+##### 5.4. Linux CLI installer
 - Open Terminal and download the x86 or x64 installer
 
 	`wget http://54.164.207.48:42000/x86/go-data-linux-x86.tar.gz`
@@ -188,7 +284,7 @@ The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:4
 
 	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000 --type=consolidation`
 
-#### 5. Auto-updater
+#### 6. Auto-updater
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
 
@@ -198,16 +294,16 @@ To publish a new update, increase the version number in `package.json`, build th
 - for Linux: TBD
 - for Linux CLI: Not available
 
-#### 6. Uninstall
+#### 7. Uninstall
 
-###### 1. Windows uninstaller
+##### 7.1. Windows uninstaller
 - Uninstall Go.Data from Add or Remove Programs
 - Optionally, remove the data folder from `C:\Users\`*`username`*`\AppData\Roaming\GoData`
-###### 2. Mac uninstaller
+##### 7.2. Mac uninstaller
 - Delete the Go.Data application from /Applications
 - Optionally, remove the data folder from `~/Library/Application Support/Go.Data`
-###### 3. Linux uninstaller
+##### 7.3. Linux uninstaller
 - TBD
-###### 4. Linux CLI uninstaller
+##### 7.4. Linux CLI uninstaller
 - Remove the folder where GoData was unarchived
 - Optionally, remove the folder set as `dbpath`
