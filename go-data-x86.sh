@@ -52,7 +52,7 @@ mkdir -p ${DBPATH}/logs
 
 #start Mongo
 echo "Starting Mongo process on port ${MONGO_PORT}..."
-platforms/linux/${ARCH}/default/mongodb/bin/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
+platforms/linux/${ARCH}/default/mongodb/bin/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --storageEngine=mmapv1 --journal --fork --logpath=${DBPATH}/logs/db.log
 
 #check file with app version
 VERSION_PATH=${DBPATH}/.appVersion
@@ -76,6 +76,6 @@ else
 fi
 
 #start Go.Data
-app-management/bin/pm2 start go-data/build/server/server.js
+platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 start go-data/build/server/server.js --interpreter=platforms/linux/${ARCH}/default/node/bin/node
 
 exit 0

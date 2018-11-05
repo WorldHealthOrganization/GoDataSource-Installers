@@ -76,6 +76,6 @@ else
 fi
 
 #start Go.Data
-app-management/bin/pm2 start go-data/build/server/server.js
+platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 start go-data/build/server/server.js --interpreter=platforms/linux/${ARCH}/default/node/bin/node
 
 exit 0

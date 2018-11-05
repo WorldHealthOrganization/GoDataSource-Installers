@@ -92,8 +92,9 @@ function startMongo(events, callback) {
         }
 
         let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`]
-        if (process.env.ARCH === 'x86' && process.env.PLATFORM === 'win') {
-            args.push(`--storageEngine=mmapv1`)
+        if (process.env.ARCH === 'x86') {
+            args.push('--storageEngine=mmapv1')
+            args.push('--journal')
         }
         const startDbProcess = spawn(AppPaths.mongodFile, args)
 
