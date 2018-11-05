@@ -16,21 +16,21 @@ For Linux distributions with versions not specified above, the universal Linux i
 
 For instance, a user working on a system with Ubuntu 15 will install the 32-bit or 64-bit Linux installer.
 
-#### 1. Prerequisites
+### 1. Prerequisites
 
 The project requires `node 8` and `@angular/cli` globally installed.
 
-#### 2. Getting started
+### 2. Getting started
 
-##### Clone the installer project
+##### 2.1 Clone the installer project
 
     git clone -b s11 git@github.com:ClarisoftTechnologies/Go.Data-Installers.git
 
-##### 2.1 Install dependencies for the installer project
+##### 2.2 Install dependencies for the installer project
 
     npm install
 
-##### 2.2 Download Mongo & Node binaries
+##### 2.3 Download Mongo & Node binaries
 Download the `platforms` directory from S3 with binaries for `mongo` and `node`. These are a few GBs of resources, so you can expect it to take a while.
 
 	npm run setup:resources
@@ -39,12 +39,12 @@ On Mac OSX and Linux systems, it may be need to changed the permissions to all t
 
 	chmod -R 755 platforms/
 
-##### 2.3 Install forever-monitor
+##### 2.4 Install forever-monitor
 forever-monitor will be used to launch the Go.Data web app. It will create the `app-management` folder in project root.
 
     npm run setup:forever
 
-##### 2.4 Install git submodules
+##### 2.5 Install git submodules
 The Go.Data projects (frontend and backend) are included as git submodules. The submodules are cloned via SSH, therefore a SSH key must be added to the Github account used to clone the repositories (<https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/>).
 
 	git submodule init
@@ -53,7 +53,7 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
-##### 2.5 Setup for Go.Data Web app
+##### 2.6 Setup for Go.Data Web app
 
 
 - Install the Go.Data dependencies for the Go.Data API and frontend projects:
@@ -82,7 +82,7 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
 
 		mv go-data/api/build go-data
 
-##### 2.6 Running the installer
+##### 2.7 Running the installer
 At this point, the Go.Data installer project should have the following structure:
 
     .
@@ -123,7 +123,7 @@ Note: the above configuration does not work as a `npm` script. For some reason, 
 
 Run the Webstorm configuration.
 
-#### 3. Build installers
+### 3. Build installers
 
 Check the `package.json` files for building installers. The file contains scripts for packaging `(pack:*)` and distribution `(dist:*)`.
 
@@ -143,7 +143,7 @@ Note: In any script, these variables should have the same value:
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
 
-#### 4. Deploy
+### 4. Deploy
 
 The files must be deployed on the same server that is used for auto-update (in this case, <http://54.164.207.48:42000/>).
 
@@ -239,7 +239,7 @@ The `x64` folder structure should be the following:
     ├── latest.yml                                              # file used by Windows auto-updater
     └── TBD.yml                                                 # file used by Linux auto-updater
 
-#### 5. Download installer
+### 5. Download installer
 
 The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:42000/>
 
@@ -284,7 +284,7 @@ The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:4
 
 	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000 --type=consolidation`
 
-#### 6. Auto-updater
+### 6. Auto-updater
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
 
@@ -294,7 +294,7 @@ To publish a new update, increase the version number in `package.json`, build th
 - for Linux: TBD
 - for Linux CLI: Not available
 
-#### 7. Uninstall
+### 7. Uninstall
 
 ##### 7.1. Windows uninstaller
 - Uninstall Go.Data from Add or Remove Programs
