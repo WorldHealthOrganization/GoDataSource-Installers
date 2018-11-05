@@ -18,7 +18,7 @@ For instance, a user working on a system with Ubuntu 15 will install the 32-bit 
 
 #### 1. Prerequisites
 
-The project requires `node` and `@angular/cli` globally installed.
+The project requires `node 8` and `@angular/cli` globally installed.
 
 #### 2. Getting started
 
@@ -26,11 +26,11 @@ The project requires `node` and `@angular/cli` globally installed.
 
     git clone -b s11 git@github.com:ClarisoftTechnologies/Go.Data-Installers.git
 
-##### Install dependencies for the installer project
+##### 2.1 Install dependencies for the installer project
 
     npm install
 
-##### Download Mongo & Node binaries
+##### 2.2 Download Mongo & Node binaries
 Download the `platforms` directory from S3 with binaries for `mongo` and `node`. These are a few GBs of resources, so you can expect it to take a while.
 
 	npm run setup:resources
@@ -39,12 +39,12 @@ On Mac OSX and Linux systems, it may be need to changed the permissions to all t
 
 	chmod -R 755 platforms/
 
-##### Install forever-monitor
+##### 2.3 Install forever-monitor
 forever-monitor will be used to launch the Go.Data web app. It will create the `app-management` folder in project root.
 
     npm run setup:forever
 
-##### Install git submodules
+##### 2.4 Install git submodules
 The Go.Data projects (frontend and backend) are included as git submodules. The submodules are cloned via SSH, therefore a SSH key must be added to the Github account used to clone the repositories (<https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/>).
 
 	git submodule init
@@ -53,7 +53,7 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
-##### Setup for Go.Data Web app
+##### 2.5 Setup for Go.Data Web app
 
 
 - Install the Go.Data dependencies for the Go.Data API and frontend projects:
@@ -82,7 +82,7 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
 
 		mv go-data/api/build go-data
 
-##### Running the installer
+##### 2.6 Running the installer
 At this point, the Go.Data installer project should have the following structure:
 
     .
