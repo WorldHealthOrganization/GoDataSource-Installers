@@ -86,7 +86,7 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
 At this point, the Go.Data installer project should have the following structure:
 
     .
-    ├── app-management			# Contains the `forever-monitor` node module
+    ├── app-management          # Contains the `forever-monitor` node module
     ├── build                   # Contains the app icon
     ├── controllers             # Source files
     ├── go-data                 # The source code and production version of the Go.Data web app
@@ -94,8 +94,8 @@ At this point, the Go.Data installer project should have the following structure
     │   ├── build               # The production version of the Go.Data web app
     │   └── frontend            # The source code and of Go.Data frontend
     ├── logger                  # Source files
-    ├── platforms				# Downloaded resources for Mongo and Node
-    ├── resources				# Contains icons for the installer
+    ├── platforms               # Downloaded resources for Mongo and Node
+    ├── resources               # Contains icons for the installer
     ├── .gitignore
     ├── .gitmodules
     ├── index.html
@@ -213,31 +213,31 @@ Go to the `x86` directory on the server and repeat the steps above with the new 
 The `x86` folder structure should be the following:
 
     .
-    ├── old-version-directory-1					# i.e. 11.0.0
-    ├── old-version-directory-2					# i.e. 11.1.0
-    ├── old-version-directory-3					# i.e. 11.2.0
-    ├── old-version-directory-4					# i.e. 11.2.1
-    ├── go-data-linux-x86.gz					# Linux 32-bit CLI installer
-    ├── Go.Data Setup version.exe				# Windows 32-bit installer
-    ├── Go.Data Setup version.exe.blockmap		# file used by Windows auto-updater
-    ├── latest.yml								# file used by Windows auto-updater
-    └── TBD.yml									# file used by Linux auto-updater
+    ├── old-version-directory-1                                 # i.e. 11.0.0
+    ├── old-version-directory-2                                 # i.e. 11.1.0
+    ├── old-version-directory-3                                 # i.e. 11.2.0
+    ├── old-version-directory-4                                 # i.e. 11.2.1
+    ├── go-data-linux-x86.gz                                    # Linux 32-bit CLI installer
+    ├── Go.Data Setup version.exe                               # Windows 32-bit installer
+    ├── Go.Data Setup version.exe.blockmap                      # file used by Windows auto-updater
+    ├── latest.yml                                              # file used by Windows auto-updater
+    └── TBD.yml                                                 # file used by Linux auto-updater
 
 The `x64` folder structure should be the following:
 
     .
-    ├── old-version-directory-1					# i.e. 11.0.0
-    ├── old-version-directory-2					# i.e. 11.1.0
-    ├── old-version-directory-3					# i.e. 11.2.0
-    ├── old-version-directory-4					# i.e. 11.2.1
-    ├── go-data-linux-x64.gz					# Linux 64-bit  CLI installer
-    ├── Go.Data Setup version.exe				# Windows 64-bit installer
-    ├── Go.Data Setup version.exe.blockmap		# file used by Windows auto-updater
-    ├── Go.Data-version-mac.zip					# file used by Mac auto-updater
-    ├── Go.Data-version.dmg						# Mac installer
-    ├── latest-mac.yml							# file used by Mac auto-updater
-    ├── latest.yml								# file used by Windows auto-updater
-    └── TBD.yml									# file used by Linux auto-updater
+    ├── old-version-directory-1                                 # i.e. 11.0.0
+    ├── old-version-directory-2                                 # i.e. 11.1.0
+    ├── old-version-directory-3                                 # i.e. 11.2.0
+    ├── old-version-directory-4                                 # i.e. 11.2.1
+    ├── go-data-linux-x64.gz                                    # Linux 64-bit  CLI installer
+    ├── Go.Data Setup version.exe                               # Windows 64-bit installer
+    ├── Go.Data Setup version.exe.blockma                       # file used by Windows auto-updater
+    ├── Go.Data-version-mac.zip                                 # file used by Mac auto-updater
+    ├── Go.Data-version.dmg                                     # Mac installer
+    ├── latest-mac.yml                                          # file used by Mac auto-updater
+    ├── latest.yml                                              # file used by Windows auto-updater
+    └── TBD.yml                                                 # file used by Linux auto-updater
 
 #### 5. Download installer
 
