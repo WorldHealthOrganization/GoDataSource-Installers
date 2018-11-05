@@ -90,7 +90,7 @@ At this point, the Go.Data installer project should have the following structure
     ├── build                   # Contains the app icon
     ├── controllers             # Source files
     ├── go-data                 # The source code and production version of the Go.Data web app
-    │	├── api                 # The source code of Go.Data API
+    │   ├── api                 # The source code of Go.Data API
     │   ├── build               # The production version of the Go.Data web app
     │   └── frontend            # The source code and of Go.Data frontend
     ├── logger                  # Source files
