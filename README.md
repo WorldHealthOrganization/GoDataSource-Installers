@@ -143,6 +143,52 @@ Note: In any script, these variables should have the same value:
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
 
+##### 3.1. Build for Windows x86
+
+Building for Windows x86 requires a 32-bit Windows machine. The project can be configured on a native 32-bit machine or on a virtual machine with a 32-bit Windows.
+
+It is important to run `npm install` and `npm run build` commands on the 64-bit version because some npm libraries have versions of 32 and 64 bits and the 32 bit versions must be installed.
+
+`npm run dist:win:32`
+
+##### 3.2. Build for Windows x64
+
+Building for Windows x64 requires a 64-bit Windows machine.
+
+It is important to run `npm install` and `npm run build` commands on the 64-bit version because some npm libraries have versions of 32 and 64 bits and the 64 bit versions must be installed.
+
+`npm run dist:win:64`
+
+##### 3.3. Build for Mac x64
+
+Building for Mac OS x64 requires a 64-bit Mac.
+
+`npm run dist:osx:64`
+
+##### 3.4. Build for Linux x86
+
+Building for Linux x86 requires a 32-bit Linux machine. We used Ubuntu 16 x86 to build for all x86 distributions in a virtual machine.
+
+To build the GUI installer:
+
+`npm run dist:linux:32`
+
+To build the CLI installer:
+
+`npm run dist:linux:cli:86`
+
+##### 3.5. Build for Linux x64
+
+Building for Linux x86 requires a 64-bit Linux machine. We used Ubuntu 16 x64 to build for all x64 distributions in a virtual machine.
+
+To build the GUI installer:
+
+`npm run dist:linux:64`
+
+To build the CLI installer:
+
+`npm run dist:linux:cli:64`
+
 ### 4. Deploy
 
 The files must be deployed on the same server that is used for auto-update (in this case, <http://54.164.207.48:42000/>).
