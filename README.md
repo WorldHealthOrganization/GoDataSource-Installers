@@ -342,7 +342,7 @@ The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:4
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
 
-To publish a new update, increase the version number in `package.json`, build the app for distribution and upload the following files on the update server:
+To publish a new update, increase the version number in `package.json` and in `go-data/build/package.json`, build the app for distribution and upload the following files on the update server:
 - for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
 - for Windows: `.exe` and `latest.yml` files
 - for Linux: TBD
