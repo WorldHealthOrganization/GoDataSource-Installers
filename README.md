@@ -70,6 +70,14 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
         cd ../frontend
         npm run build
 
+    In case the api build fails, run the script with node:
+
+    `"build": "node ./node_modules/gulp/bin/gulp.js build"`
+
+    In case the front-end build fails, create another script to increase node allocated memory:
+
+    `"build-prod": "node --max_old_space_size=8000 ./node_modules/@angular/cli/bin/ng build --prod --aot --build-optimizer"`
+
 	This will create the `build` folder for Go.Data API (`go-data/api/build`) and the `dist` folder for Go.Data frontend (`go-data/frontend/dist`).
 
     **Warning:** The projects must be build with `node 8` (NODE_MODULE_VERSION 57). Make sure that the active version of `node` is 8 by running `node -v` in terminal.
