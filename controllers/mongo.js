@@ -21,6 +21,8 @@ const databaseDirectory = AppPaths.databaseDirectory
 const logDirectory = AppPaths.databaseLogDirectory
 const DatabaseLogFile = AppPaths.databaseLogFile
 
+const { ARCH } = require('./../package')
+
 const init = (events, callback) => {
     configureMongo(events, (err) => {
         startMongo(events, (err) => {
@@ -80,7 +82,6 @@ function configureMongo(events, callback) {
  * Starts the Mongo database from depending on system configuration
  */
 function startMongo(events, callback) {
-    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args --dbpath=${databaseDirectory} --logpath=${DatabaseLogFile}...`)
     events({
         text: 'Starting database service...',
         detail: `Starting Mongo service from path ${AppPaths.mongodFile} ...`
@@ -92,10 +93,11 @@ function startMongo(events, callback) {
         }
 
         let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`]
-        if (process.env.ARCH === 'x86') {
+        if (process.env.ARCH === 'x86' || ARCH === 'x86') {
             args.push('--storageEngine=mmapv1')
             args.push('--journal')
         }
+        logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`)
         const startDbProcess = spawn(AppPaths.mongodFile, args)
 
         startDbProcess.stdout.on('close', (code) => {
@@ -141,7 +143,9 @@ function startDatabase(events, callback) {
 
         if (version !== AppPaths.webApp.currentVersion) {
             //perform migration
-            return migrateDatabase(events, callback)
+            return migrateDatabase(version, AppPaths.webApp.currentVersion, events, () => {
+                appVersion.setVersion(callback)
+            })
         }
 
         return callback()
@@ -173,10 +177,14 @@ function populateDatabase(events, callback) {
 /**
  * Runs node ./go-data/build/server/install/install.js migrate-database
  */
-function migrateDatabase(events, callback) {
+function migrateDatabase(oldVersion, newVersion, events, callback) {
     logger.info(`Migrating database...`)
     events({text: `Migrating database...`})
-    const migrateDatabase = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'migrate-database'])
+    const migrateDatabase = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'migrate-database', 'from', oldVersion, 'to', newVersion])
+    migrateDatabase.stderr.on('data', (data) => {
+        logger.error(`Error migrating database: ${data.toString()}`)
+        events({detail: data.toString()})
+    })
     migrateDatabase.stdout.on('data', (data) => {
         events({detail: data.toString()})
     })
