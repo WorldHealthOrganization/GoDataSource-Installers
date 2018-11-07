@@ -241,12 +241,13 @@ function openSettings(settingType) {
     }
     settingsWindow = new BrowserWindow({
         width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 370 : 420,
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 400 : 420,
         resizable: false,
         center: true,
-        frame: false,
+        frame: settingType === constants.SETTINGS_WINDOW_SETTING,
         show: false
     })
+    settingsWindow.setMenu(null);
     settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings', 'settings.html'))
     settingsWindow.on('closed', () => {
         settingsWindow = null
