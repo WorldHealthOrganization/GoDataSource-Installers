@@ -96,7 +96,7 @@ function startGoData(events, callback) {
 
         tail.on('line', (data) => {
             const log = data.toString()
-            events({details: log})
+            events({text: `Configuring ${productName} web app...`, details: log})
             if (log.indexOf('Web server listening at:') > -1) {
 
                 if (watcher) {

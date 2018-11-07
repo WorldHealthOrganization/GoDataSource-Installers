@@ -69,7 +69,7 @@ const configureUpdater = (events, callback) => {
             } else {
                 dialog.showMessageBox({
                     title: 'Go.Data Updater',
-                    message: error.message
+                    message: `Unable to connect to update server (${error.message})`
                 })
             }
         } else {

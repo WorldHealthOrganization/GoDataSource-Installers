@@ -40,8 +40,8 @@ function setShouldThrowExceptionOnMongoFailure(value) {
  * Creates Mongo folders for database (AppData/db) and database logs (AppData/logs/db/db.log) using mkdir
  */
 function configureMongo(events, callback) {
-    logger.info(`Configuring Mongo database...`)
-    events({text: `Configuring Mongo database...`})
+    logger.info('Configuring Mongo database...')
+    events({text: 'Configuring Mongo database...'})
 
     async.parallel([
             (callback) => {
@@ -60,7 +60,7 @@ function configureMongo(events, callback) {
                 throw err
             }
             logger.info(`Successfully set database path ${databaseDirectory} for Mongo database!`)
-            events({detail: `Successfully set database path ${databaseDirectory} for Mongo database!`})
+            events({text: 'Configuring Mongo database...', detail: `Successfully set database path ${databaseDirectory} for Mongo database!`})
             callback()
         })
     }
@@ -72,7 +72,7 @@ function configureMongo(events, callback) {
                 throw err
             }
             logger.info(`Successfully set log path ${logDirectory} for Mongo database!`)
-            events({detail: `Successfully set log path ${logDirectory} for Mongo database!`})
+            events({text: 'Configuring logging...', detail: `Successfully set log path ${logDirectory} for Mongo database!`})
             callback()
         })
     }
@@ -161,11 +161,11 @@ function populateDatabase(events, callback) {
     const setupDbProcess = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'init-database'])
     setupDbProcess.stderr.on('data', (data) => {
         logger.error(`Error populating database: ${data.toString()}`)
-        events({detail: data.toString()})
+        events({text: `Populating database...`, detail: data.toString()})
     })
     setupDbProcess.stdout.on('data', (data) => {
         logger.info(`Populating database: ${data.toString()}`)
-        events({detail: data.toString()})
+        events({text: `Populating database...`, detail: data.toString()})
     })
     setupDbProcess.stdout.on('close', (code) => {
         logger.info(`Completed populating database!`)
@@ -178,15 +178,15 @@ function populateDatabase(events, callback) {
  * Runs node ./go-data/build/server/install/install.js migrate-database
  */
 function migrateDatabase(oldVersion, newVersion, events, callback) {
-    logger.info(`Migrating database...`)
-    events({text: `Migrating database...`})
+    logger.info('Migrating database...')
+    events({text: 'Migrating database...'})
     const migrateDatabase = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'migrate-database', 'from', oldVersion, 'to', newVersion])
     migrateDatabase.stderr.on('data', (data) => {
         logger.error(`Error migrating database: ${data.toString()}`)
-        events({detail: data.toString()})
+        events({text:'Migrating database...', detail: data.toString()})
     })
     migrateDatabase.stdout.on('data', (data) => {
-        events({detail: data.toString()})
+        events({text:'Migrating database...', detail: data.toString()})
     })
     migrateDatabase.stdout.on('close', (code) => {
         callback()

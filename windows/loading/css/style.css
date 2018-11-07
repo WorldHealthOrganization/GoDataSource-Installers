@@ -1,3 +1,18 @@
+@font-face {
+  font-family: "Roboto-Thin";
+  src: url('../../../resources/fonts/Roboto-Light.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto-Medium";
+  src: url('../../../resources/fonts/Roboto-Medium.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url('../../../resources/fonts/Roboto-Regular.ttf') format("truetype");
+}
+
 @-webkit-keyframes outerRotate1 {
   0% {
     transform: translate(-50%, -50%) rotate(0);
@@ -101,7 +116,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Roboto", sans-serif;
   width: 100vw;
   height: 100vh;
   background: #222;

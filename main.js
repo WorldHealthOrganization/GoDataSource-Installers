@@ -26,6 +26,7 @@ const formatter = require('./utils/formatter')
 let tray = null
 let settingsWindow = null
 let splashScreen = null
+let pleaseWaitScreen = null
 
 // used at first launch to start web app as hub or consolidation server
 let goDataConfiguration = null
@@ -69,6 +70,8 @@ const createTray = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
 
+    openPleaseWait()
+
     let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
         openWebApp()
     })
@@ -82,10 +85,10 @@ app.on('ready', () => {
     // set up logger
     logger.init((err) => {
         if (!err) {
-            let updateScreen;
+            let updateScreen
             updater.configureUpdater(
                 (event) => {
-                    let percentage = Math.round(event.percent * 10)/10
+                    let percentage = Math.round(event.percent * 10) / 10
                     if (percentage === 100) {
                         updateScreen.webContents.send('event', `Please wait while ${productName} relaunches. This may take a few minutes.`)
                     } else {
@@ -160,7 +163,6 @@ app.on('ready', () => {
     readline.on('SIGINT', () => {
         process.emit('SIGINT')
     })
-
 })
 
 function launchGoData() {
@@ -179,6 +181,7 @@ function launchGoData() {
         splashScreen = null
     })
     splashScreen.once('ready-to-show', () => {
+        closePleaseWait()
         splashScreen.show()
     })
 
@@ -190,17 +193,20 @@ function launchGoData() {
 
         },
         () => {
+            let loadingIndicator = ['⦾', '⦿']
+            let index = 0
             mongo.init(
                 (event) => {
                     if (event.text) {
-                        splashScreen && splashScreen.webContents.send('event', event.text)
+                        splashScreen && splashScreen.webContents.send('event', `${loadingIndicator[(++index) % 2]} ${event.text}`)
+
                     }
                 },
                 () => {
                     goData.init(
                         (event) => {
                             if (event.text) {
-                                splashScreen && splashScreen.webContents.send('event', event.text)
+                                splashScreen && splashScreen.webContents.send('event', `${loadingIndicator[(++index) % 2]} ${event.text}`)
                             }
                         },
                         (err, appURL) => {
@@ -209,7 +215,6 @@ function launchGoData() {
                                 openWebApp(appURL)
                             }
                             splashScreen.close()
-                            splashScreen = null
                             createTray()
                         })
                 })
@@ -237,7 +242,7 @@ function openSettings(settingType) {
     settingsWindow = new BrowserWindow({
         width: 300,
         height: settingType === constants.SETTINGS_WINDOW_SETTING ? 370 : 420,
-        resizable: true,
+        resizable: false,
         center: true,
         frame: false,
         show: false
@@ -247,9 +252,30 @@ function openSettings(settingType) {
         settingsWindow = null
     })
     settingsWindow.once('ready-to-show', () => {
+        closePleaseWait()
         settingsWindow.show()
-        // settingsWindow.webContents.openDevTools()
     })
+}
+
+function openPleaseWait() {
+    pleaseWaitScreen = new BrowserWindow({
+        width: 250,
+        height: 120,
+        resizable: false,
+        center: true,
+        frame: false,
+        show: false
+    })
+    pleaseWaitScreen.loadFile(path.join(AppPaths.windowsDirectory, 'please-wait', 'index.html'))
+
+    pleaseWaitScreen.once('ready-to-show', () => {
+        pleaseWaitScreen.show()
+    })
+}
+
+function closePleaseWait() {
+    pleaseWaitScreen && pleaseWaitScreen.close()
+    pleaseWaitScreen = null
 }
 
 // Quit when all windows are closed.
