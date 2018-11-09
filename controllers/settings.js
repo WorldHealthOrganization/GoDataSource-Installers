@@ -9,6 +9,8 @@ const fs = require('fs')
 const AppPaths = require('./../utils/paths')
 const settingsFile = AppPaths.desktopApp.settingsFile
 
+const encryptionController = require('./encryption')
+
 const logger = require('./../logger/app').logger
 
 /**
@@ -133,9 +135,54 @@ const setMongoPort = (port, callback) => {
     })
 }
 
+/**
+ * Reads the .settings file and returns `encryptionCapability` variable
+ * @param callback - invoked with (err, capable)
+ */
+let encryptionCapability = null
+const getEncryptionCapability = (callback) => {
+    if (encryptionCapability) {
+        return callback(null, encryptionCapability)
+    }
+    getSettings((err, settings) => {
+        if (settings && settings.encryptionCapability) {
+            encryptionCapability = settings.encryptionCapability
+            return callback(null, encryptionCapability)
+        }
+        encryptionController.testEncryptedDummyFile((err, capable) => {
+            encryptionCapability = capable
+            setEncryptionCapability(capable, (err) => {
+                callback(err, capable)
+            })
+        })
+    })
+}
+
+/**
+ * Reads the .settings file, sets the encryption capability and writes back the .settings file
+ * @param capable
+ * @param callback - Invoked with (err)
+ */
+const setEncryptionCapability = (capable, callback) => {
+    getSettings((err, settings) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                settings = {}
+            } else {
+                return callback(err, null)
+            }
+        }
+        encryptionCapability = capable
+        settings.encryptionCapability = capable
+        logger.info(`Writing encryption capability to settings file...`)
+        setSettings(settings, callback)
+    })
+}
+
 module.exports = {
     getMongoPort,
     setMongoPort,
     getAppPort,
-    setAppPort
+    setAppPort,
+    getEncryptionCapability
 }

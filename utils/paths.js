@@ -4,12 +4,15 @@ const path = require('path')
 const desktopAppPackage = require('./../package')
 const {NODE_PLATFORM, MONGO_PLATFORM, ARCH, OSVERSION} = require('./../package')
 
+const appDirectory = app.getPath('userData')
 const dbDirectory = path.join(app.getPath('userData'), 'db')
 const dbLogDirectory = path.join(app.getPath('userData'), 'logs/db')
 const dbLogPath = path.join(dbLogDirectory, 'db.log')
 
 const appLogDirectory = path.join(app.getPath('userData'), 'logs/app')
 const appLogPath = path.join(appLogDirectory, 'web-app.log')
+
+const testEnctryptionDirectory = path.join(app.getPath('userData'), 'logs/TEST')
 
 const resourceDirectory = path.join(__dirname, './../resources')
 const windowsDirectory = path.join(__dirname, './../windows')
@@ -46,6 +49,7 @@ const webAppInstalledVersion = path.join(app.getPath('userData'), '.appVersion')
 const settingsFile = path.join(app.getPath('userData'), '.settings')
 
 module.exports = {
+    appDirectory: appDirectory,
     webApp: {
         directory: webAppDirectory,                 // Location of the Go.Data web app directory
         package: webAppPackage,                     // Location of package.json for Go.Data web app
@@ -69,5 +73,6 @@ module.exports = {
     pm2Module: pm2Module,                           // Location of the PM2 module (to be used programatically)
     pm2File: pm2File,                               // Location of the PM2 executable (to be used with child process)
     resourcesDirectory: resourceDirectory,
-    windowsDirectory: windowsDirectory
+    windowsDirectory: windowsDirectory,
+    testEncryptionDirectory: testEnctryptionDirectory
 }

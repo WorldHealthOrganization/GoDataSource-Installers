@@ -16,6 +16,7 @@ const prelaunch = require('./controllers/prelaunch')
 const mongo = require('./controllers/mongo')
 const goData = require('./controllers/goData')
 const goDataAPI = require('./controllers/goDataAPI')
+const encryptionController = require('./controllers/encryption')
 const updater = require('./updater/updater')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
@@ -113,20 +114,40 @@ app.on('ready', () => {
                         updateScreen.webContents.send('event', 'Downloading update...')
                     } else {
                         appVersion.getVersion((err, version) => {
-                            ipcMain.init((mongoPort, goDataPort, appType, state) => {
+                            ipcMain.init((mongoPort, goDataPort, appType, encryption, state) => {
 
                                 goDataConfiguration = appType
+
+                                let encryptionProcess = (callback) => {
+                                    encryptionController.getDatabaseEncryptionStatus((err, result) => {
+                                        if (result !== encryption) {
+                                            // encryption status changed
+                                            // either encrypt or decrypt the database folder
+                                            if (encryption) {
+                                                encryptionController.encryptDatabase(callback)
+                                            } else {
+                                                encryptionController.decryptDatabase(callback)
+                                            }
+                                        } else {
+                                            callback()
+                                        }
+                                    })
+                                }
 
                                 switch (state) {
                                     case constants.SETTINGS_WINDOW_LAUNCH:
                                         setPortsInSettings(true, () => {
-                                            launchGoData()
-                                            settingsWindow.close()
+                                            encryptionProcess(() => {
+                                                launchGoData()
+                                                settingsWindow.close()
+                                            });
                                         })
                                         break
                                     case constants.SETTINGS_WINDOW_SETTING:
                                         setPortsInSettings(false, () => {
-                                            settingsWindow.close()
+                                            encryptionProcess(() => {
+                                                settingsWindow.close()
+                                            })
                                         })
                                         break
                                 }
@@ -241,7 +262,7 @@ function openSettings(settingType) {
     }
     settingsWindow = new BrowserWindow({
         width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 400 : 420,
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 446 : 466,
         resizable: false,
         center: true,
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,

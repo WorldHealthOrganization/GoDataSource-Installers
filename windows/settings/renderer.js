@@ -7,43 +7,52 @@ const constants = require('./../../utils/constants')
 
 let goDataType = 'hub';
 
-// const logger = require('./../logger/app').logger
-
 ipcRenderer.send('getState-message', '')
 ipcRenderer.send('getDbPort-message', '')
 ipcRenderer.send('getGoDataPort-message', '')
 ipcRenderer.send('getProductVersion-message', '')
+ipcRenderer.send('getEncryptionCapabilities-message', '')
 
 ipcRenderer.on('getState-reply', (event, arg) => {
-    // logger.log('IPCRenderer received getState-reply')
     loadView(arg)
     setButtonFunctionality()
     bindToggle()
 })
 
 ipcRenderer.on('getDBPort-reply', (event, arg) => {
-    // logger.log('IPCRenderer received getDBPort-reply')
     document.getElementById('mongoPort').value = arg
 })
 
 ipcRenderer.on('getGoDataPort-reply', (event, arg) => {
-    // logger.log('IPCRenderer received getGoDataPort-reply')
     document.getElementById('goDataPort').value = arg
 })
 
 ipcRenderer.on('getProductVersion-reply', (event, arg) => {
-    // logger.log('IPCRenderer received getGoDataPort-reply')
     document.getElementById('productVersion').innerHTML = arg
 })
 
+ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, status) => {
+    document.getElementById('settingsButton').disabled = false
+    if (err) {
+        document.getElementById('encryptionLabel').innerHTML = `Error retrieving encryption settings`
+    } else if (!capability) {
+        document.getElementById('encryptionLabel').innerHTML = 'Data encryption is not available'
+    } else {
+        document.getElementById('encryptionLabel').innerHTML = 'Data encryption'
+        document.getElementById('encryptionSwitch').checked = status
+        document.getElementById('encryptionSwitch').style.display = 'block'
+    }
+})
+
 function setButtonFunctionality() {
-    // logger.log(`Loading settings view button`)
     document.getElementById('settingsButton').onclick = () => {
+        document.getElementById('settingsButton').disabled = true
         ipcRenderer.send(
             'buttonClick-message', {
                 mongoPort: document.getElementById('mongoPort').value,
                 goDataPort: document.getElementById('goDataPort').value,
-                appType: goDataType
+                appType: goDataType,
+                encryption: document.getElementById('encryptionSwitch').checked
             }
         )
     }
@@ -57,7 +66,6 @@ function bindToggle() {
 }
 
 function loadView(state) {
-    // logger.log(`Loading settings view in ${state} state`)
     switch (state) {
         case constants.SETTINGS_WINDOW_LAUNCH:
             document.getElementById('settingsButton').innerHTML = 'Launch Go.Data'
@@ -71,6 +79,7 @@ function loadView(state) {
             document.getElementById('typeSelector').style.display = 'none'
             break
     }
+    document.getElementById('settingsButton').disabled = true
 }
 
 function changeGoDataType(e) {

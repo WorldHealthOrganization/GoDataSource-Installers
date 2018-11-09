@@ -56,6 +56,10 @@ button {
     font-size: 24px;
 }
 
+button[disabled=disabled], button:disabled {
+    background-color: #3b877b;
+}
+
 .setting {
     padding-top: 10px;
     padding-bottom: 10px;
@@ -132,4 +136,35 @@ button {
 }
 input, button, textarea, :focus {
     outline: none; // You should add some other style for :focus to help UX/a11y
+}
+
+/*SWITCH*/
+
+#encryption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0px;
+    height: 26px;
+}
+
+input.switch {
+    display: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    -o-appearance: none;
+    height: 20px;
+    width: 40px;
+    border-radius: 10px;
+    box-shadow: inset -20px 0px 0px 0px rgba(192, 192, 192, 1);
+    background-color: white;
+    border: 1px solid rgba(192, 192, 192, 1);
+    outline: none;
+    -webkit-transition: 0.2s;
+    transition: 0.2s;
+}
+
+input.switch:checked {
+    box-shadow: inset 20px 0px 0px 1px #4db0a0;
+    border: 1px solid #4db0a0;
 }

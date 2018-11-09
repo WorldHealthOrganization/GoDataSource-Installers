@@ -93,6 +93,7 @@
     "mkdirp": "^0.5.1",
     "pm2": "^3.1.2",
     "ps-node": "^0.1.6",
+    "rimraf": "^2.6.2",
     "tail": "^1.4.0"
   },
   "postinstall": "electron-builder install-app-deps"

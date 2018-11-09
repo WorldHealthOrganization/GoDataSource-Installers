@@ -3,6 +3,7 @@
 const { ipcMain } = require('electron')
 
 const settings = require('./settings')
+const encryption = require('./encryption')
 
 const logger = require('./../logger/app').logger
 
@@ -38,9 +39,23 @@ const init = (events) => {
         event.sender.send('getProductVersion-reply', `${name} ${version}`)
     })
 
+    ipcMain.on('getEncryptionCapabilities-message', (event, arg) => {
+        logger.log('IPCMain received getEncryptionCapabilities-message')
+        settings.getEncryptionCapability((err, encryptionCapability) => {
+            if (!encryptionCapability) {
+                // send to window result that encryption is not available
+                return event.sender.send('getEncryptionCapabilities-reply', err, false, false)
+            }
+            //retrieve encryption status
+            encryption.getDatabaseEncryptionStatus((err, status) => {
+                event.sender.send('getEncryptionCapabilities-reply', err, true, status)
+            })
+        })
+    })
+
     ipcMain.on('buttonClick-message', (event, arg) => {
         logger.log('IPCMain received buttonClick-message')
-        events(arg.mongoPort, arg.goDataPort, arg.appType, state)
+        events(arg.mongoPort, arg.goDataPort, arg.appType, arg.encryption, state)
     })
 
     logger.info('Initialized IPCMain')
