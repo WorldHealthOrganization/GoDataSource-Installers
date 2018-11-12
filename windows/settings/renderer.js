@@ -6,6 +6,7 @@ const { ipcRenderer } = require('electron')
 const constants = require('./../../utils/constants')
 
 let goDataType = 'hub';
+let platform = null;
 
 ipcRenderer.send('getState-message', '')
 ipcRenderer.send('getDbPort-message', '')
@@ -17,6 +18,7 @@ ipcRenderer.on('getState-reply', (event, arg) => {
     loadView(arg)
     setButtonFunctionality()
     bindToggle()
+    bindEncryption()
 })
 
 ipcRenderer.on('getDBPort-reply', (event, arg) => {
@@ -27,8 +29,9 @@ ipcRenderer.on('getGoDataPort-reply', (event, arg) => {
     document.getElementById('goDataPort').value = arg
 })
 
-ipcRenderer.on('getProductVersion-reply', (event, arg) => {
-    document.getElementById('productVersion').innerHTML = arg
+ipcRenderer.on('getProductVersion-reply', (event, version, appPlatform) => {
+    platform = appPlatform
+    document.getElementById('productVersion').innerHTML = version
 })
 
 ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, status) => {
@@ -38,7 +41,7 @@ ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, statu
     } else if (!capability) {
         document.getElementById('encryptionLabel').innerHTML = 'Data encryption is not available'
     } else {
-        document.getElementById('encryptionLabel').innerHTML = 'Data encryption'
+        document.getElementById('encryptionLabel').innerHTML = `Encrypt data ${platform === 'darwin' ? 'with FileVault' : ''}`
         document.getElementById('encryptionSwitch').checked = status
         document.getElementById('encryptionSwitch').style.display = 'block'
     }
@@ -63,6 +66,13 @@ function bindToggle() {
     goDataHub.onclick = () => { changeGoDataType(goDataHub) }
     let goDataConsolidation = document.getElementById('goDataConsolidation')
     goDataConsolidation.onclick = () => { changeGoDataType(goDataConsolidation) }
+}
+
+function bindEncryption() {
+    let encryptionToggle = document.getElementById('encryptionSwitch')
+    encryptionToggle.onclick = () => {
+        ipcRenderer.send('toggleEncryption-message', document.getElementById('encryptionSwitch').checked)
+    }
 }
 
 function loadView(state) {

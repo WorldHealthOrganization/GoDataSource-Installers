@@ -149,12 +149,23 @@ const getEncryptionCapability = (callback) => {
             encryptionCapability = settings.encryptionCapability
             return callback(null, encryptionCapability)
         }
-        encryptionController.testEncryptedDummyFile((err, capable) => {
-            encryptionCapability = capable
-            setEncryptionCapability(capable, (err) => {
-                callback(err, capable)
-            })
-        })
+        let architecture = process.env.NODE_PLATFORM || NODE_PLATFORM
+        switch (architecture) {
+            case 'win':
+                encryptionController.testEncryptedDummyFile((err, capable) => {
+                    encryptionCapability = capable
+                    setEncryptionCapability(capable, (err) => {
+                        callback(err, capable)
+                    })
+                })
+                break
+            case 'darwin':
+                callback(null, true)
+                break
+            default:
+                callback(null, false)
+                break
+        }
     })
 }
 

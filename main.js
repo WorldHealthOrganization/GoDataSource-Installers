@@ -22,6 +22,10 @@ const logger = require('./logger/app')
 const constants = require('./utils/constants')
 const formatter = require('./utils/formatter')
 
+const { NODE_PLATFORM } = require('./package')
+
+const platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let tray = null
@@ -118,21 +122,25 @@ app.on('ready', () => {
 
                                 goDataConfiguration = appType
 
-                                let encryptionProcess = (callback) => {
-                                    encryptionController.getDatabaseEncryptionStatus((err, result) => {
-                                        if (result !== encryption) {
-                                            // encryption status changed
-                                            // either encrypt or decrypt the database folder
-                                            if (encryption) {
-                                                encryptionController.encryptDatabase(callback)
+                                let encryptionProcess = platform === 'win' ?
+                                    (callback) => {
+                                        encryptionController.getDatabaseEncryptionStatus((err, result) => {
+                                            if (result !== encryption) {
+                                                // encryption status changed
+                                                // either encrypt or decrypt the database folder
+                                                if (encryption) {
+                                                    encryptionController.encryptDatabase(callback)
+                                                } else {
+                                                    encryptionController.decryptDatabase(callback)
+                                                }
                                             } else {
-                                                encryptionController.decryptDatabase(callback)
+                                                callback()
                                             }
-                                        } else {
-                                            callback()
-                                        }
-                                    })
-                                }
+                                        })
+                                    } :
+                                    (callback) => {
+                                        callback()
+                                    }
 
                                 switch (state) {
                                     case constants.SETTINGS_WINDOW_LAUNCH:

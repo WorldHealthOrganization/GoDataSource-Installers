@@ -7,7 +7,7 @@ const encryption = require('./encryption')
 
 const logger = require('./../logger/app').logger
 
-const { name, version } = require('./../package')
+const { name, version, NODE_PLATFORM } = require('./../package')
 
 let state;
 
@@ -36,7 +36,8 @@ const init = (events) => {
 
     ipcMain.on('getProductVersion-message', (event, arg) => {
         logger.log('IPCMain received getProductVersion-message')
-        event.sender.send('getProductVersion-reply', `${name} ${version}`)
+        let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+        event.sender.send('getProductVersion-reply', `${name} ${version}`, platform)
     })
 
     ipcMain.on('getEncryptionCapabilities-message', (event, arg) => {
@@ -51,6 +52,15 @@ const init = (events) => {
                 event.sender.send('getEncryptionCapabilities-reply', err, true, status)
             })
         })
+    })
+
+    ipcMain.on('toggleEncryption-message', (event, arg) => {
+        logger.log('IPCMain received toggleEncryption-message')
+        if (arg) {
+            encryption.encryptDatabase(() => {})
+        } else {
+            encryption.decryptDatabase(() => {})
+        }
     })
 
     ipcMain.on('buttonClick-message', (event, arg) => {
