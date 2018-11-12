@@ -12,6 +12,7 @@ const settingsFile = AppPaths.desktopApp.settingsFile
 const encryptionController = require('./encryption')
 
 const logger = require('./../logger/app').logger
+const { NODE_PLATFORM } = require('./../package')
 
 /**
  * Reads the .settings file and returns the JSON parsed content as object.
@@ -149,8 +150,8 @@ const getEncryptionCapability = (callback) => {
             encryptionCapability = settings.encryptionCapability
             return callback(null, encryptionCapability)
         }
-        let architecture = process.env.NODE_PLATFORM || NODE_PLATFORM
-        switch (architecture) {
+        let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+        switch (platform) {
             case 'win':
                 encryptionController.testEncryptedDummyFile((err, capable) => {
                     encryptionCapability = capable

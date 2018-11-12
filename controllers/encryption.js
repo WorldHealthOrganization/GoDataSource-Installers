@@ -9,7 +9,7 @@ const {spawn} = require('child_process')
 
 const logger = require('./../logger/app').logger
 
-const architecture = process.env.NODE_PLATFORM || NODE_PLATFORM
+const platform = process.env.NODE_PLATFORM || NODE_PLATFORM
 
 /**
  * Determines whether a Windows machine has encryption capability by creating a test folder and attempting to encrypt it with the 'cipher' command
@@ -59,9 +59,7 @@ const testEncryptedDummyFile = (callback) => {
  */
 const getDatabaseEncryptionStatus = (callback) => {
 
-    let architecture = process.env.NODE_PLATFORM || NODE_PLATFORM
-
-    switch (architecture) {
+    switch (platform) {
         case 'win':
             getWinEncStatus(callback)
             break
@@ -115,7 +113,7 @@ const encryptDatabase = (callback) => {
 
 const decryptDatabase = (callback) => {
     changeDatabaseEncryption(false, (err, result) => {
-        if (architecture === 'win') {
+        if (platform === 'win') {
             // call twice on windows because decrypting only once decrypts all files except from the parent folder!
             changeDatabaseEncryption(false, callback)
         } else {
@@ -126,7 +124,7 @@ const decryptDatabase = (callback) => {
 
 function changeDatabaseEncryption(encryptionFlag, callback) {
 
-    switch (architecture) {
+    switch (platform) {
         case 'win':
             changeWinDbEnc(callback)
             break
