@@ -93,7 +93,7 @@ function startMongo(events, callback) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=0.0.0.0`]
+        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`]
         if (process.env.ARCH === 'x86' || ARCH === 'x86') {
             args.push('--storageEngine=mmapv1')
             args.push('--journal')
