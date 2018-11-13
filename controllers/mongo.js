@@ -8,6 +8,7 @@ const {spawn, spawnSync} = require('child_process')
 
 const async = require('async')
 const mkdirp = require('mkdirp')
+const kill = require('kill-port')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -21,7 +22,7 @@ const databaseDirectory = AppPaths.databaseDirectory
 const logDirectory = AppPaths.databaseLogDirectory
 const DatabaseLogFile = AppPaths.databaseLogFile
 
-const { ARCH } = require('./../package')
+const { ARCH, MONGO_PLATFORM } = require('./../package')
 
 const init = (events, callback) => {
     configureMongo(events, (err) => {
@@ -92,7 +93,7 @@ function startMongo(events, callback) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`]
+        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=0.0.0.0`]
         if (process.env.ARCH === 'x86' || ARCH === 'x86') {
             args.push('--storageEngine=mmapv1')
             args.push('--journal')
@@ -133,7 +134,10 @@ function startDatabase(events, callback) {
         if (err) {
             if (err.code === 'ENOENT') {
                 // fresh install, no app version set => set version and perform population with early exit
-                return populateDatabase(events, () => {
+                return populateDatabase(events, (err) => {
+                    if (err) {
+                        return;
+                    }
                     appVersion.setVersion(callback)
                 })
             } else {
@@ -167,10 +171,15 @@ function populateDatabase(events, callback) {
         logger.info(`Populating database: ${data.toString()}`)
         events({text: `Populating database...`, detail: data.toString()})
     })
-    setupDbProcess.stdout.on('close', (code) => {
-        logger.info(`Completed populating database!`)
-        events({text: `Completed populating database...`})
-        callback()
+    setupDbProcess.on('close', (code) => {
+        if (code) {
+            events({text: `Error populating database.\nError log available at ${AppPaths.appLogFile}`})
+            callback(code)
+        } else {
+            logger.info(`Completed populating database!`)
+            events({text: `Completed populating database...`})
+            callback()
+        }
     })
 }
 
@@ -188,8 +197,15 @@ function migrateDatabase(oldVersion, newVersion, events, callback) {
     migrateDatabase.stdout.on('data', (data) => {
         events({text:'Migrating database...', detail: data.toString()})
     })
-    migrateDatabase.stdout.on('close', (code) => {
-        callback()
+    migrateDatabase.on('close', (code) => {
+        if (code) {
+            events({text: `Error migrating database.\nError log available at ${AppPaths.appLogFile}`})
+            callback(code)
+        } else {
+            logger.info(`Completed migrating database!`)
+            events({text: `Completed migrating database...`})
+            callback()
+        }
     })
 }
 
@@ -202,24 +218,42 @@ function killMongo(callback) {
     callback || (callback = () => {})
 
     logger.info('Attempt to terminate previous Mongo process...')
-    goDataAPI.getDbPort((err, port) => {
-        if (err) {
-            logger.error(`Error reading Mongo port: ${err.message}`)
-            callback()
-            throw new Error(`Error reading Mongo port: ${err.message}`)
-        }
-        processUtil.findPortInUse(port, (err, processes) => {
-            if (processes && processes.length > 0) {
-                async.each(
-                    processes.map(p => p.pid),
-                    processUtil.killProcess,
-                    callback
-                )
-            } else {
+
+        goDataAPI.getDbPort((err, port) => {
+            if (err) {
+                logger.error(`Error reading Mongo port: ${err.message}`)
                 callback()
+                throw new Error(`Error reading Mongo port: ${err.message}`)
+            }
+            if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
+                kill(port)
+                    .then((result) => {
+                        if (result.stderr && result.stderr.length > 0) {
+                            logger.error(`Error killing process on port ${port}: ${result.stderr}`)
+                            return callback(result.stderr)
+
+                        }
+                        logger.info(`Killed process on port ${port}`)
+                        callback()
+                    })
+                    .catch((e) => {
+                        logger.error(`Error killing process on port ${port}: ${e}`)
+                        callback(e)
+                    })
+            } else {
+                processUtil.findPortInUse(port, (err, processes) => {
+                    if (processes && processes.length > 0) {
+                        async.each(
+                            processes.map(p => p.pid),
+                            processUtil.killProcess,
+                            callback
+                        )
+                    } else {
+                        callback()
+                    }
+                })
             }
         })
-    })
 }
 
 module.exports = {

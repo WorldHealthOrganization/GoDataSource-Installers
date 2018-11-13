@@ -27,6 +27,10 @@ const findPortInUse = (port, callback) => {
                 logger.error(`Error retrieving processes running on port ${port}`)
                 callback(err, null)
             })
+        .catch((e) => {
+            logger.info(e)
+            callback(e, null)
+        })
 }
 
 const killProcess = (pid, callback) => {
