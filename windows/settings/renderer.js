@@ -94,5 +94,4 @@ function loadView(state) {
 
 function changeGoDataType(e) {
     goDataType = e.value
-    console.log(goDataType)
 }

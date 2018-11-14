@@ -63,21 +63,12 @@ const configureUpdater = (events, callback) => {
     })
     autoUpdater.on('error', (error) => {
         logger.logger.error(`Updater error: ${error.message}`)
-        if (isNetworkError(error) || isUpdaterError(error)) {
-            if (state === UPDATER_STATE_AUTO) {
-                callback(null, false)
-            } else {
-                dialog.showMessageBox({
-                    title: 'Go.Data Updater',
-                    message: `Unable to connect to update server (${error.message})`
-                })
-            }
+        if (state === UPDATER_STATE_AUTO) {
+            callback(null, false)
         } else {
             dialog.showMessageBox({
-                title: 'Error installing update',
-                message: error.message
-            }, () => {
-                setImmediate(() => app.quit())
+                title: 'Go.Data Updater',
+                message: `Unable to connect to update server (${error.message})`
             })
         }
     })
@@ -93,16 +84,6 @@ const configureUpdater = (events, callback) => {
         setImmediate(() => autoUpdater.quitAndInstall())
     })
     checkForUpdates()
-}
-
-function isNetworkError(errorObject) {
-    return errorObject.message === "net::ERR_INTERNET_DISCONNECTED" ||
-        errorObject.message === "net::ERR_PROXY_CONNECTION_FAILED" ||
-        errorObject.message === "net::ERR_CONNECTION_RESET" ||
-        errorObject.message === "net::ERR_CONNECTION_CLOSE" ||
-        errorObject.message === "net::ERR_NAME_NOT_RESOLVED" ||
-        errorObject.message === "net::ERR_CONNECTION_TIMED_OUT" ||
-        errorObject.message === "net::ERR_CONNECTION_REFUSED"
 }
 
 function isUpdaterError(errorObject) {

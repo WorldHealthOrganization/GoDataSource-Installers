@@ -52,6 +52,19 @@ const createTray = () => {
             }
         },
         {
+            label: `Reset Admin Password`,
+            click: () => {
+                openSettings(constants.SETTINGS_WINDOW_SETTING)
+            }
+        },
+        {
+            label: `Restore Backup`,
+            click: () => {
+                openSettings(constants.SETTINGS_WINDOW_SETTING)
+            }
+        },
+        {type: 'separator'},
+        {
             label: `Check for updates`,
             click: () => {
                 updater.setState(constants.UPDATER_STATE_MANUAL)
@@ -171,6 +184,17 @@ app.on('ready', () => {
                                             }
                                         ],
                                         callback)
+                                }
+                            })
+
+                            ipcMain.initSplashEvents((event) => {
+                                switch (event) {
+                                    case constants.APP_EXIT:
+                                        app.quit()
+                                        break
+                                    case constants.OPEN_LOGS:
+                                        shell.openItem(AppPaths.appLogDirectory)
+                                        break
                                 }
                             })
 
@@ -353,7 +377,8 @@ process.on('SIGUSR2', () => {
 
 //catches uncaught exceptions
 process.on('uncaughtException', (exc) => {
-    logger.logger.error(exc)
-    setTimeout(process.exit, 3000)
-// cleanup('uncaughtException')
+    if (splashScreen) {
+        splashScreen.webContents.send('event', exc.message)
+        splashScreen.webContents.send('error', null)
+    }
 })

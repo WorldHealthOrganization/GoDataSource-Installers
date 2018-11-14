@@ -342,3 +342,24 @@ body {
 input, button, textarea, :focus {
   outline: none; // You should add some other style for :focus to help UX/a11y
 }
+
+#button-container {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 16px;
+  z-index: 999;
+}
+
+.go-data-button {
+  display: block;
+  width: 120px;
+  height: 40px;
+  color: #a2a2a2;
+  font-family: "Roboto", sans-serif;
+  border: 2px solid #404040;
+  font-size: 16px;
+  background-color: #222;
+  margin: 5px 0px;
+}

@@ -8,3 +8,16 @@ ipcRenderer.on('event', (event, arg) => {
     document.getElementById('log-area').textContent = arg
 })
 
+ipcRenderer.on('error', (event, arg) => {
+    document.getElementById('button-container').style.display = 'block'
+})
+
+let openLogs = document.getElementById('logs-button')
+openLogs.onclick = () => {
+    ipcRenderer.send('open-logs-message', '')
+}
+
+let exit = document.getElementById('exit-button')
+exit.onclick = () => {
+    ipcRenderer.send('exit-message', '')
+}

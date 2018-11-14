@@ -9,6 +9,8 @@ const logger = require('./../logger/app').logger
 
 const { name, version, NODE_PLATFORM } = require('./../package')
 
+const { APP_EXIT, OPEN_LOGS } = require('./../utils/constants')
+
 let state;
 
 const init = (events) => {
@@ -71,11 +73,24 @@ const init = (events) => {
     logger.info('Initialized IPCMain')
 }
 
+const initSplashEvents = (events) => {
+    ipcMain.on('open-logs-message', (event, arg) => {
+        logger.log('IPCMain received open-logs-message')
+        events(OPEN_LOGS)
+    })
+
+    ipcMain.on('exit-message', (event, arg) => {
+        logger.log('IPCMain received exit-message')
+        events(APP_EXIT)
+    })
+}
+
 function setState(newState) {
     state = newState
 }
 
 module.exports = {
     init,
+    initSplashEvents,
     setState
 }
