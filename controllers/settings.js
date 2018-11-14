@@ -65,7 +65,7 @@ const getAppPort = (callback) => {
                 throw new Error(`Error setting application port: ${err.message}`)
             }
         }
-        appPort = settings.appPort
+        appPort = settings.appPort || 8000
         callback(null, appPort)
     })
 }
@@ -110,7 +110,7 @@ const getMongoPort = (callback) => {
                 throw new Error(`Error setting Mongo port: ${err.message}`)
             }
         }
-        mongoPort = settings.mongoPort
+        mongoPort = settings.mongoPort || 27017
         callback(null, mongoPort)
     })
 }
