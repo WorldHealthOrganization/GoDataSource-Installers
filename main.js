@@ -113,6 +113,7 @@ app.on('ready', () => {
                         updateScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
 
                         updateScreen.once('ready-to-show', () => {
+                            closePleaseWait()
                             updateScreen.show()
                         })
                         updateScreen.webContents.send('event', 'Downloading update...')

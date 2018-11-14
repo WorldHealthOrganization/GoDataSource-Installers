@@ -10,6 +10,7 @@
 const async = require('async')
 const Tail = require('tail').Tail
 const chokidar = require('chokidar')
+const kill = require('kill-port')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -20,6 +21,8 @@ const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
 
 const pm2 = require(AppPaths.pm2Module)
+
+const { MONGO_PLATFORM } = require('./../package')
 
 const init = (events, callback) => {
     startGoData(events, callback)
@@ -151,17 +154,34 @@ function killGoData(callback) {
                     logger.error(`Error retrieving ${productName} API PORT: ${err.message}`)
                     throw err
                 }
-                processUtil.findPortInUse(port, (err, processes) => {
-                    if (processes && processes.length > 0) {
-                        async.each(
-                            processes.map(p => p.pid),
-                            processUtil.killProcess,
-                            callback
-                        )
-                    } else {
-                        callback()
-                    }
-                })
+                if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
+                    kill(port)
+                        .then((result) => {
+                            if (result.stderr && result.stderr.length > 0) {
+                                logger.error(`Error killing process on port ${port}: ${result.stderr}`)
+                                return callback(result.stderr)
+
+                            }
+                            logger.info(`Killed process on port ${port}`)
+                            callback()
+                        })
+                        .catch((e) => {
+                            logger.error(`Error killing process on port ${port}: ${e}`)
+                            callback(e)
+                        })
+                } else {
+                    processUtil.findPortInUse(port, (err, processes) => {
+                        if (processes && processes.length > 0) {
+                            async.each(
+                                processes.map(p => p.pid),
+                                processUtil.killProcess,
+                                callback
+                            )
+                        } else {
+                            callback()
+                        }
+                    })
+                }
             })
         })
     })
