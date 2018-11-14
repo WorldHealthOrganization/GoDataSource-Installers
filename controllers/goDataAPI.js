@@ -192,5 +192,10 @@ function setGoDataParam(param, value, callback) {
 }
 
 module.exports = {
-    getAppPort, setAppPort, getDbPort, setDbPort, getBuildConfiguration, setBuildConfiguration
+    getAppPort,
+    setAppPort,
+    getDbPort,
+    setDbPort,
+    getBuildConfiguration,
+    setBuildConfiguration,
 }
