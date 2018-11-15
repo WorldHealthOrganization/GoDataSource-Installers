@@ -13,7 +13,7 @@ const { APP_EXIT, OPEN_LOGS } = require('./../utils/constants')
 
 let state;
 
-const init = (events) => {
+const initSettingsEvents = (events) => {
 
     logger.info('Initializing IPCMain...')
 
@@ -90,7 +90,7 @@ function setState(newState) {
 }
 
 module.exports = {
-    init,
+    initSettingsEvents,
     initSplashEvents,
     setState
 }

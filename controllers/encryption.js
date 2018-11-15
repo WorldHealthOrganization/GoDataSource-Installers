@@ -55,7 +55,7 @@ const testEncryptedDummyFile = (callback) => {
 
 /**
  * Determines whether the application folder is encrypted or not. It runs the 'cipher' command on Windows and the 'fdesetup' command on OSX.
- * @param callback - Invoked with (err, result) Result is a boolean value with the the encryption status of the application folder.
+ * @param callback - Invoked with (err, result). Result is a boolean value with the the encryption status of the application folder.
  */
 const getDatabaseEncryptionStatus = (callback) => {
 
@@ -68,6 +68,10 @@ const getDatabaseEncryptionStatus = (callback) => {
             break
     }
 
+    /**
+     * Runs cipher /c C:\Users\{user}\AppData\GoData
+     * @param callback - Invoked with(err, result). Result is a boolean value that specifies if the folder is encrypted.
+     */
     function getWinEncStatus(callback) {
         let result = false
         const startEncryptionProcess = spawn('cipher', ['/c', AppPaths.appDirectory])
@@ -87,6 +91,10 @@ const getDatabaseEncryptionStatus = (callback) => {
         })
     }
 
+    /**
+     * Runs fdesetup status
+     * @param callback - Invoked with(err, result). Result is a boolean value that specifies if the drive is encrypted.
+     */
     function getMacEncStatus(callback) {
         let result = false
         const startEncryptionProcess = spawn('fdesetup', ['status'])
@@ -107,10 +115,18 @@ const getDatabaseEncryptionStatus = (callback) => {
     }
 }
 
+/**
+ * Encrypts the application folder (on Windows) or launches System Settings File Vault (OSX)
+ * @param callback
+ */
 const encryptDatabase = (callback) => {
     changeDatabaseEncryption(true, callback)
 }
 
+/**
+ * Decrypts the application folder (on Windows) or launches System Settings File Vault (OSX)
+ * @param callback
+ */
 const decryptDatabase = (callback) => {
     changeDatabaseEncryption(false, (err, result) => {
         if (platform === 'win') {
@@ -122,6 +138,11 @@ const decryptDatabase = (callback) => {
     })
 }
 
+/**
+ * Calls different encryption functions depending on platform.
+ * @param encryptionFlag - either '/e' or '/d'
+ * @param callback - Invoked with (err, result). Result is a boolean value representing whether the encryption toggle has succeeded.
+ */
 function changeDatabaseEncryption(encryptionFlag, callback) {
 
     switch (platform) {
@@ -136,6 +157,10 @@ function changeDatabaseEncryption(encryptionFlag, callback) {
             break
     }
 
+    /**
+     * Encrypts/decrypts the application folder by running 'cipher /e /s:{folder}' or 'cipher /d /s:{folder}'
+     * @param callback Invoked with (err, result). Result is a boolean value representing whether the encryption toggle has succeeded.
+     */
     function changeWinDbEnc(callback) {
         let result = false
 
@@ -158,6 +183,10 @@ function changeDatabaseEncryption(encryptionFlag, callback) {
         })
     }
 
+    /**
+     * Opens the File Vault in System Settings
+     * @param callback
+     */
     function changeMacDbEnc(callback) {
         let result = false
 

@@ -1,13 +1,11 @@
 'use strict'
 
-const {spawnSync} = require('child_process')
-
 const AppPaths = require('./../utils/paths')
 
 const logDirectory = AppPaths.appLogDirectory
 const logPath = AppPaths.appLogFile
 
-var logger = require('electron-log')
+let logger = require('electron-log')
 const mkdirp = require('mkdirp')
 
 /**
@@ -16,8 +14,7 @@ const mkdirp = require('mkdirp')
 const init = (callback) => {
     mkdirp(logDirectory, (err) => {
         if (err) {
-            callback(err)
-            throw err
+            return callback(err)
         }
         logger.transports.file.level = 'info'
         logger.transports.file.file = logPath

@@ -4,7 +4,7 @@
 
 'use strict'
 
-const {spawn, spawnSync} = require('child_process')
+const {spawn} = require('child_process')
 
 const async = require('async')
 const mkdirp = require('mkdirp')
@@ -24,6 +24,13 @@ const DatabaseLogFile = AppPaths.databaseLogFile
 
 const { ARCH, MONGO_PLATFORM } = require('./../package')
 
+/**
+ * Configures Mongo (set database path, log path, storage engine, journaling etc)
+ * Starts Mongo service
+ * Start
+ * @param events
+ * @param callback
+ */
 const init = (events, callback) => {
     configureMongo(events, (err) => {
         startMongo(events, (err) => {
@@ -33,6 +40,11 @@ const init = (events, callback) => {
 }
 
 let shouldThrowExceptionOnMongoFailure = true;
+
+/**
+ * Specifies whether the app should throw an exception when Mongo crashes. The only time it shouldn't throw an exception is when the Mongo process is forcefully closed in the clean-up operation.
+ * @param value - Boolean value
+ */
 function setShouldThrowExceptionOnMongoFailure(value) {
     shouldThrowExceptionOnMongoFailure = value
 }

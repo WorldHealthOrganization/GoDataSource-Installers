@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
+const {app, BrowserWindow, Menu, Tray, shell, dialog} = require('electron')
 
 const path = require('path')
 const rl = require('readline')
@@ -16,71 +16,34 @@ const prelaunch = require('./controllers/prelaunch')
 const mongo = require('./controllers/mongo')
 const goData = require('./controllers/goData')
 const goDataAPI = require('./controllers/goDataAPI')
+const goDataAdmin = require('./controllers/goDataAdmin')
 const encryptionController = require('./controllers/encryption')
 const updater = require('./updater/updater')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
-const formatter = require('./utils/formatter')
 
-const { NODE_PLATFORM } = require('./package')
+const appLoading = require('./app/loading')
+const appUpdate = require('./app/update')
+const appSplash = require('./app/splash')
+const appSettings = require('./app/settings')
+const appWebApp = require('./app/web-app')
+const appTray = require('./app/tray')
+
+const {NODE_PLATFORM} = require('./package')
 
 const platform = process.env.NODE_PLATFORM || NODE_PLATFORM
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let tray = null
-let settingsWindow = null
-let splashScreen = null
-let pleaseWaitScreen = null
-
-// used at first launch to start web app as hub or consolidation server
-let goDataConfiguration = null
-
-const createTray = () => {
-    tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: `Open ${productName}`,
-            click: () => {
-                openWebApp()
-            }
-        },
-        {
-            label: `Settings`,
-            click: () => {
-                openSettings(constants.SETTINGS_WINDOW_SETTING)
-            }
-        },
-        {
-            label: `Reset Admin Password`,
-            click: () => {
-                openSettings(constants.SETTINGS_WINDOW_SETTING)
-            }
-        },
-        {
-            label: `Restore Backup`,
-            click: () => {
-                openSettings(constants.SETTINGS_WINDOW_SETTING)
-            }
-        },
-        {type: 'separator'},
-        {
-            label: `Check for updates`,
-            click: () => {
-                updater.setState(constants.UPDATER_STATE_MANUAL)
-                updater.checkForUpdates()
-            }
-        },
-        {type: 'separator'},
-        {
-            label: `Quit ${productName}`,
-            click: () => {
-                cleanup(0)
-                setTimeout(app.quit, 4000)
-            }
-        }
-    ])
-    tray.setContextMenu(contextMenu)
+// Determines if another app instance is running and opens the existing one or launches a new instance
+const checkSingletonInstance = () => {
+    let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+        appWebApp.openWebApp()
+    })
+    if (shouldQuit) {
+        logger.logger.info(`Detected previous ${productName} instance, will quit app...`)
+        app.quit()
+        return true
+    }
+    return false
 }
 
 // This method will be called when Electron has finished
@@ -88,125 +51,31 @@ const createTray = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
 
-    openPleaseWait()
-
-    let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
-        openWebApp()
-    })
-
-    if (shouldQuit) {
-        logger.logger.info(`Detected previous ${productName} instance, will quit app...`)
-        app.quit()
-        return
-    }
+    appLoading.openPleaseWait()
 
     // set up logger
     logger.init((err) => {
         if (!err) {
-            let updateScreen
-            updater.configureUpdater(
-                (event) => {
-                    let percentage = Math.round(event.percent * 10) / 10
-                    if (percentage === 100) {
-                        updateScreen.webContents.send('event', `Please wait while ${productName} relaunches. This may take a few minutes.`)
+            if (checkSingletonInstance()) {
+                return
+            }
+            appUpdate.configureUpdate(() => {
+                appVersion.getVersion((err, version) => {
+                    appSettings.configureIPCMain()
+                    appSplash.configureIPCMain()
+
+                    if (err && err.code === 'ENOENT') {
+                        // fresh install, no app version set => set version and perform population with early exit
+                        appSettings.openSettings(constants.SETTINGS_WINDOW_LAUNCH)
                     } else {
-                        updateScreen.webContents.send('event', `Downloading update ${Math.round(event.percent * 10) / 10}% - ${formatter.formatBytes(event.transferred)}/${formatter.formatBytes(event.total)}`)
-                    }
-                },
-                (err, updateAvailable) => {
-                    if (updateAvailable) {
-                        updateScreen = new BrowserWindow({
-                            width: 900,
-                            height: 475,
-                            resizable: false,
-                            center: true,
-                            frame: false,
-                            show: false
-                        })
-                        updateScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
-
-                        updateScreen.once('ready-to-show', () => {
-                            closePleaseWait()
-                            updateScreen.show()
-                        })
-                        updateScreen.webContents.send('event', 'Downloading update...')
-                    } else {
-                        appVersion.getVersion((err, version) => {
-                            ipcMain.init((mongoPort, goDataPort, appType, encryption, state) => {
-
-                                goDataConfiguration = appType
-
-                                let encryptionProcess = platform === 'win' ?
-                                    (callback) => {
-                                        encryptionController.getDatabaseEncryptionStatus((err, result) => {
-                                            if (result !== encryption) {
-                                                // encryption status changed
-                                                // either encrypt or decrypt the database folder
-                                                if (encryption) {
-                                                    encryptionController.encryptDatabase(callback)
-                                                } else {
-                                                    encryptionController.decryptDatabase(callback)
-                                                }
-                                            } else {
-                                                callback()
-                                            }
-                                        })
-                                    } :
-                                    (callback) => {
-                                        callback()
-                                    }
-
-                                switch (state) {
-                                    case constants.SETTINGS_WINDOW_LAUNCH:
-                                        setPortsInSettings(true, () => {
-                                            encryptionProcess(() => {
-                                                launchGoData()
-                                                settingsWindow.close()
-                                            });
-                                        })
-                                        break
-                                    case constants.SETTINGS_WINDOW_SETTING:
-                                        setPortsInSettings(false, () => {
-                                            encryptionProcess(() => {
-                                                settingsWindow.close()
-                                            })
-                                        })
-                                        break
-                                }
-
-                                function setPortsInSettings(immediately, callback) {
-                                    async.series([
-                                            (callback) => {
-                                                settings.setMongoPort(mongoPort, callback)
-                                            },
-                                            (callback) => {
-                                                settings.setAppPort(goDataPort, callback)
-                                            }
-                                        ],
-                                        callback)
-                                }
-                            })
-
-                            ipcMain.initSplashEvents((event) => {
-                                switch (event) {
-                                    case constants.APP_EXIT:
-                                        app.quit()
-                                        break
-                                    case constants.OPEN_LOGS:
-                                        shell.openItem(AppPaths.appLogDirectory)
-                                        break
-                                }
-                            })
-
-                            if (err && err.code === 'ENOENT') {
-                                // fresh install, no app version set => set version and perform population with early exit
-                                openSettings(constants.SETTINGS_WINDOW_LAUNCH)
-                            } else {
-                                launchGoData()
-                            }
+                        appWebApp.launchGoData(() => {
+                            appTray.createTray()
                         })
                     }
                 })
+            })
+        } else {
+            //display error that logger was not initialized
         }
     })
 
@@ -218,120 +87,6 @@ app.on('ready', () => {
         process.emit('SIGINT')
     })
 })
-
-function launchGoData() {
-
-    splashScreen = new BrowserWindow({
-        width: 900,
-        height: 475,
-        resizable: false,
-        center: true,
-        frame: false,
-        show: false
-    })
-    splashScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
-
-    splashScreen.on('closed', () => {
-        splashScreen = null
-    })
-    splashScreen.once('ready-to-show', () => {
-        closePleaseWait()
-        splashScreen.show()
-    })
-
-    splashScreen.webContents.send('event', 'Cleaning up...')
-
-    prelaunch.setBuildConfiguration(goDataConfiguration)
-    prelaunch.cleanUp(
-        (event) => {
-
-        },
-        () => {
-            let loadingIndicator = ['⦾', '⦿']
-            let index = 0
-            mongo.init(
-                (event) => {
-                    if (event.text) {
-                        splashScreen && splashScreen.webContents.send('event', `${loadingIndicator[(++index) % 2]} ${event.text}`)
-
-                    }
-                },
-                () => {
-                    goData.init(
-                        (event) => {
-                            if (event.text) {
-                                splashScreen && splashScreen.webContents.send('event', `${loadingIndicator[(++index) % 2]} ${event.text}`)
-                            }
-                        },
-                        (err, appURL) => {
-                            if (appURL) {
-                                logger.logger.info(`Opening ${productName} at ${appURL}`)
-                                openWebApp(appURL)
-                            }
-                            splashScreen.close()
-                            createTray()
-                        })
-                })
-        })
-}
-
-function openWebApp(appURL) {
-    if (appURL) {
-        shell.openExternal(appURL)
-    } else {
-        goDataAPI.getAppPort((err, port) => {
-            if (!err) {
-                shell.openExternal(`http://localhost:${port}`)
-            }
-        })
-    }
-}
-
-function openSettings(settingType) {
-    ipcMain.setState(settingType)
-    if (settingsWindow) {
-        settingsWindow.show()
-        return
-    }
-    settingsWindow = new BrowserWindow({
-        width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 446 : 466,
-        resizable: false,
-        center: true,
-        frame: settingType === constants.SETTINGS_WINDOW_SETTING,
-        show: false
-    })
-    settingsWindow.setMenu(null);
-    settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings', 'settings.html'))
-    settingsWindow.on('closed', () => {
-        settingsWindow = null
-    })
-    settingsWindow.once('ready-to-show', () => {
-        closePleaseWait()
-        settingsWindow.show()
-    })
-}
-
-function openPleaseWait() {
-    pleaseWaitScreen = new BrowserWindow({
-        width: 250,
-        height: 120,
-        resizable: false,
-        center: true,
-        frame: false,
-        show: false
-    })
-    pleaseWaitScreen.loadFile(path.join(AppPaths.windowsDirectory, 'please-wait', 'index.html'))
-
-    pleaseWaitScreen.once('ready-to-show', () => {
-        pleaseWaitScreen.show()
-    })
-}
-
-function closePleaseWait() {
-    pleaseWaitScreen && pleaseWaitScreen.close()
-    pleaseWaitScreen = null
-}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -350,12 +105,6 @@ app.on('activate', function () {
 app.on('will-quit', function () {
     logger.logger.info('App will now quit!')
 })
-
-const cleanup = () => {
-    mongo.setShouldThrowExceptionOnMongoFailure(false)
-    mongo.killMongo()
-    goData.killGoData()
-}
 
 //do something when app is closing
 process.on('exit', () => {
@@ -376,9 +125,7 @@ process.on('SIGUSR2', () => {
 })
 
 //catches uncaught exceptions
-process.on('uncaughtException', (exc) => {
-    if (splashScreen) {
-        splashScreen.webContents.send('event', exc.message)
-        splashScreen.webContents.send('error', null)
-    }
-})
+// process.on('uncaughtException', (exc) => {
+//     appSplash.sendSplashEvent('event', exc.message)
+//     appSplash.sendSplashEvent('error', null)
+// })

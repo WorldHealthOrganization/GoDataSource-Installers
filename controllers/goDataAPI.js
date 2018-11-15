@@ -197,5 +197,5 @@ module.exports = {
     getDbPort,
     setDbPort,
     getBuildConfiguration,
-    setBuildConfiguration,
+    setBuildConfiguration
 }
