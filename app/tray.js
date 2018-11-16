@@ -24,50 +24,52 @@ let tray = null
  */
 const createTray = () => {
     // Create the system tray
-    tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
+    if (!tray) {
+        tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
 
-    // Create the tray options menu
-    const contextMenu = Menu.buildFromTemplate([
-        // Option "Open GoData"
-        {
-            label: `Open ${productName}`,
-            click: openWebApp
-        },
-        // Options "Reset Password"
-        {
-            label: `Reset Admin Password`,
-            click: resetAdminPassword
-        },
-        // Option Restore Backup
-        {
-            label: `Restore Backup`,
-            click: restoreBackup
-        },
-        {type: 'separator'},
-        // Option "Settings"
-        {
-            label: `Settings`,
-            click: openSettings
-        },
-        {type: 'separator'},
-        // Option Check Updates
-        {
-            label: `Check for updates`,
-            click: checkUpdates
-        },
-        {type: 'separator'},
-        // Option Quit
-        {
-            label: `Quit ${productName}`,
-            click: quit
-        }
-    ])
+        // Create the tray options menu
+        const contextMenu = Menu.buildFromTemplate([
+            // Option "Open GoData"
+            {
+                label: `Open ${productName}`,
+                click: openWebApp
+            },
+            // Options "Reset Password"
+            {
+                label: `Reset Admin Password`,
+                click: resetAdminPassword
+            },
+            // Option Restore Backup
+            {
+                label: `Restore Backup`,
+                click: restoreBackup
+            },
+            {type: 'separator'},
+            // Option "Settings"
+            {
+                label: `Settings`,
+                click: openSettings
+            },
+            {type: 'separator'},
+            // Option Check Updates
+            {
+                label: `Check for updates`,
+                click: checkUpdates
+            },
+            {type: 'separator'},
+            // Option Quit
+            {
+                label: `Quit ${productName}`,
+                click: quit
+            }
+        ])
 
-    // Set the context menu and double click events
-    tray.setContextMenu(contextMenu)
-    tray.on('double-click', (event, bounds) => {
-        appWebApp.openWebApp()
-    })
+        // Set the context menu and double click events
+        tray.setContextMenu(contextMenu)
+        tray.on('double-click', (event, bounds) => {
+            appWebApp.openWebApp()
+        })
+    }
 }
 
 /**

@@ -57,6 +57,9 @@
       "platforms/${env.PLATFORM}/${env.ARCH}/${env.VERSION}"
     ],
     "mac": {
+      "extendInfo": {
+        "LSUIElement": 1
+      },
       "category": "public.app-category.healthcare-fitness"
     },
     "win": {
