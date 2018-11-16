@@ -1,6 +1,6 @@
 'use strict'
 
-const { BrowserWindow } = require('electron')
+const {BrowserWindow} = require('electron')
 const path = require('path')
 const async = require('async')
 
@@ -41,7 +41,7 @@ const openSettings = (settingType) => {
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,
         show: false
     })
-    settingsWindow.setMenu(null);
+    settingsWindow.setMenu(null)
     settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings', 'settings.html'))
     settingsWindow.on('closed', () => {
         settingsWindow = null
@@ -61,6 +61,7 @@ const configureIPCMain = () => {
         // Set the build type
         appWebApp.setGoDataConfiguration(appType)
 
+        // Handle encryption event
         let encryptionProcess = platform === 'win' ?
             (callback) => {
                 encryptionController.getDatabaseEncryptionStatus((err, result) => {
@@ -81,11 +82,12 @@ const configureIPCMain = () => {
                 callback()
             }
 
+        // Handle settings saved event
         switch (state) {
             case constants.SETTINGS_WINDOW_LAUNCH:
                 setPortsInSettings(true, () => {
                     encryptionProcess(() => {
-                        appWebApp.launchGoData()
+                        appWebApp.launchGoData((err) => {})
                         closeSettings()
                     })
                 })
@@ -98,6 +100,7 @@ const configureIPCMain = () => {
                 })
                 break
         }
+
 
         function setPortsInSettings(immediately, callback) {
             async.series([

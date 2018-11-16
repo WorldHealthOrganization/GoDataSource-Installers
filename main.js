@@ -27,7 +27,6 @@ const appUpdate = require('./app/update')
 const appSplash = require('./app/splash')
 const appSettings = require('./app/settings')
 const appWebApp = require('./app/web-app')
-const appTray = require('./app/tray')
 
 const {NODE_PLATFORM} = require('./package')
 
@@ -56,21 +55,28 @@ app.on('ready', () => {
     // set up logger
     logger.init((err) => {
         if (!err) {
+
+            // stop launching app if it is already running
             if (checkSingletonInstance()) {
                 return
             }
+
+            // check for update
             appUpdate.configureUpdate(() => {
+
+                // retrieve version saved on disk to determine if it is first launch or not
                 appVersion.getVersion((err, version) => {
+
+                    // configure events for splash screen and settings screens
                     appSettings.configureIPCMain()
                     appSplash.configureIPCMain()
 
+                    // open settings on first launch or launch Go.Data othewise
                     if (err && err.code === 'ENOENT') {
                         // fresh install, no app version set => set version and perform population with early exit
                         appSettings.openSettings(constants.SETTINGS_WINDOW_LAUNCH)
                     } else {
-                        appWebApp.launchGoData(() => {
-                            appTray.createTray()
-                        })
+                        appWebApp.launchGoData((err) => { })
                     }
                 })
             })
@@ -124,8 +130,18 @@ process.on('SIGUSR2', () => {
     // cleanup('SIGUSR2')
 })
 
-//catches uncaught exceptions
-// process.on('uncaughtException', (exc) => {
-//     appSplash.sendSplashEvent('event', exc.message)
-//     appSplash.sendSplashEvent('error', null)
-// })
+//catches uncaught exceptions and displays them in the splash screen or a dialog box
+process.on('uncaughtException', (exc) => {
+    logger.logger.error(`Unhandled exception: ${exc}`)
+    if (!appSplash.sendSplashEvent('error', exc.message)) {
+        dialog.showMessageBox({
+            type: 'error',
+            title: `Error`,
+            message: `A ${productName} process crashed.\n${exc.message}.\nPlease relaunch ${productName}.`,
+            buttons: ['Close']
+        }, () => {
+            // Force quit the app
+            process.exit(-1)
+        })
+    }
+})

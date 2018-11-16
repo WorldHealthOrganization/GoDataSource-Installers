@@ -22,7 +22,7 @@ const productName = AppPaths.desktopApp.package.name
 
 const pm2 = require(AppPaths.pm2Module)
 
-const { MONGO_PLATFORM } = require('./../package')
+const {MONGO_PLATFORM} = require('./../package')
 
 const init = (events, callback) => {
     startGoData(events, callback)
@@ -47,7 +47,11 @@ function setDbPort(callback) {
 }
 
 /**
- * Starts the Mongo database from depending on system configuration
+ * Starts Go.Data using PM2
+ * @param events - Invoked with ({ options }).
+ *      options.text - Event text
+ *      options.details - Event detail
+ * @param callback - Invoked with (err)
  */
 function startGoData(events, callback) {
     logger.info(`Configuring ${productName} web app...`)
@@ -55,8 +59,9 @@ function startGoData(events, callback) {
     pm2.connect(true, (err) => {
 
         if (err) {
-            logger.error(`Error connecting PM2 process: ${err.message}`)
-            throw err
+            err = new Error(`Error connecting PM2 process: ${err.message}`)
+            logger.error(err.message)
+            return callback(err)
         }
 
         logger.info(`Starting ${productName} PM2 process...`)
@@ -74,55 +79,82 @@ function startGoData(events, callback) {
             },
             (err) => {
                 if (err) {
-                    logger.error(`Error configuring the ${productName} web app: ${err.message}`)
-                    throw err
+                    // log file sends events to splash screen
+                    stopWatchingLogFile()
+
+                    err = new Error(`Error configuring the ${productName} web app: ${err.message}`)
+                    logger.error(err.message)
+                    return callback(err)
                 }
                 logger.info(`Started ${productName}`)
                 pm2.disconnect()
             })
 
-
-
         // There's an OS bug on windows that freezes the files from being read. chokidar will force-poll the logs file.
         let watcher
-        if (process.platform ==='win32') {
+        if (process.platform === 'win32') {
             watcher = chokidar.watch(AppPaths.appLogFile, {
                 usePolling: true,
                 interval: 1000
             }).on('all', (event, path) => {
-                console.log(event, path);
+                console.log(event, path)
             })
         }
 
         //create a read stream from the log file to detect when the app starts
         const tail = new Tail(AppPaths.appLogFile)
 
+        let called = false
+
         tail.on('line', (data) => {
             const log = data.toString()
             events({text: `Configuring ${productName} web app...`, details: log})
             if (log.indexOf('Web server listening at:') > -1) {
 
-                if (watcher) {
-                    watcher.unwatch(AppPaths.appLogFile)
-                    watcher.close()
-                }
-                tail.unwatch()
+                stopWatchingLogFile()
 
                 logger.info(`Successfully started ${productName} web app!`)
                 events({text: `Successfully started ${productName} web app!`})
 
                 const urlIndex = log.indexOf('http')
                 if (urlIndex > -1) {
+                    called = true
                     return callback(null, log.substring(urlIndex))
                 }
 
+                called = true
                 callback()
             }
         })
 
+        // Sometimes 'Web server listening at http://localhost:8000' is not caught in the log file.
+        // As a final fallback, set a 30 second timer that calls the callback if it's not previously been called.
+        setTimeout(() => {
+            settings.getAppPort((err, port) => {
+                if (err) {
+                    return !called && callback(err)
+                }
+                if (!called) {
+                    logger.log(`${productName} start event callback not called, fallback to call callback after 30 seconds`)
+                    callback(null, `http://localhost:${port}`)
+                } else {
+                    logger.log(`${productName} started, no need for 30 seconds fallback`)
+                }
+            })
+        }, 30000)
+
         tail.on('error', (err) => {
-            logger.error('ERROR' + err.message)
+            logger.error('ERROR ' + err.message)
         })
+
+        function stopWatchingLogFile() {
+            logger.info(`Stopping watch over log file ${AppPaths.appLogFile}`)
+            if (watcher) {
+                watcher.unwatch(AppPaths.appLogFile)
+                watcher.close()
+            }
+            tail.unwatch()
+        }
     })
 }
 
@@ -132,14 +164,17 @@ function startGoData(events, callback) {
  */
 function killGoData(callback) {
 
-    callback || (callback = () => {})
+    callback || (callback = () => {
+    })
 
     // delete the PM2 process
     logger.info('Attempt to terminate previous Go.Data process...')
     pm2.connect(true, (err) => {
+
         if (err) {
-            logger.error(`Error connecting PM2 process: ${err.message}`)
-            throw err
+            err = new Error(`Error connecting PM2 process: ${err.message}`)
+            logger.error(err.message)
+            return callback(err)
         }
         logger.info(`Deleting PM2 ${productName} process...`)
         pm2.delete(productName, (err) => {
@@ -151,8 +186,10 @@ function killGoData(callback) {
             pm2.disconnect()
             goDataAPI.getAppPort((err, port) => {
                 if (err) {
-                    logger.error(`Error retrieving ${productName} API PORT: ${err.message}`)
-                    throw err
+                    err = new Error(`Error retrieving ${productName} API PORT: ${err.message}`)
+                    logger.error(err.message)
+                    return callback(err)
+                    // throw err
                 }
                 if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
                     kill(port)
@@ -191,5 +228,6 @@ module.exports = {
     init,
     setAppPort,
     setDbPort,
+    startGoData,
     killGoData,
 }

@@ -92,7 +92,7 @@ function configureMongo(events, callback) {
 }
 
 /**
- * Starts the Mongo database from depending on system configuration
+ * Starts the Mongo database depending on system configuration
  */
 function startMongo(events, callback) {
     events({

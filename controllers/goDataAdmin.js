@@ -6,31 +6,67 @@ const logger = require('./../logger/app').logger
 const AppPaths = require('./../utils/paths')
 
 const goData = require('./goData')
+const constants = require('./../utils/constants')
 
-const restoreBackup = (callback) => {
+/**
+ * Launches the restore back-up script
+ * @param filePath - The path of the file containing the back-up
+ * @param callback - Invoked with (errors). Errors is an array of errors.
+ */
+const restoreBackup = (filePath, callback) => {
+    // Stop Go.Data web app
     goData.killGoData((err) => {
-
-    })
-    logger.info('Restoring back-up...')
-    events({text: 'Migrating database...'})
-    const migrateDatabase = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'migrate-database', 'from', oldVersion, 'to', newVersion])
-    migrateDatabase.stderr.on('data', (data) => {
-        logger.error(`Error migrating database: ${data.toString()}`)
-        events({text:'Migrating database...', detail: data.toString()})
-    })
-    migrateDatabase.stdout.on('data', (data) => {
-        events({text:'Migrating database...', detail: data.toString()})
-    })
-    migrateDatabase.on('close', (code) => {
-        if (code) {
-            events({text: `Error migrating database.\nError log available at ${AppPaths.appLogFile}`})
-            callback(code)
-        } else {
-            logger.info(`Completed migrating database!`)
-            events({text: `Completed migrating database...`})
-            callback()
+        // All errors will be send in callback in an array
+        if (err) {
+            return callback([{type: constants.GO_DATA_KILL_ERROR}])
         }
+
+        let infoMessage = 'Restoring back-up...'
+        let errorMessage = 'Error restoring back-up'
+        logger.info(infoMessage)
+
+        // run node backupScript.js --file={filePath}
+        const restoreBackup = spawn(AppPaths.nodeFile, [AppPaths.restoreBackupScriptFile, `--file=${filePath}`])
+
+        // log script errors
+        restoreBackup.stderr.on('data', (data) => {
+            logger.error(`${errorMessage}: ${data.toString()}`)
+        })
+
+        restoreBackup.stdout.on('data', (data) => {
+            logger.info(data.toString())
+        })
+
+        // handle script exit
+        restoreBackup.on('close', (code) => {
+            // errors may be due to script fail or Go.Data relaunch fail. All of them will be sent in callback
+            let errors = []
+
+            // handle case for script error
+            if (code) {
+                logger.error(`Back-up restore exit with code ${code}`)
+
+                // add error that will be sent in callback
+                errors.push({type: constants.GO_DATA_BACKUP_ERROR})
+            } else {
+                logger.info(`Completed back-up restore!`)
+            }
+
+            //Relaunch Go.Data web app
+            goData.startGoData(
+                //events
+                () => { },
+                //callback
+                (error) => {
+                    // add launch error to errors if Go.Data launch failed
+                    if (error) {
+                        errors.add({type: constants.GO_DATA_LAUNCH_ERROR})
+                    }
+                    callback(errors)
+                })
+        })
     })
+
 }
 
 const resetAdminPassword = (callback) => {

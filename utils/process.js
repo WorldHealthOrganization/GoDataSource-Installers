@@ -53,7 +53,7 @@ const killProcess = (pid, callback) => {
             } else {
                 logger.info(`Process with PID ${pid} terminated!`)
             }
-            // call callback without err because it may timeout and still succeed
+            // call callback without err. The process may be killed of not in case of an error, proceed without error.
             callback(null)
         })
 }

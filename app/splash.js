@@ -1,6 +1,6 @@
 'use strict'
 
-const { BrowserWindow } = require('electron')
+const { BrowserWindow, app, shell } = require('electron')
 const path = require('path')
 
 const ipcMain = require('./../controllers/ipcMain')
@@ -8,6 +8,7 @@ const ipcMain = require('./../controllers/ipcMain')
 const appLoading = require('./loading')
 
 const AppPaths = require('./../utils/paths')
+const constants = require('./../utils/constants')
 
 let splashScreen = null
 
@@ -54,11 +55,14 @@ const configureIPCMain = () => {
  * Sends an event to the splash screen. The events are handled in the window ipcRenderer function.
  * @param event - Event send to the splash screen
  * @param arg - The arguments send with the event
+ * Returns - A boolean value representing if the event has been sent.
  */
 const sendSplashEvent = (event, arg) => {
     if (splashScreen) {
         splashScreen.webContents.send(event, arg)
+        return true
     }
+    return false
 }
 
 /**

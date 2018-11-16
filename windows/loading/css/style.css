@@ -346,7 +346,7 @@ input, button, textarea, :focus {
 #button-container {
   display: none;
   position: absolute;
-  top: 50%;
+  bottom: 65px;
   transform: translateY(-50%);
   right: 16px;
   z-index: 999;

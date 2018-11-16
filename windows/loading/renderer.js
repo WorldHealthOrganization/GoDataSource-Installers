@@ -9,6 +9,7 @@ ipcRenderer.on('event', (event, arg) => {
 })
 
 ipcRenderer.on('error', (event, arg) => {
+    document.getElementById('log-area').textContent = arg
     document.getElementById('button-container').style.display = 'block'
 })
 

@@ -32,6 +32,7 @@ const setGoDataConfiguration = (configuration) => {
  * Starts the Go.Data web app
  * Creates the system tray
  * Closes the splash screen
+ * @param callback - Invoked with (err)
  */
 const launchGoData = (callback) => {
 
@@ -40,9 +41,7 @@ const launchGoData = (callback) => {
 
     prelaunch.setBuildConfiguration(goDataConfiguration)
     prelaunch.cleanUp(
-        (event) => {
-
-        },
+        (event) => { },
         () => {
             let loadingIndicator = ['⦾', '⦿']
             let index = 0
@@ -60,11 +59,17 @@ const launchGoData = (callback) => {
                             }
                         },
                         (err, appURL) => {
+                            if (err) {
+                                appSplash.sendSplashEvent('error', err.message)
+                                return callback(err)
+                            }
                             if (appURL) {
                                 logger.logger.info(`Opening ${productName} at ${appURL}`)
                                 openWebApp(appURL)
                             }
                             appSplash.closeSplashScreen()
+                            const tray = require('./tray')
+                            tray.createTray()
                             callback()
                         })
                 })
