@@ -69,6 +69,10 @@ const restoreBackup = (filePath, callback) => {
 
 }
 
+/**
+ * Launches the reset password script
+ * @param callback
+ */
 const resetAdminPassword = (callback) => {
     let info = 'Reseting Admin password...'
     let error = 'Error reseting Admin password'
