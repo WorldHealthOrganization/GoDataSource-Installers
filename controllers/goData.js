@@ -104,6 +104,7 @@ function startGoData(events, callback) {
         //create a read stream from the log file to detect when the app starts
         const tail = new Tail(AppPaths.appLogFile)
 
+        // used to call the open Go.Data callback only once
         let called = false
 
         tail.on('line', (data) => {
@@ -117,13 +118,15 @@ function startGoData(events, callback) {
                 events({text: `Successfully started ${productName} web app!`})
 
                 const urlIndex = log.indexOf('http')
-                if (urlIndex > -1) {
+                if (urlIndex > -1 && !called) {
                     called = true
                     return callback(null, log.substring(urlIndex))
                 }
 
-                called = true
-                callback()
+                if (!called) {
+                    called = true
+                    callback()
+                }
             }
         })
 
@@ -136,6 +139,7 @@ function startGoData(events, callback) {
                 }
                 if (!called) {
                     logger.log(`${productName} start event callback not called, fallback to call callback after 30 seconds`)
+                    called = true
                     callback(null, `http://localhost:${port}`)
                 } else {
                     logger.log(`${productName} started, no need for 30 seconds fallback`)
