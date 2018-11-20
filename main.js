@@ -137,7 +137,7 @@ process.on('uncaughtException', (exc) => {
         dialog.showMessageBox({
             type: 'error',
             title: `Error`,
-            message: `A ${productName} process crashed.\n${exc.message}.\nPlease relaunch ${productName}.`,
+            message: `A ${productName} process crashed.\nError: ${exc.message}.\nPlease relaunch ${productName}.`,
             buttons: ['Close']
         }, () => {
             // Force quit the app

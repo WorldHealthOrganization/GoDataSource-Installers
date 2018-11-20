@@ -1,6 +1,6 @@
 'use strict'
 
-const { BrowserWindow, app, shell } = require('electron')
+const {BrowserWindow, app, shell} = require('electron')
 const path = require('path')
 
 const ipcMain = require('./../controllers/ipcMain')
@@ -11,6 +11,7 @@ const AppPaths = require('./../utils/paths')
 const constants = require('./../utils/constants')
 
 let splashScreen = null
+let visible = false
 
 /**
  * Opens the Go.Data splash screen with the loading animation
@@ -26,6 +27,9 @@ const openSplashScreen = () => {
     })
     splashScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'))
 
+    splashScreen.on('show', () => {
+        visible = true
+    })
     splashScreen.on('closed', () => {
         splashScreen = null
     })
@@ -58,7 +62,7 @@ const configureIPCMain = () => {
  * Returns - A boolean value representing if the event has been sent.
  */
 const sendSplashEvent = (event, arg) => {
-    if (splashScreen) {
+    if (splashScreen && visible) {
         splashScreen.webContents.send(event, arg)
         return true
     }
