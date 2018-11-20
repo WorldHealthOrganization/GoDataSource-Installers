@@ -84,8 +84,8 @@
     "electron": "^2.0.0",
     "electron-builder": "^20.28.4",
     "electron-rebuild": "^1.8.2",
-    "lodash": "^4.17.10",
-    "ncp": "^2.0.0"
+    "fs-extra": "^7.0.1",
+    "lodash": "^4.17.10"
   },
   "dependencies": {
     "async": "^2.6.1",
