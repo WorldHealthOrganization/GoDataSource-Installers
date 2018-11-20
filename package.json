@@ -9,6 +9,7 @@
     "setup": "npm run setup:resources && npm run setup:forever",
     "setup:resources": "node setup-resources.js --bucket=com.clarisoft.mongo-node",
     "setup:forever": "npm install --prefix app-management -g pm2",
+    "setup:build": "node build-scripts/move-build.js",
     "pack:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
     "pack:win:32": "set PLATFORM=win&& set ARCH=x86&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x86 -c.extraMetadata.OSVERSION=default --dir",

@@ -1,5 +1,11 @@
 const fs = require('fs-extra')
 const rimraf = require('rimraf')
+const path = require('path')
+
+const clientSource = path.join(__dirname, './../go-data/frontend/dist')
+const clientDest = path.join(__dirname, './../go-data/api/build/client/dist')
+const buildSource = path.join(__dirname, './../go-data/api/build')
+const buildDest = path.join(__dirname, './../go-data/build')
 
 /**
  * Remove web app production directory ("go-data/build")
@@ -8,17 +14,17 @@ const rimraf = require('rimraf')
  */
 function build() {
     console.log('Removing build folder...')
-    rimraf('./../go-data/build', (err) => {
+    rimraf(buildDest, (err) => {
         if (err) {
             return output(JSON.stringify(err), true)
         }
         console.log('Copying frontend build...')
-        fs.copy('./../go-data/frontend/dist', './../go-data/api/build/client/dist', { overwrite: true }, (err) => {
+        fs.copy(clientSource, clientDest, { overwrite: true }, (err) => {
             if (err) {
                 return output(JSON.stringify(err), true)
             }
             console.log('Copying API build...')
-            fs.copy('./../go-data/api/build', './../go-data/build', { overwrite: true}, (err) => {
+            fs.copy(buildSource, buildDest, { overwrite: true}, (err) => {
                 if (err) {
                     return output(JSON.stringify(err), true)
                 }
