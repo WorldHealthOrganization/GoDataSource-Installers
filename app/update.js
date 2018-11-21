@@ -1,6 +1,7 @@
 'use strict'
 
 const { BrowserWindow } = require('electron')
+const path = require('path')
 
 const appLoading = require('./loading')
 
