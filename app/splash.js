@@ -10,8 +10,6 @@ const appLoading = require('./loading')
 const AppPaths = require('./../utils/paths')
 const constants = require('./../utils/constants')
 
-const logger = require('./../logger/app').logger
-
 let splashScreen = null
 let visible = false
 
@@ -64,7 +62,6 @@ const configureIPCMain = () => {
  * Returns - A boolean value representing if the event has been sent.
  */
 const sendSplashEvent = (event, arg) => {
-    logger.info(`Sending splash event: ${event}, ${arg}`)
     if (splashScreen && visible) {
         splashScreen.webContents.send(event, arg)
         return true
