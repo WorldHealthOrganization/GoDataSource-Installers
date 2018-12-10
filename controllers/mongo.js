@@ -234,7 +234,7 @@ function killMongo(callback) {
         goDataAPI.getDbPort((err, port) => {
             if (err) {
                 logger.error(`Error reading Mongo port: ${err.message}`)
-                callback()
+                // callback()
                 throw new Error(`Error reading Mongo port: ${err.message}`)
             }
             if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
