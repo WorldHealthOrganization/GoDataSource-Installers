@@ -69,7 +69,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "license": "license.html"
+      "license": "license_en.html"
     },
     "publish": [
       {
