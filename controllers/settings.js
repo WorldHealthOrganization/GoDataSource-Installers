@@ -47,7 +47,7 @@ const setSettings = (settings, callback) => {
 }
 
 /**
- * Reads the .settings file and returns `apiPort` variable
+ * If the application port is cached, it is sent in callback. Otherwise, the .settings file is read and the value of `apiPort` is sent in the callback.
  * @param callback - invoked with (err, port)
  */
 let appPort = null
@@ -61,8 +61,8 @@ const getAppPort = (callback) => {
                 appPort = 8000
                 return callback(null, appPort)
             } else {
-                callback(null, null)
-                throw new Error(`Error setting application port: ${err.message}`)
+                // callback(null, null)
+                throw new Error(`Error getting application port: ${err.message}`)
             }
         }
         appPort = settings.appPort || 8000
@@ -81,7 +81,8 @@ const setAppPort = (port, callback) => {
             if (err.code === 'ENOENT') {
                 settings = {}
             } else {
-                return callback(err, null)
+                // return callback(err, null)
+                throw new Error(`Error setting application port: ${err.message}`)
             }
         }
         appPort = port
@@ -106,7 +107,7 @@ const getMongoPort = (callback) => {
                 mongoPort = 27017
                 return callback(null, mongoPort)
             } else {
-                callback(null, null)
+                // callback(null, null)
                 throw new Error(`Error setting Mongo port: ${err.message}`)
             }
         }
@@ -126,7 +127,8 @@ const setMongoPort = (port, callback) => {
             if (err.code === 'ENOENT') {
                 settings = {}
             } else {
-                return callback(err, null)
+                // return callback(err, null)
+                throw new Error(`Error setting Mongo port: ${err.message}`)
             }
         }
         mongoPort = port
