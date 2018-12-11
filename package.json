@@ -69,7 +69,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "license": "license_en.html",
+      "license": "license_en.rtf",
       "include": "build/installer.nsh"
     },
     "publish": [
