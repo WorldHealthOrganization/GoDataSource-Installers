@@ -1,24 +1,19 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, Tray, shell, dialog} = require('electron')
+const {app, dialog} = require('electron')
 
-const path = require('path')
+const {NODE_PLATFORM} = require('./package')
+// Check on windows if the installation is per user or per machine
+const installationFolder = app.getAppPath()
+if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') && installationFolder.indexOf('Program Files') > -1) {
+    app.setPath('userData', `${process.env.HOMEDRIVE}\\GoData\\data`)
+}
+
 const rl = require('readline')
-
-const async = require('async')
 
 const appVersion = require('./utils/appVersion')
 const AppPaths = require('./utils/paths')
 const productName = AppPaths.desktopApp.package.name
 
-const settings = require('./controllers/settings')
-const ipcMain = require('./controllers/ipcMain')
-const prelaunch = require('./controllers/prelaunch')
-const mongo = require('./controllers/mongo')
-const goData = require('./controllers/goData')
-const goDataAPI = require('./controllers/goDataAPI')
-const goDataAdmin = require('./controllers/goDataAdmin')
-const encryptionController = require('./controllers/encryption')
-const updater = require('./updater/updater')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
 
@@ -27,10 +22,6 @@ const appUpdate = require('./app/update')
 const appSplash = require('./app/splash')
 const appSettings = require('./app/settings')
 const appWebApp = require('./app/web-app')
-
-const {NODE_PLATFORM} = require('./package')
-
-const platform = process.env.NODE_PLATFORM || NODE_PLATFORM
 
 // Determines if another app instance is running and opens the existing one or launches a new instance
 const checkSingletonInstance = () => {
