@@ -146,10 +146,7 @@ function startDatabase(events, callback) {
         if (err) {
             if (err.code === 'ENOENT') {
                 // fresh install, no app version set => set version and perform population with early exit
-                return populateDatabase(events, (err) => {
-                    if (err) {
-                        return;
-                    }
+                return populateDatabase(events, () => {
                     appVersion.setVersion(callback)
                 })
             } else {
@@ -169,7 +166,9 @@ function startDatabase(events, callback) {
 }
 
 /**
- * Runs node ./go-data/build/server/install/install.js init-database
+ * Runs node ./go-data/build/server/install/install.js init-database.
+ * @param events Function that sends events back to called. Can be called multiple times. Invoked with ({title, details}).
+ * @param callback Invoked with no parameter.
  */
 function populateDatabase(events, callback) {
     logger.info(`Populating database...`)
@@ -185,8 +184,7 @@ function populateDatabase(events, callback) {
     })
     setupDbProcess.on('close', (code) => {
         if (code) {
-            events({text: `Error populating database.\nError log available at ${AppPaths.appLogFile}`})
-            callback(code)
+            throw new Error(`Error populating database.\nError log available at ${AppPaths.appLogFile}`)
         } else {
             logger.info(`Completed populating database!`)
             events({text: `Completed populating database...`})
@@ -197,6 +195,8 @@ function populateDatabase(events, callback) {
 
 /**
  * Runs node ./go-data/build/server/install/install.js migrate-database
+ * @param events Function that sends events back to called. Can be called multiple times. Invoked with ({title, details}).
+ * @param callback Invoked with no parameter.
  */
 function migrateDatabase(oldVersion, newVersion, events, callback) {
     logger.info('Migrating database...')
@@ -211,8 +211,7 @@ function migrateDatabase(oldVersion, newVersion, events, callback) {
     })
     migrateDatabase.on('close', (code) => {
         if (code) {
-            events({text: `Error migrating database.\nError log available at ${AppPaths.appLogFile}`})
-            callback(code)
+            throw new Error(`Error migrating database.\nError log available at ${AppPaths.appLogFile}`)
         } else {
             logger.info(`Completed migrating database!`)
             events({text: `Completed migrating database...`})
