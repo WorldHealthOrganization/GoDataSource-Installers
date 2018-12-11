@@ -73,7 +73,7 @@ app.on('ready', () => {
 
                     // open settings on first launch or launch Go.Data othewise
                     if (err && err.code === 'ENOENT') {
-                        // fresh install, no app version set => set version and perform population with early exit
+                        // fresh install, no app version set => open settings
                         appSettings.openSettings(constants.SETTINGS_WINDOW_LAUNCH)
                     } else {
                         appWebApp.launchGoData((err) => { })
@@ -112,23 +112,23 @@ app.on('will-quit', function () {
     logger.logger.info('App will now quit!')
 })
 
-//do something when app is closing
-process.on('exit', () => {
-    // cleanup('EXIT')
-})
-
-//catches ctrl+c event
-process.on('SIGINT', () => {
-    // cleanup('SIGINT')
-})
-
-// catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', () => {
-    // cleanup('SIGUSR1')
-})
-process.on('SIGUSR2', () => {
-    // cleanup('SIGUSR2')
-})
+// //do something when app is closing
+// process.on('exit', () => {
+//     // cleanup('EXIT')
+// })
+//
+// //catches ctrl+c event
+// process.on('SIGINT', () => {
+//     // cleanup('SIGINT')
+// })
+//
+// // catches "kill pid" (for example: nodemon restart)
+// process.on('SIGUSR1', () => {
+//     // cleanup('SIGUSR1')
+// })
+// process.on('SIGUSR2', () => {
+//     // cleanup('SIGUSR2')
+// })
 
 //catches uncaught exceptions and displays them in the splash screen or a dialog box
 process.on('uncaughtException', (exc) => {

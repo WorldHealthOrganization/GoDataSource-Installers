@@ -47,6 +47,9 @@ const launchGoData = (callback) => {
             let index = 0
             mongo.init(
                 (event) => {
+                    if (event.wait) {
+                        appSplash.sendSplashEvent('event', 'wait')
+                    }
                     if (event.text) {
                         appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`)
                     }
