@@ -80,12 +80,14 @@ function loadView(state) {
         case constants.SETTINGS_WINDOW_LAUNCH:
             document.getElementById('settingsButton').innerHTML = 'Launch Go.Data'
             document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?'
-            document.getElementById('typeSelector').style.display = 'flex'
+            document.getElementById('settingDetails').style.display = 'inline-block'
+            document.getElementById('typeSelector').style.display = 'none' // Use 'flex' to display the hub/consolidation type selection
 
             break
         case constants.SETTINGS_WINDOW_SETTING:
             document.getElementById('settingsButton').innerHTML = 'Save'
             document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings'
+            document.getElementById('settingDetails').style.display = 'none'
             document.getElementById('typeSelector').style.display = 'none'
             break
     }

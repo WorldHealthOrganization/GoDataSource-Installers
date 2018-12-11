@@ -70,7 +70,7 @@ button[disabled=disabled], button:disabled {
     font-family: 'Roboto-Thin', sans-serif;
     font-size: 18px;
     margin-bottom: 30px;
-    display: inline-block;
+    display: none;
 }
 
 #productVersoinHolder {
