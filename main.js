@@ -2,10 +2,15 @@
 const {app, dialog} = require('electron')
 
 const {NODE_PLATFORM} = require('./package')
-// Check on windows if the installation is per user or per machine
+// If the installation is per machine, the data will be saved in the "data" directory in the installation folder
+// If the installation is per user, the data will be saved in [WindowsDrive]:\Users\{currentUser}\AppData\Roaming\GoData
+// Since there is no way to check if the installation is per user or per machine, we'll consider per user all installations that have the path like \Users\{anythingExceptBackslash}\AppData
 const installationFolder = app.getAppPath()
-if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') && installationFolder.indexOf('Program Files') > -1) {
-    app.setPath('userData', `${process.env.HOMEDRIVE}\\GoData\\data`)
+const path = require('path')
+const regex = new RegExp('\\\\Users\\\\[^\\\\]+\\\\AppData')
+if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') &&
+    !regex.test(installationFolder)) {
+    app.setPath('userData', path.join(app.getAppPath(), '../../data'))
 }
 
 const rl = require('readline')
@@ -46,6 +51,9 @@ app.on('ready', () => {
     // set up logger
     logger.init((err) => {
         if (!err) {
+
+            logger.logger.info(`Application installed to ${app.getAppPath()}`)
+            logger.logger.info(`Application data directory set to ${app.getAppPath()}`)
 
             // stop launching app if it is already running
             if (checkSingletonInstance()) {
