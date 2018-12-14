@@ -138,11 +138,11 @@ function startGoData(events, callback) {
                     return !called && callback(err)
                 }
                 if (!called) {
-                    logger.log(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
+                    logger.info(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
                     called = true
                     callback(null, `http://localhost:${port}`)
                 } else {
-                    logger.log(`${productName} started, no need for 60 seconds fallback`)
+                    logger.info(`${productName} started, no need for 60 seconds fallback`)
                 }
             })
         }, 60000)
