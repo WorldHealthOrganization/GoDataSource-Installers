@@ -365,13 +365,14 @@ function watchMongoStart(events, callback) {
                 const log = data.toString()
                 logger.log(log)
                 if (log.indexOf('waiting for connections') > -1 && !called) {
+                    logger.info(`Mongo ready for connections detected while reading line from ${DatabaseLogFile}`)
                     readyForConnections()
                 }
             })
 
             // Handle errors when reading line from Mongo log
             tail.on('error', (err) => {
-                logger.error(`Error reading line from Mongo log: ${err.message}`)
+                logger.error(`Error reading line from Mongo log file ${err.message}`)
                 if (!called) {
                     called = true
                     callback(err)
