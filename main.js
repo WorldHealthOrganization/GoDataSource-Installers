@@ -10,7 +10,7 @@ const path = require('path')
 const regex = new RegExp('\\\\Users\\\\[^\\\\]+\\\\AppData')
 if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') &&
     !regex.test(installationFolder)) {
-    app.setPath('userData', path.join(app.getAppPath(), '../../data'))
+    app.setPath('userData', path.join(app.getAppPath(), '../../../data'))
 }
 
 const rl = require('readline')
