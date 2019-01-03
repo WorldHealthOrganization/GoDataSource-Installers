@@ -21,12 +21,16 @@ const productName = AppPaths.desktopApp.package.name
 
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
+const crashReporter = require('./utils/reporter')
 
 const appLoading = require('./app/loading')
 const appUpdate = require('./app/update')
 const appSplash = require('./app/splash')
 const appSettings = require('./app/settings')
 const appWebApp = require('./app/web-app')
+
+// set up crash reporter
+crashReporter.init()
 
 // Determines if another app instance is running and opens the existing one or launches a new instance
 const checkSingletonInstance = () => {
