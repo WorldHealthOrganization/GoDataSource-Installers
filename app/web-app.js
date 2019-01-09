@@ -1,6 +1,7 @@
 'use strict'
 
-const { shell } = require('electron')
+const { app, BrowserWindow } = require('electron')
+const path = require('path')
 
 const goData = require('./../controllers/goData')
 const goDataAPI = require('./../controllers/goDataAPI')
@@ -14,6 +15,13 @@ const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
 
 const logger = require('./../logger/app')
+
+const menu = require('./menu')
+
+const contextMenu = require('electron-context-menu')
+contextMenu({
+    showSaveImageAs: true
+})
 
 // used at first launch to start web app as hub or consolidation server
 let goDataConfiguration = null
@@ -86,13 +94,60 @@ const launchGoData = (callback) => {
  */
 const openWebApp = (appURL) => {
     if (appURL) {
-        shell.openExternal(appURL)
+        openEmbeddedWindow(appURL)
     } else {
         goDataAPI.getAppPort((err, port) => {
             if (!err) {
-                shell.openExternal(`http://localhost:${port}`)
+                openEmbeddedWindow(`http://localhost:${port}`)
             }
         })
+    }
+}
+
+let embeddedAppWindow;
+/**
+ * Open Go.Data in an Electron window that loads Go.Data Web portal
+ * @param url - The URL where Go.Data is running.
+ */
+const openEmbeddedWindow = (url) => {
+    if (!embeddedAppWindow) {
+        embeddedAppWindow = new BrowserWindow({
+            webPreferences: {
+                nodeIntegration: false
+            },
+            show: false,
+            icon: path.join(__dirname, './../build/icon.png')
+        });
+
+        // maximize window
+        embeddedAppWindow.maximize()
+        // then show it
+        embeddedAppWindow.show()
+
+        // and load the app.
+        embeddedAppWindow.loadURL(url)
+
+        // keep name and URL on app title
+        embeddedAppWindow.on('page-title-updated', function (event, title) {
+            event.preventDefault();
+            embeddedAppWindow.setTitle(title)
+        });
+
+        // Emitted when the window is closed.
+        embeddedAppWindow.on('closed', function () {
+            // Dereference the window object, usually you would store windows
+            // in an array if your app supports multi windows, this is the time
+            // when you should delete the corresponding element.
+            embeddedAppWindow = null
+        });
+
+        app.setApplicationMenu(menu.getMenu(url))
+
+    } else {
+        // maximize window
+        embeddedAppWindow.maximize()
+        // then show it
+        embeddedAppWindow.show()
     }
 }
 
