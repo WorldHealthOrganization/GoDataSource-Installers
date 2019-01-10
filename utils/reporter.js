@@ -6,7 +6,7 @@ const init = () => {
   crashReporter.start({
     productName: package.name,
     companyName: package.author,
-    submitURL: package.build.reporter.url,
+    submitURL: package.reporter.url,
     uploadToServer: true
   })
 }

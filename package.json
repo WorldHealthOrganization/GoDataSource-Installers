@@ -77,10 +77,10 @@
         "provider": "generic",
         "url": "http://54.164.207.48:42000"
       }
-    ],
-    "reporter": {
-      "url": "http://54.164.207.48:1127/post"
-    }
+    ]
+  },
+  "reporter": {
+    "url": "http://54.164.207.48:1127/post"
   },
   "author": "Clarisoft",
   "license": "CC0-1.0",
