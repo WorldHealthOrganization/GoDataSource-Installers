@@ -23,6 +23,9 @@ contextMenu({
     showSaveImageAs: true
 })
 
+// used to cache the app URL after app is loaded
+let webAppURL = null
+
 // used at first launch to start web app as hub or consolidation server
 let goDataConfiguration = null
 /**
@@ -94,7 +97,10 @@ const launchGoData = (callback) => {
  */
 const openWebApp = (appURL) => {
     if (appURL) {
+        webAppURL = appURL;
         openEmbeddedWindow(appURL)
+    } else if (webAppURL) {
+        openEmbeddedWindow(webAppURL)
     } else {
         goDataAPI.getAppPort((err, port) => {
             if (!err) {
