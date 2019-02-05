@@ -38,7 +38,7 @@ platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/con
 
 #perform cleanup
 echo "Stopping PM2 process..."
-app-management/bin/pm2 stop server
+platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 stop server
 
 echo "Stopping process on port ${MONGO_PORT}..."
 kill -9 $(lsof -t -i:${MONGO_PORT})
