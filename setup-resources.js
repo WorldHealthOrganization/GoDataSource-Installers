@@ -14,6 +14,7 @@ const AWS = require('aws-sdk')
 const path = require('path')
 const mkdirp = require('mkdirp')
 const zip = require('compressing')
+const rimraf = require('rimraf')
 
 const async = require('async')
 const _ = require('lodash')
@@ -111,7 +112,16 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                     zip.zip.uncompress(file, dirPath)
                         .then(() => {
                             console.log(`Unzipping file ${file} complete!`)
-                            callback()
+                            // Remove __MACOSX folder (if existing)
+                            let macosPath = path.join(dirPath, '__MACOSX')
+                            rimraf(macosPath, err => {
+                                if (err) {
+                                    console.log(`Error deleting __MACOSX folder at path ${macosPath}: ${err.message}`)
+                                    return callback(err)
+                                }
+                                console.log(`Deleted __MACOSX folder at path ${macosPath}`)
+                                return callback()
+                            })
                         })
                         .catch((err) => {
                             output(`Error unzipping file ${file} to ${dirPath}: ${err.message}`, true)
