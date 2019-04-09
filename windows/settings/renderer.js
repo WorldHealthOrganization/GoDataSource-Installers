@@ -12,6 +12,7 @@ ipcRenderer.send('getState-message', '')
 ipcRenderer.send('getDbPort-message', '')
 ipcRenderer.send('getGoDataPort-message', '')
 ipcRenderer.send('getProductVersion-message', '')
+ipcRenderer.send('getBuildNumber-message', '')
 ipcRenderer.send('getEncryptionCapabilities-message', '')
 
 ipcRenderer.on('getState-reply', (event, arg) => {
@@ -31,7 +32,11 @@ ipcRenderer.on('getGoDataPort-reply', (event, arg) => {
 
 ipcRenderer.on('getProductVersion-reply', (event, version, appPlatform) => {
     platform = appPlatform
-    document.getElementById('productVersion').innerHTML = version
+    document.getElementById('productVersion').innerHTML = version;
+})
+
+ipcRenderer.on('getBuildNumber-reply', (event, version) => {
+    document.getElementById('productBuildNumber').innerHTML = `Build ${version}`;
 })
 
 ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, status) => {

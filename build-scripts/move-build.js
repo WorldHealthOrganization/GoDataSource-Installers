@@ -24,7 +24,9 @@ function build() {
                 return output(JSON.stringify(err), true)
             }
             console.log('Copying API build...')
-            fs.copy(buildSource, buildDest, { overwrite: true}, (err) => {
+            // On linux there's an error attempting to copy a file that no longer exists (node_modules/.bin/rc)
+            // Copying files sync to avoid this issue
+            fs.copySync(buildSource, buildDest, { overwrite: true}, (err) => {
                 if (err) {
                     return output(JSON.stringify(err), true)
                 }

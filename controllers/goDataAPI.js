@@ -44,6 +44,14 @@ function setDbPort(port, callback) {
 }
 
 /**
+ * Calls go-data low level API to retrieve the build number
+ * @param callback Invoked with (err, buildNumber)
+ */
+function getBuildNumber(callback) {
+    getGoDataParam('buildNumber', callback)
+}
+
+/**
  * Calls go-data low level API to set the build configuration
  * @param configuration - Object that specifies type and platform: {type: 'hub', platform: 'windows-x86'}
  * @param callback - Invoked with (err)
@@ -117,5 +125,6 @@ module.exports = {
     setAppPort,
     getDbPort,
     setDbPort,
+    getBuildNumber,
     setBuildConfiguration
 }

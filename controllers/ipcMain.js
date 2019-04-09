@@ -6,6 +6,7 @@ const settings = require('./settings')
 const encryption = require('./encryption')
 
 const logger = require('./../logger/app').logger
+const goDataAPI = require('./goDataAPI')
 
 const { name, version, NODE_PLATFORM } = require('./../package')
 
@@ -40,6 +41,13 @@ const initSettingsEvents = (events) => {
         logger.log('IPCMain received getProductVersion-message')
         let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
         event.sender.send('getProductVersion-reply', `${name} ${version}`, platform)
+    })
+
+    ipcMain.on('getBuildNumber-message', (event, arg) => {
+        logger.log('IPCMain received getBuildNumber-message')
+        goDataAPI.getBuildNumber((err, buildNumber) => {
+            event.sender.send('getBuildNumber-reply', buildNumber || 'not set')
+        })
     })
 
     ipcMain.on('getEncryptionCapabilities-message', (event, arg) => {
