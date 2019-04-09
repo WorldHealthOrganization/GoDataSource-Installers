@@ -145,7 +145,7 @@ input, button, textarea, :focus {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0px;
-    height: 26px;
+    height: 40px;
 }
 
 input.switch {

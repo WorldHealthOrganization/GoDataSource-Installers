@@ -44,7 +44,7 @@ ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, statu
     if (err) {
         document.getElementById('encryptionLabel').innerHTML = `Error retrieving encryption settings`
     } else if (!capability) {
-        document.getElementById('encryptionLabel').innerHTML = 'Data encryption is not available'
+        document.getElementById('encryptionLabel').innerHTML = 'Go.Data is unable to apply its own encryption. Your machine may still have encryption enabled using another method.'
     } else {
         document.getElementById('encryptionLabel').innerHTML = `Encrypt data ${platform === 'darwin' ? 'with FileVault' : ''}`
         document.getElementById('encryptionSwitch').checked = status

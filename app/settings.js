@@ -35,7 +35,7 @@ const openSettings = (settingType) => {
     }
     settingsWindow = new BrowserWindow({
         width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 420 : 416, // Values with hub/consolidation switch are 426 / 476
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 434 : 430,
         resizable: false,
         center: true,
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,
