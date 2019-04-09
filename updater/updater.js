@@ -7,7 +7,7 @@ const {autoUpdater} = require('electron-updater')
 const path = require('path')
 
 const logger = require('../logger/app')
-const {ARCH} = require('./../package')
+const {ARCH, internalBuild} = require('./../package')
 const { UPDATER_STATE_AUTO } = require('./../utils/constants')
 
 let state = UPDATER_STATE_AUTO
@@ -25,10 +25,10 @@ const configureUpdater = (events, callback) => {
     } else {
         switch (ARCH) {
             case 'x64':
-                autoUpdater.updateConfigPath = path.join(__dirname, 'app-update-x64.yml')
+                autoUpdater.updateConfigPath = path.join(__dirname, internalBuild ? 'app-update-x64-internal.yml' : 'app-update-x64.yml')
                 break
             case 'x86':
-                autoUpdater.updateConfigPath = path.join(__dirname, 'app-update-x86.yml')
+                autoUpdater.updateConfigPath = path.join(__dirname, internalBuild ? 'app-update-x86-internal.yml' : 'app-update-x86.yml')
                 break
         }
     }
