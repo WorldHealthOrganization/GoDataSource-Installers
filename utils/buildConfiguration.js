@@ -37,6 +37,7 @@ const mapTypeToBuildConfiguration = (type) => {
             result.platform = `windows-${process.env.NODE_ENV === 'development' ? process.env.ARCH : ARCH}`
             break
     }
+    result.arch = process.env.NODE_ENV === 'development' ? process.env.ARCH : ARCH
     return result
 }
 

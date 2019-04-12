@@ -59,7 +59,8 @@ function getBuildNumber(callback) {
 function setBuildConfiguration(configuration, callback) {
     async.series([
         (callback) => { setGoDataParam('buildType', configuration.type, callback) },
-        (callback) => { setGoDataParam('buildPlatform', configuration.platform, callback) }
+        (callback) => { setGoDataParam('buildPlatform', configuration.platform, callback) },
+        (callback) => { setGoDataParam('buildArch', configuration.arch, callback) }
     ],
         callback)
 }
