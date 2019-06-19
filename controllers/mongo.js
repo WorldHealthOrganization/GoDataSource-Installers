@@ -4,7 +4,7 @@
 
 'use strict'
 
-const {spawn} = require('child_process')
+const {spawn, exec} = require('child_process')
 
 const async = require('async')
 const mkdirp = require('mkdirp')
@@ -12,6 +12,7 @@ const kill = require('kill-port')
 const Tail = require('tail').Tail
 const chokidar = require('chokidar')
 const fs = require('fs')
+const sudo = require('sudo-prompt')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -114,32 +115,205 @@ function startMongo(events, callback) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
-        if (process.env.ARCH === 'x86' || ARCH === 'x86') {
-            args.push('--storageEngine=mmapv1')
-            args.push('--journal')
+        let mongoPlatform = process.env.MONGO_PLATFORM || MONGO_PLATFORM
+        switch (mongoPlatform) {
+            case 'win':
+                startMongoWindows(port, (err, status) => {
+                    // When the service is already running, it will no longer write in the log file, therefore call the callback here
+                    if (status === nssmStatuses.ServiceStarted || status === nssmStatuses.ServiceRunning) {
+                        callback()
+                    }
+                })
+                break
+            default:
+                startMongoUnix(port)
+                break
         }
-        logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`)
-        const startDbProcess = spawn(AppPaths.mongodFile, args)
-
-        startDbProcess.stdout.on('close', (code) => {
-            if (shouldThrowExceptionOnMongoFailure) {
-                throw new Error(`Error: Mongo process exited with code ${code}`)
-            }
-        })
-
-        startDbProcess.stderr.on('data', (data) => {
-            logger.error(data.toString())
-        })
-
-        startDbProcess.stdout.on('data', (data) => {
-            logger.info(data.toString())
-        })
 
         // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
         watchMongoStart(events, callback)
 
     })
+}
+
+/**
+ * Starts Mongo on Max & Linux systems using spawn. Results are logged to the Mongo logpath.
+ */
+function startMongoUnix(port) {
+    let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
+    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
+        args.push('--storageEngine=mmapv1')
+        args.push('--journal')
+    }
+    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`)
+    const startDbProcess = spawn(AppPaths.mongodFile, args)
+
+    startDbProcess.stdout.on('close', (code) => {
+        if (shouldThrowExceptionOnMongoFailure) {
+            throw new Error(`Error: Mongo process exited with code ${code}`)
+        }
+    })
+
+    startDbProcess.stderr.on('data', (data) => {
+        logger.error(data.toString())
+    })
+
+    startDbProcess.stdout.on('data', (data) => {
+        logger.info(data.toString())
+    })
+
+}
+
+// Name that will appear in services list for Mongo
+const mongoServiceName = "GoDataMongo"
+
+// Statuses returned by nssm.exe
+const nssmStatuses = Object.freeze({
+    ServiceNotInstalled: 'The specified service does not exist as an installed service.',
+    ServiceAlreadyInstalled: 'The specified service already exists.',
+    ServiceInstalled: `Service "${mongoServiceName}" installed successfully!`,
+    ServiceDirectorySet: `Set parameter "AppDirectory" for service "${mongoServiceName}".`,
+    ServiceStarted: 'START: The operation completed successfully.',
+    ServiceStopped: 'SERVICE_STOPPED',
+    ServicePaused: 'SERVICE_PAUSED',
+    ServiceRunning: 'SERVICE_RUNNING',
+    ServiceRequiresAdminAccess: 'Administrator access is needed to install a service.'
+})
+
+// nssm.exe encodes results in UTF16
+const nssmEncoding = 'utf16le'
+
+/**
+ * Starts Mongo on Windows as a service using nssm.exe. Results are logged to the Mongo logpath.
+ * @param callback(err, status)
+ */
+function startMongoWindows(port, callback) {
+    checkMongoService((err, status) => {
+        switch (status) {
+            // service not installed, install service
+            case nssmStatuses.ServiceNotInstalled:
+                installMongoService(port, () => {
+                    startMongoWindows(port, callback)
+                })
+                break
+
+            case nssmStatuses.ServiceAlreadyInstalled:
+            case nssmStatuses.ServiceInstalled:
+            case nssmStatuses.ServiceDirectorySet:
+            case nssmStatuses.ServiceStopped:
+            case nssmStatuses.ServicePaused:
+                startMongoService(callback)
+                break
+            case nssmStatuses.ServiceRequiresAdminAccess:
+                startMongoWindows(callback)
+                break
+            case nssmStatuses.ServiceRunning:
+                callback(null, status)
+                break
+        }
+    })
+}
+
+/**
+ * Checks the Mongo service using nssm.exe.
+ * @param callback
+ */
+function checkMongoService(callback) {
+    let command = ['status', mongoServiceName]
+    runNssmShell(command, false, callback)
+}
+
+/**
+ * Installs Mongo as a service using nssm.exe
+ * @param callback
+ */
+function installMongoService(port, callback) {
+    let command = ['install', mongoServiceName, AppPaths.mongodFile, `--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
+    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
+        command.push('--storageEngine=mmapv1')
+        command.push('--journal')
+    }
+    runNssmShell(command, true, callback)
+}
+
+function setMongoServicePath(callback) {
+    let command = ['set', mongoServiceName, 'AppDirectory', AppPaths.mongodFile]
+    runNssmShell(command, true, callback)
+}
+
+/**
+ * Starts Mongo as a service using nssm.exe
+ * @param callback
+ */
+function startMongoService(callback) {
+    let command = ['start', mongoServiceName]
+    runNssmShell(command, true, callback)
+}
+
+/**
+ * Executes a command using nssm.exe
+ * @param command - Array containing the command and additional parameters
+ * @param requiresElevation - Whether the command requires elevation to ask for Admin account
+ * @param callback
+ */
+function runNssmShell(command, requiresElevation, callback) {
+    logger.info(`Running NSSM command "nssm.exe ${command.join(' ')}"...`)
+
+    // Used for cases when both stdout and stderr are written to call the callback only once
+    let callbackCalled = false
+
+    // Run command with nssm.exe
+    // const nssmShellProcess = spawn(AppPaths.nssmFile, command, {shell: true})
+
+    let executor = requiresElevation ? sudo.exec : exec
+    let options = requiresElevation ? {
+        name: 'GoData'
+    } : null
+
+    let sanitizedCommand = `${AppPaths.nssmFile} ${command.join(' ')}`
+    const nssmShellProcess = executor(sanitizedCommand, options, (error, stdout, stderr) => {
+        if (error && requiresElevation) {
+            processNssmResult(true, Buffer.from(error.message))
+        } else if (stderr.length > 0) {
+            processNssmResult(true, Buffer.from(stderr))
+        } else {
+            processNssmResult(false, Buffer.from(stdout))
+        }
+    })
+
+    // nssmShellProcess.stdout.on('data', (data) => processNssmResult(false, data))
+    // nssmShellProcess.stderr.on('data', (data) => processNssmResult(true, data))
+
+    /**
+     * Converts nssm result to string and calls the callback
+     * @param isError
+     * @param data
+     */
+    function processNssmResult(isError, data) {
+        let result = data.toString(nssmEncoding)
+        logger.info(`NSSM result: ${result}`)
+
+        // throw an error unless the error is a valid status
+        let status = undefined
+        for (let key in nssmStatuses) {
+            if (nssmStatuses.hasOwnProperty(key)) {
+                if (result.indexOf(nssmStatuses[key]) > -1) {
+                    status = nssmStatuses[key]
+                    break
+                }
+            }
+        }
+        if (!status) {
+            logger.info(`Error executing NSSM command "nssm.exe ${command.join(' ')}": ${result}`)
+            throw new Error(`Error executing NSSM command "nssm.exe ${command.join(' ')}"`)
+        }
+
+        // call callback unless previously called
+        if (!callbackCalled) {
+            callback(isError ? true : null, status)
+            callbackCalled = true
+        }
+    }
 }
 
 /**
@@ -329,7 +503,7 @@ function watchMongoStart(events, callback) {
         } else {
             logger.info(`Mongo started, no need for 60 seconds fallback`)
         }
-    }, 180000);
+    }, 180000)
 
     // Removes the watchers from the log file (chokidar) and tail (if any)
     function stopWatchingLogFile() {
