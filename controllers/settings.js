@@ -193,10 +193,13 @@ const setEncryptionCapability = (capable, callback) => {
     })
 }
 
+const runMongoAsAService = true
+
 module.exports = {
     getMongoPort,
     setMongoPort,
     getAppPort,
     setAppPort,
-    getEncryptionCapability
+    getEncryptionCapability,
+    runMongoAsAService
 }

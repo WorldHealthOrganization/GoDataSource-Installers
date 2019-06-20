@@ -14,6 +14,7 @@ const mongo = require('./mongo')
 const goData = require('./goData')
 const goDataApi = require('./goDataAPI')
 const buildConfiguration = require('./../utils/buildConfiguration')
+const settings = require('./settings')
 
 let goDataType = null
 const setBuildConfiguration = (config) => {
@@ -23,7 +24,7 @@ const setBuildConfiguration = (config) => {
 const cleanUp = (events, callback) => {
     logger.log('Cleaning up...')
     async.series([
-            mongo.killMongo,
+            (callback) => { (!settings.runMongoAsAService && mongo.killMongo(callback)) || callback() },
             goData.killGoData,
             goData.setAppPort,
             goData.setDbPort,

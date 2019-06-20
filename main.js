@@ -74,7 +74,7 @@ app.on('ready', () => {
                     appSettings.configureIPCMain()
                     appSplash.configureIPCMain()
 
-                    // open settings on first launch or launch Go.Data othewise
+                    // open settings on first launch or launch Go.Data otherwise
                     if (err && err.code === 'ENOENT') {
                         // fresh install, no app version set => open settings
                         appSettings.openSettings(constants.SETTINGS_WINDOW_LAUNCH)

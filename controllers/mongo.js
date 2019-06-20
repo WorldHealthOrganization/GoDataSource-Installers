@@ -116,22 +116,20 @@ function startMongo(events, callback) {
         }
 
         let mongoPlatform = process.env.MONGO_PLATFORM || MONGO_PLATFORM
-        switch (mongoPlatform) {
-            case 'win':
-                startMongoWindows(port, (err, status) => {
-                    // When the service is already running, it will no longer write in the log file, therefore call the callback here
-                    if (status === nssmStatuses.ServiceStarted || status === nssmStatuses.ServiceRunning) {
-                        callback()
-                    }
-                })
-                break
-            default:
-                startMongoUnix(port)
-                break
+        if (settings.runMongoAsAService && mongoPlatform === 'win') {
+            // Start Mongo as a service - does not need to check the log file because nssm.exe will return the status of the service
+            startMongoService(port, (err, status) => {
+                // When the service is already running, it will no longer write in the log file, therefore call the callback here
+                if (status === nssmStatuses.ServiceStarted || status === nssmStatuses.ServiceRunning) {
+                    callback()
+                }
+            })
+        } else {
+            // Start Mongo as integrated process
+            startMongoProcess(port)
+            // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
+            watchMongoStart(events, callback)
         }
-
-        // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
-        watchMongoStart(events, callback)
 
     })
 }
@@ -139,7 +137,7 @@ function startMongo(events, callback) {
 /**
  * Starts Mongo on Max & Linux systems using spawn. Results are logged to the Mongo logpath.
  */
-function startMongoUnix(port) {
+function startMongoProcess(port) {
     let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
     if (process.env.ARCH === 'x86' || ARCH === 'x86') {
         args.push('--storageEngine=mmapv1')
@@ -165,7 +163,7 @@ function startMongoUnix(port) {
 }
 
 // Name that will appear in services list for Mongo
-const mongoServiceName = "GoDataMongo"
+const mongoServiceName = "GoDataStorageEngine"
 
 // Statuses returned by nssm.exe
 const nssmStatuses = Object.freeze({
@@ -176,8 +174,7 @@ const nssmStatuses = Object.freeze({
     ServiceStarted: 'START: The operation completed successfully.',
     ServiceStopped: 'SERVICE_STOPPED',
     ServicePaused: 'SERVICE_PAUSED',
-    ServiceRunning: 'SERVICE_RUNNING',
-    ServiceRequiresAdminAccess: 'Administrator access is needed to install a service.'
+    ServiceRunning: 'SERVICE_RUNNING'
 })
 
 // nssm.exe encodes results in UTF16
@@ -185,27 +182,25 @@ const nssmEncoding = 'utf16le'
 
 /**
  * Starts Mongo on Windows as a service using nssm.exe. Results are logged to the Mongo logpath.
+ * @param port
  * @param callback(err, status)
  */
-function startMongoWindows(port, callback) {
+function startMongoService(port, callback) {
     checkMongoService((err, status) => {
         switch (status) {
             // service not installed, install service
             case nssmStatuses.ServiceNotInstalled:
                 installMongoService(port, () => {
-                    startMongoWindows(port, callback)
+                    startMongoService(port, callback)
                 })
                 break
-
+            // service in one status that requires just to be started
             case nssmStatuses.ServiceAlreadyInstalled:
             case nssmStatuses.ServiceInstalled:
             case nssmStatuses.ServiceDirectorySet:
             case nssmStatuses.ServiceStopped:
             case nssmStatuses.ServicePaused:
-                startMongoService(callback)
-                break
-            case nssmStatuses.ServiceRequiresAdminAccess:
-                startMongoWindows(callback)
+                launchMongoService(callback)
                 break
             case nssmStatuses.ServiceRunning:
                 callback(null, status)
@@ -236,16 +231,11 @@ function installMongoService(port, callback) {
     runNssmShell(command, true, callback)
 }
 
-function setMongoServicePath(callback) {
-    let command = ['set', mongoServiceName, 'AppDirectory', AppPaths.mongodFile]
-    runNssmShell(command, true, callback)
-}
-
 /**
  * Starts Mongo as a service using nssm.exe
  * @param callback
  */
-function startMongoService(callback) {
+function launchMongoService(callback) {
     let command = ['start', mongoServiceName]
     runNssmShell(command, true, callback)
 }
@@ -262,16 +252,14 @@ function runNssmShell(command, requiresElevation, callback) {
     // Used for cases when both stdout and stderr are written to call the callback only once
     let callbackCalled = false
 
-    // Run command with nssm.exe
-    // const nssmShellProcess = spawn(AppPaths.nssmFile, command, {shell: true})
-
+    // Choose whether to run nssm.exe with admin permissions or not
     let executor = requiresElevation ? sudo.exec : exec
     let options = requiresElevation ? {
         name: 'GoData'
     } : null
 
     let sanitizedCommand = `${AppPaths.nssmFile} ${command.join(' ')}`
-    const nssmShellProcess = executor(sanitizedCommand, options, (error, stdout, stderr) => {
+    executor(sanitizedCommand, options, (error, stdout, stderr) => {
         if (error && requiresElevation) {
             processNssmResult(true, Buffer.from(error.message))
         } else if (stderr.length > 0) {
@@ -462,7 +450,7 @@ function watchMongoStart(events, callback) {
 
     // We will use chokidar to scan for changes on the Mongo log file (add, change)
     // When chokidar detects that the mongo log is added, we read it to see if it contains 'waiting for connections' and add a tail listener that
-    // When chokidar detects that the mongo log is changed, we
+    // When chokidar detects that the mongo log is changed, we only tail the file to see 'waiting for connections' from that point
     let called = false
     let tail = null
     let newLog = false
@@ -473,11 +461,13 @@ function watchMongoStart(events, callback) {
         if (!called) {
             switch (event) {
                 case 'add':
+                    logger.info(`Detected new Mongo log in ${DatabaseLogFile}`)
                     newLog = true
                     readMongoLog()
                     tailMongoLog()
                     break
                 case 'change':
+                    logger.info(`Detected change in Mongo log in ${DatabaseLogFile}`)
                     tailMongoLog()
                     break
             }
