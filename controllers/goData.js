@@ -16,6 +16,7 @@ const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
 const goDataAPI = require('./goDataAPI')
 const settings = require('./settings')
+const { nssmStatuses, goDataAPIServiceName, runNssmShell } = require('nssm')
 
 const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
@@ -47,7 +48,7 @@ function setDbPort(callback) {
 }
 
 /**
- * Starts Go.Data using PM2
+ * Decides whether to start Go.Data as service or as process and proceeds with chosen method
  * @param events - Invoked with ({ options }).
  *      options.text - Event text
  *      options.details - Event detail
@@ -56,6 +57,20 @@ function setDbPort(callback) {
 function startGoData(events, callback) {
     logger.info(`Configuring ${productName} web app...`)
     events({text: `Configuring ${productName} web app...`})
+
+    if (settings.runGoDataAPIAsAService) {
+        startGoDataAsService(events, callback)
+    } else {
+        startGoDataAsProcess(events, callback)
+    }
+}
+
+/**
+ * Launches Go.Data as a process using PM2 node API
+ * @param events
+ * @param callback
+ */
+function startGoDataAsProcess(events, callback) {
     pm2.connect(true, (err) => {
 
         if (err) {
@@ -160,6 +175,63 @@ function startGoData(events, callback) {
             tail.unwatch()
         }
     })
+}
+
+/**
+ * Launches Go.Data as a service using nssm.exe and PM2 CLI
+ * @param events
+ * @param callback
+ */
+function startGoDataAsService(events, callback) {
+    checkGoDataAPIService((err, status) => {
+        switch (status) {
+            // service not installed, install service
+            case nssmStatuses.ServiceNotInstalled:
+                installGoDataAPIService(() => {
+                    startGoDataAsService(events, callback)
+                })
+                break
+            // service in one status that requires just to be started
+            case nssmStatuses.ServiceAlreadyInstalled:
+            case nssmStatuses.ServiceInstalled:
+            case nssmStatuses.ServiceDirectorySet:
+            case nssmStatuses.ServiceStopped:
+            case nssmStatuses.ServicePaused:
+                launchGoDataAPIService(callback)
+                break
+            case nssmStatuses.ServiceRunning:
+                callback(null, status)
+                break
+        }
+    })
+}
+
+/**
+ * Checks the Go.Data API service using nssm.exe.
+ * @param callback
+ */
+function checkGoDataAPIService(callback) {
+    let command = ['status', goDataAPIServiceName]
+    runNssmShell(command, false, callback)
+}
+
+/**
+ * Installs Go.Data API as a service using nssm.exe
+ * @param callback
+ */
+function installGoDataAPIService(callback) {
+    // TODO - write PM2 CLI command to launch Go.Data
+    let command = ['install', goDataAPIServiceName, AppPaths.PM2ExecutableThatIsNotYetHere, 'pm2 parameter1', 'pm2']
+    runNssmShell(command, true, callback)
+}
+
+/**
+ * Starts Mongo as a service using nssm.exe
+ * @param callback
+ */
+function launchGoDataAPIService(callback) {
+    let command = ['start', goDataAPIServiceName]
+    runNssmShell(command, true, callback)
 }
 
 /**

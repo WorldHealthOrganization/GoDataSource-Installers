@@ -12,7 +12,7 @@ const settingsFile = AppPaths.desktopApp.settingsFile
 const encryptionController = require('./encryption')
 
 const logger = require('./../logger/app').logger
-const { NODE_PLATFORM } = require('./../package')
+const { NODE_PLATFORM, MONGO_PLATFORM } = require('./../package')
 
 /**
  * Reads the .settings file and returns the JSON parsed content as object.
@@ -193,7 +193,8 @@ const setEncryptionCapability = (capable, callback) => {
     })
 }
 
-const runMongoAsAService = true
+const runMongoAsAService = (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win'
+const runGoDataAPIAsAService = false
 
 module.exports = {
     getMongoPort,
@@ -201,5 +202,6 @@ module.exports = {
     getAppPort,
     setAppPort,
     getEncryptionCapability,
-    runMongoAsAService
+    runMongoAsAService,
+    runGoDataAPIAsAService
 }
