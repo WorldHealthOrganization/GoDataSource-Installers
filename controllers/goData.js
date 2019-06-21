@@ -16,7 +16,8 @@ const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
 const goDataAPI = require('./goDataAPI')
 const settings = require('./settings')
-const { nssmStatuses, goDataAPIServiceName, runNssmShell } = require('nssm')
+const { nssmStatuses, goDataAPIServiceName, runNssmShell } = require('./nssm')
+const service = require('node-windows').Service
 
 const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
@@ -178,60 +179,26 @@ function startGoDataAsProcess(events, callback) {
 }
 
 /**
- * Launches Go.Data as a service using nssm.exe and PM2 CLI
+ * Launches Go.Data as a service. Nssm can not be used to create services from non-executable files, so we use the 'node-windows' module to create a service.
  * @param events
  * @param callback
  */
 function startGoDataAsService(events, callback) {
-    checkGoDataAPIService((err, status) => {
-        switch (status) {
-            // service not installed, install service
-            case nssmStatuses.ServiceNotInstalled:
-                installGoDataAPIService(() => {
-                    startGoDataAsService(events, callback)
-                })
-                break
-            // service in one status that requires just to be started
-            case nssmStatuses.ServiceAlreadyInstalled:
-            case nssmStatuses.ServiceInstalled:
-            case nssmStatuses.ServiceDirectorySet:
-            case nssmStatuses.ServiceStopped:
-            case nssmStatuses.ServicePaused:
-                launchGoDataAPIService(callback)
-                break
-            case nssmStatuses.ServiceRunning:
-                callback(null, status)
-                break
-        }
+    let svc = new service({
+        name: goDataAPIServiceName,
+        script: `${AppPaths.webApp.directory}\\server\\server.js`
     })
-}
-
-/**
- * Checks the Go.Data API service using nssm.exe.
- * @param callback
- */
-function checkGoDataAPIService(callback) {
-    let command = ['status', goDataAPIServiceName]
-    runNssmShell(command, false, callback)
-}
-
-/**
- * Installs Go.Data API as a service using nssm.exe
- * @param callback
- */
-function installGoDataAPIService(callback) {
-    // TODO - write PM2 CLI command to launch Go.Data
-    let command = ['install', goDataAPIServiceName, AppPaths.PM2ExecutableThatIsNotYetHere, 'pm2 parameter1', 'pm2']
-    runNssmShell(command, true, callback)
-}
-
-/**
- * Starts Mongo as a service using nssm.exe
- * @param callback
- */
-function launchGoDataAPIService(callback) {
-    let command = ['start', goDataAPIServiceName]
-    runNssmShell(command, true, callback)
+    svc.on('install', () => {
+        svc.start()
+    })
+    svc.on('alreadyinstalled', () => {
+        svc.start()
+    })
+    svc.on('start', () => {
+        // TODO here we have to find in logs that the app launched successfully, the same way that launching as process watches over the log file
+        callback()
+    })
+    svc.install()
 }
 
 /**

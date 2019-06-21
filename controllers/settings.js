@@ -194,7 +194,7 @@ const setEncryptionCapability = (capable, callback) => {
 }
 
 const runMongoAsAService = (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win'
-const runGoDataAPIAsAService = false
+const runGoDataAPIAsAService = true
 
 module.exports = {
     getMongoPort,

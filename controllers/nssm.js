@@ -4,6 +4,12 @@
 
 'use strict';
 
+const { exec } = require('child_process')
+const sudo = require('sudo-prompt')
+
+const logger = require('./../logger/app').logger
+const AppPaths = require('./../utils/paths')
+
 // Windows Service names
 const mongoServiceName = "GoDataStorageEngine"
 const goDataAPIServiceName = "GoDataAPI"
@@ -12,12 +18,16 @@ const goDataAPIServiceName = "GoDataAPI"
 const nssmStatuses = Object.freeze({
     ServiceNotInstalled: 'The specified service does not exist as an installed service.',
     ServiceAlreadyInstalled: 'The specified service already exists.',
-    ServiceInstalled: `Service "${mongoServiceName}" installed successfully!`,
-    ServiceDirectorySet: `Set parameter "AppDirectory" for service "${mongoServiceName}".`,
     ServiceStarted: 'START: The operation completed successfully.',
     ServiceStopped: 'SERVICE_STOPPED',
     ServicePaused: 'SERVICE_PAUSED',
-    ServiceRunning: 'SERVICE_RUNNING'
+    ServiceRunning: 'SERVICE_RUNNING',
+    /**
+     * @return {string}
+     */
+    ServiceInstalled: function (serviceName) {
+        return `Service "${serviceName}" installed successfully!`
+    }
 })
 
 // nssm.exe encodes results in UTF16
@@ -26,24 +36,27 @@ const nssmEncoding = 'utf16le'
 /**
  * Executes a command using nssm.exe
  * @param command - Array containing the command and additional parameters
- * @param requiresElevation - Whether the command requires elevation to ask for Admin account
+ * @param shellOptions
+ *     requiresElevation - Whether the command requires elevation to ask for Admin account
+ *     serviceName - The name of the windows service
  * @param callback
  */
-function runNssmShell(command, requiresElevation, callback) {
+function runNssmShell(command, shellOptions, callback) {
+    shellOptions = shellOptions || {}
     logger.info(`Running NSSM command "nssm.exe ${command.join(' ')}"...`)
 
     // Used for cases when both stdout and stderr are written to call the callback only once
     let callbackCalled = false
 
     // Choose whether to run nssm.exe with admin permissions or not
-    let executor = requiresElevation ? sudo.exec : exec
-    let options = requiresElevation ? {
+    let executor = shellOptions.requiresElevation ? sudo.exec : exec
+    let options = shellOptions.requiresElevation ? {
         name: 'GoData'
     } : null
 
     let sanitizedCommand = `${AppPaths.nssmFile} ${command.join(' ')}`
     executor(sanitizedCommand, options, (error, stdout, stderr) => {
-        if (error && requiresElevation) {
+        if (error && shellOptions.requiresElevation) {
             processNssmResult(true, Buffer.from(error.message))
         } else if (stderr.length > 0) {
             processNssmResult(true, Buffer.from(stderr))
@@ -68,8 +81,12 @@ function runNssmShell(command, requiresElevation, callback) {
         let status = undefined
         for (let key in nssmStatuses) {
             if (nssmStatuses.hasOwnProperty(key)) {
-                if (result.indexOf(nssmStatuses[key]) > -1) {
-                    status = nssmStatuses[key]
+                let sanitizedStatus = nssmStatuses[key]
+                if (typeof nssmStatuses[key] === 'function') {
+                    sanitizedStatus = nssmStatuses[key](shellOptions.serviceName)
+                }
+                if (result.indexOf(sanitizedStatus) > -1) {
+                    status = sanitizedStatus
                     break
                 }
             }

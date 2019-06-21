@@ -83,7 +83,7 @@ module.exports = {
     mongodFile: mongodPath,                         // Location of the Mongod executable
     mongoFile: mongoPath,
     pm2Module: pm2Module,                           // Location of the PM2 module (to be used programatically)
-    pm2File: pm2File,                               // Location of the PM2 executable (to be used with child process)
+    pm2File: pm2File,                               // Location of the PM2 javascript file (to be used with child process)
     resourcesDirectory: resourceDirectory,
     windowsDirectory: windowsDirectory,
     testEncryptionDirectory: testEnctryptionDirectory

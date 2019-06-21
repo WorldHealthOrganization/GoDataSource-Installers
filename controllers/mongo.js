@@ -4,7 +4,7 @@
 
 'use strict'
 
-const {spawn, exec} = require('child_process')
+const {spawn} = require('child_process')
 
 const async = require('async')
 const mkdirp = require('mkdirp')
@@ -12,7 +12,6 @@ const kill = require('kill-port')
 const Tail = require('tail').Tail
 const chokidar = require('chokidar')
 const fs = require('fs')
-const sudo = require('sudo-prompt')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
@@ -168,7 +167,6 @@ function startMongoProcess(port) {
 //     ServiceNotInstalled: 'The specified service does not exist as an installed service.',
 //     ServiceAlreadyInstalled: 'The specified service already exists.',
 //     ServiceInstalled: `Service "${mongoServiceName}" installed successfully!`,
-//     ServiceDirectorySet: `Set parameter "AppDirectory" for service "${mongoServiceName}".`,
 //     ServiceStarted: 'START: The operation completed successfully.',
 //     ServiceStopped: 'SERVICE_STOPPED',
 //     ServicePaused: 'SERVICE_PAUSED',
@@ -194,10 +192,9 @@ function startMongoService(port, callback) {
                 break
             // service in one status that requires just to be started
             case nssmStatuses.ServiceAlreadyInstalled:
-            case nssmStatuses.ServiceInstalled:
-            case nssmStatuses.ServiceDirectorySet:
             case nssmStatuses.ServiceStopped:
             case nssmStatuses.ServicePaused:
+            case nssmStatuses.ServiceInstalled(mongoServiceName):
                 launchMongoService(callback)
                 break
             case nssmStatuses.ServiceRunning:
@@ -213,7 +210,7 @@ function startMongoService(port, callback) {
  */
 function checkMongoService(callback) {
     let command = ['status', mongoServiceName]
-    runNssmShell(command, false, callback)
+    runNssmShell(command, { requiresElevation: false }, callback)
 }
 
 /**
@@ -226,7 +223,7 @@ function installMongoService(port, callback) {
         command.push('--storageEngine=mmapv1')
         command.push('--journal')
     }
-    runNssmShell(command, true, callback)
+    runNssmShell(command,  { requiresElevation: true, serviceName: mongoServiceName }, callback)
 }
 
 /**
@@ -235,7 +232,7 @@ function installMongoService(port, callback) {
  */
 function launchMongoService(callback) {
     let command = ['start', mongoServiceName]
-    runNssmShell(command, true, callback)
+    runNssmShell(command, { requiresElevation: true }, callback)
 }
 
 /**
