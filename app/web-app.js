@@ -1,6 +1,6 @@
 'use strict'
 
-const { app, BrowserWindow } = require('electron')
+const {app, BrowserWindow} = require('electron')
 const path = require('path')
 
 const goData = require('./../controllers/goData')
@@ -52,7 +52,8 @@ const launchGoData = (callback) => {
 
     prelaunch.setBuildConfiguration(goDataConfiguration)
     prelaunch.cleanUp(
-        (event) => { },
+        (event) => {
+        },
         () => {
             let loadingIndicator = ['⦾', '⦿']
             let index = 0
@@ -77,10 +78,7 @@ const launchGoData = (callback) => {
                                 appSplash.sendSplashEvent('error', err.message)
                                 return callback(err)
                             }
-                            if (appURL) {
-                                logger.logger.info(`Opening ${productName} at ${appURL}`)
-                                openWebApp(appURL)
-                            }
+                            openWebApp(appURL)
                             appSplash.closeSplashScreen()
                             const tray = require('./tray')
                             tray.createTray()
@@ -97,20 +95,24 @@ const launchGoData = (callback) => {
  */
 const openWebApp = (appURL) => {
     if (appURL) {
-        webAppURL = appURL;
+        logger.logger.info(`Opening ${productName} at ${appURL}`)
+        webAppURL = appURL
         openEmbeddedWindow(appURL)
     } else if (webAppURL) {
+        logger.logger.info(`Opening ${productName} at ${webAppURL}`)
         openEmbeddedWindow(webAppURL)
     } else {
         goDataAPI.getAppPort((err, port) => {
             if (!err) {
-                openEmbeddedWindow(`http://localhost:${port}`)
+                let url = `http://localhost:${port}`
+                logger.logger.info(`Opening ${productName} at ${url}`)
+                openEmbeddedWindow(url)
             }
         })
     }
 }
 
-let embeddedAppWindow;
+let embeddedAppWindow
 /**
  * Open Go.Data in an Electron window that loads Go.Data Web portal
  * @param url - The URL where Go.Data is running.
@@ -123,7 +125,7 @@ const openEmbeddedWindow = (url) => {
             },
             show: false,
             icon: path.join(__dirname, './../build/icon.png')
-        });
+        })
 
         // maximize window
         embeddedAppWindow.maximize()
@@ -135,9 +137,9 @@ const openEmbeddedWindow = (url) => {
 
         // keep name and URL on app title
         embeddedAppWindow.on('page-title-updated', function (event, title) {
-            event.preventDefault();
+            event.preventDefault()
             embeddedAppWindow.setTitle(title)
-        });
+        })
 
         // Emitted when the window is closed.
         embeddedAppWindow.on('closed', function () {
@@ -145,7 +147,7 @@ const openEmbeddedWindow = (url) => {
             // in an array if your app supports multi windows, this is the time
             // when you should delete the corresponding element.
             embeddedAppWindow = null
-        });
+        })
 
         app.setApplicationMenu(menu.getMenu(url))
 

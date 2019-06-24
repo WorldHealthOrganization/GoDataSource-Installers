@@ -96,7 +96,7 @@ function startGoDataAsProcess(events, callback) {
             (err) => {
                 if (err) {
                     // log file sends events to splash screen
-                    stopWatchingLogFile()
+                    stopWatchingLogFile(options)
 
                     err = new Error(`Error configuring the ${productName} web app: ${err.message}`)
                     logger.error(err.message)
@@ -105,76 +105,9 @@ function startGoDataAsProcess(events, callback) {
                 logger.info(`Started ${productName}`)
                 pm2.disconnect()
             })
-
-        // There's an OS bug on windows that freezes the files from being read. chokidar will force-poll the logs file.
-        let watcher
-        if (process.platform === 'win32') {
-            watcher = chokidar.watch(AppPaths.appLogFile, {
-                usePolling: true,
-                interval: 1000
-            }).on('all', (event, path) => {
-                console.log(event, path)
-            })
-        }
-
-        //create a read stream from the log file to detect when the app starts
-        const tail = new Tail(AppPaths.appLogFile)
-
-        // used to call the open Go.Data callback only once
-        let called = false
-
-        tail.on('line', (data) => {
-            const log = data.toString()
-            events({text: `Configuring ${productName} web app...`, details: log})
-            if (log.indexOf('Web server listening at:') > -1) {
-
-                stopWatchingLogFile()
-
-                logger.info(`Successfully started ${productName} web app!`)
-                events({text: `Successfully started ${productName} web app!`})
-
-                const urlIndex = log.indexOf('http')
-                if (urlIndex > -1 && !called) {
-                    called = true
-                    return callback(null, log.substring(urlIndex))
-                }
-
-                if (!called) {
-                    called = true
-                    callback()
-                }
-            }
-        })
-
-        // Sometimes 'Web server listening at http://localhost:8000' is not caught in the log file.
-        // As a final fallback, set a 30 second timer that calls the callback if it's not previously been called.
-        setTimeout(() => {
-            settings.getAppPort((err, port) => {
-                if (err) {
-                    return !called && callback(err)
-                }
-                if (!called) {
-                    logger.info(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
-                    called = true
-                    callback(null, `http://localhost:${port}`)
-                } else {
-                    logger.info(`${productName} started, no need for 60 seconds fallback`)
-                }
-            })
-        }, 60000)
-
-        tail.on('error', (err) => {
-            logger.error('ERROR ' + err.message)
-        })
-
-        function stopWatchingLogFile() {
-            logger.info(`Stopping watch over log file ${AppPaths.appLogFile}`)
-            if (watcher) {
-                watcher.unwatch(AppPaths.appLogFile)
-                watcher.close()
-            }
-            tail.unwatch()
-        }
+        // will contain watcher and tail
+        let options = { }
+        detectAppStartFromLog(options, events, callback)
     })
 }
 
@@ -184,21 +117,165 @@ function startGoDataAsProcess(events, callback) {
  * @param callback
  */
 function startGoDataAsService(events, callback) {
-    let svc = new service({
-        name: goDataAPIServiceName,
-        script: `${AppPaths.webApp.directory}\\server\\server.js`
+    checkGoDataAPIService((err, status) => {
+        switch (status) {
+            // service not installed, install service
+            case nssmStatuses.ServiceNotInstalled:
+                // install service
+                installGoDataAPIService((error, status) => {
+                    // set service paramteres for logging
+                    setGoDataAPIServiceParameters((error, statuses) => {
+                        // recursive call this function to check again the status
+                        startGoDataAsService(events, callback)
+                    })
+                })
+                break
+            // service in one status that requires just to be started
+            case nssmStatuses.ServiceAlreadyInstalled:
+            case nssmStatuses.ServiceStopped:
+            case nssmStatuses.ServicePaused:
+            case nssmStatuses.ServiceInstalled({goDataAPIServiceName}):
+                let options = {}
+                detectAppStartFromLog(options, events, callback)
+                launchGoDataAPIService((error, status) => {
+                    // The callback will not be called here. Once the service is launched, Go.Data takes some time to load
+                    // To determine when Go.Data has loaded, we will check the web app log and then the callback will be called
+                })
+                break
+            case nssmStatuses.ServiceRunning:
+                callback()
+                break
+            default:
+                callback(new Error(`Error starting GoData API Service! Service returned status ${status}`))
+        }
     })
-    svc.on('install', () => {
-        svc.start()
+}
+
+/**
+ * Checks the app
+ * @param options - contains watcher and tail
+ * @param events
+ * @param callback
+ */
+function detectAppStartFromLog(options, events, callback) {
+    // There's an OS bug on windows that freezes the files from being read. chokidar will force-poll the logs file.
+    if (process.platform === 'win32') {
+        options.watcher = chokidar.watch(AppPaths.appLogFile, {
+            usePolling: true,
+            interval: 1000
+        }).on('all', (event, path) => {
+            console.log(event, path)
+        })
+    }
+
+    //create a read stream from the log file to detect when the app starts
+    options.tail = new Tail(AppPaths.appLogFile)
+
+    // used to call the open Go.Data callback only once
+    let called = false
+
+    options.tail.on('line', (data) => {
+        const log = data.toString()
+        events({text: `Configuring ${productName} web app...`, details: log})
+        if (log.indexOf('Web server listening at:') > -1) {
+
+            stopWatchingLogFile(options)
+
+            logger.info(`Successfully started ${productName} web app!`)
+            events({text: `Successfully started ${productName} web app!`})
+
+            const urlIndex = log.indexOf('http')
+            if (urlIndex > -1 && !called) {
+                called = true
+                return callback(null, log.substring(urlIndex))
+            }
+
+            if (!called) {
+                called = true
+                callback()
+            }
+        }
     })
-    svc.on('alreadyinstalled', () => {
-        svc.start()
+
+    // Sometimes 'Web server listening at http://localhost:8000' is not caught in the log file.
+    // As a final fallback, set a 30 second timer that calls the callback if it's not previously been called.
+    setTimeout(() => {
+        settings.getAppPort((err, port) => {
+            if (err) {
+                return !called && callback(err)
+            }
+            if (!called) {
+                logger.info(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
+                called = true
+                callback(null, `http://localhost:${port}`)
+            } else {
+                logger.info(`${productName} started, no need for 60 seconds fallback`)
+            }
+        })
+    }, 60000)
+
+    options.tail.on('error', (err) => {
+        logger.error('ERROR ' + err.message)
     })
-    svc.on('start', () => {
-        // TODO here we have to find in logs that the app launched successfully, the same way that launching as process watches over the log file
-        callback()
-    })
-    svc.install()
+}
+
+/**
+ * Stops watching a log file
+ * @param options - contains watcher and tail
+ */
+function stopWatchingLogFile(options) {
+    logger.info(`Stopping watch over log file ${AppPaths.appLogFile}`)
+    if (options.watcher) {
+        options.watcher.unwatch(AppPaths.appLogFile)
+        options.watcher.close()
+    }
+    options.tail.unwatch()
+}
+
+/**
+ * Checks the Mongo service using nssm.exe.
+ * @param callback
+ */
+function checkGoDataAPIService(callback) {
+    let command = ['status', goDataAPIServiceName]
+    runNssmShell(command, { requiresElevation: false }, callback)
+}
+
+/**
+ * Installs Mongo as a service using nssm.exe
+ * @param callback
+ */
+function installGoDataAPIService(callback) {
+    let command = ['install', goDataAPIServiceName, AppPaths.nodeFile, AppPaths.webApp.launchScript]
+    runNssmShell(command, { requiresElevation: true, serviceName: goDataAPIServiceName }, callback)
+}
+
+/**
+ * Sets the service parameters 'AppStdout' and 'AppStderr' to write to the same log file where it writes when Go.Data is launched as a process.
+ * @param callback
+ */
+function setGoDataAPIServiceParameters(callback) {
+    let appStdout = 'AppStdout'
+    let appStderr = 'AppStderr'
+    let outputCommand = ['set', goDataAPIServiceName, appStdout, AppPaths.appLogFile]
+    let errorCommand = ['set', goDataAPIServiceName, appStderr, AppPaths.appLogFile]
+    async.parallel([
+        (callback) => {
+            runNssmShell(outputCommand, { requiresElevation: true, serviceName: goDataAPIServiceName, serviceParameter: appStdout }, callback)
+        },
+        (callback) => {
+            runNssmShell(errorCommand, { requiresElevation: true, serviceName: goDataAPIServiceName, serviceParameter: appStderr }, callback)
+        }
+    ], callback)
+}
+
+/**
+ * Starts Mongo as a service using nssm.exe
+ * @param callback
+ */
+function launchGoDataAPIService(callback) {
+    let command = ['start', goDataAPIServiceName]
+    runNssmShell(command, { requiresElevation: true }, callback)
 }
 
 /**

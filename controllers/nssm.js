@@ -22,11 +22,18 @@ const nssmStatuses = Object.freeze({
     ServiceStopped: 'SERVICE_STOPPED',
     ServicePaused: 'SERVICE_PAUSED',
     ServiceRunning: 'SERVICE_RUNNING',
+
     /**
      * @return {string}
      */
-    ServiceInstalled: function (serviceName) {
-        return `Service "${serviceName}" installed successfully!`
+    ServiceInstalled: function (options) {
+        return `Service "${options.serviceName}" installed successfully!`
+    },
+    /**
+     * @return {string}
+     */
+    ParameterSet: function (options) {
+        return `Set parameter "${options.serviceParameter}" for service "${options.serviceName}".`
     }
 })
 
@@ -65,9 +72,6 @@ function runNssmShell(command, shellOptions, callback) {
         }
     })
 
-    // nssmShellProcess.stdout.on('data', (data) => processNssmResult(false, data))
-    // nssmShellProcess.stderr.on('data', (data) => processNssmResult(true, data))
-
     /**
      * Converts nssm result to string and calls the callback
      * @param isError
@@ -83,7 +87,7 @@ function runNssmShell(command, shellOptions, callback) {
             if (nssmStatuses.hasOwnProperty(key)) {
                 let sanitizedStatus = nssmStatuses[key]
                 if (typeof nssmStatuses[key] === 'function') {
-                    sanitizedStatus = nssmStatuses[key](shellOptions.serviceName)
+                    sanitizedStatus = nssmStatuses[key](shellOptions)
                 }
                 if (result.indexOf(sanitizedStatus) > -1) {
                     status = sanitizedStatus

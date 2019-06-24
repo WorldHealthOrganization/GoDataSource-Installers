@@ -52,6 +52,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2')
+const webAppLaunchScript = path.join(webAppDirectory, 'server/server.js')
 const webAppPackage = path.join(webAppDirectory, 'package')
 const webAppVersion = require(webAppPackage).version
 const webAppInstalledVersion = path.join(app.getPath('userData'), '.appVersion')
@@ -61,6 +62,7 @@ module.exports = {
     appDirectory: appDirectory,
     webApp: {
         directory: webAppDirectory,                 // Location of the Go.Data web app directory
+        launchScript: webAppLaunchScript,           // Location of the Go.Data main file (server/server.js)
         package: webAppPackage,                     // Location of package.json for Go.Data web app
         currentVersion: webAppVersion,              // Version of Go.Data web app taken from package.json
         installedVersion: webAppInstalledVersion,   // Location of file that contains the version of the installed Go.Data web

@@ -11,7 +11,8 @@ const cleanup = () => {
     mongo.setShouldThrowExceptionOnMongoFailure(false)
     // Mongo process should only be stopped if not running as a service
     !settings.runMongoAsAService && mongo.killMongo()
-    goData.killGoData()
+    // Go.Data process should only be stopped if not running as a service
+    ! settings.runGoDataAPIAsAService && goData.killGoData()
 }
 
 module.exports = {

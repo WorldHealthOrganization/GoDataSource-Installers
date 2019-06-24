@@ -194,12 +194,14 @@ function startMongoService(port, callback) {
             case nssmStatuses.ServiceAlreadyInstalled:
             case nssmStatuses.ServiceStopped:
             case nssmStatuses.ServicePaused:
-            case nssmStatuses.ServiceInstalled(mongoServiceName):
+            case nssmStatuses.ServiceInstalled({mongoServiceName}):
                 launchMongoService(callback)
                 break
             case nssmStatuses.ServiceRunning:
                 callback(null, status)
                 break
+            default:
+                callback(new Error(`Error starting Mongo Service! Service returned status ${status}`))
         }
     })
 }

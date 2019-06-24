@@ -28,6 +28,7 @@ const getSettings = (callback) => {
 
 /**
  * Creates the .settings file with JSON content
+ * @param settings
  * @param callback
  */
 const setSettings = (settings, callback) => {
@@ -194,7 +195,7 @@ const setEncryptionCapability = (capable, callback) => {
 }
 
 const runMongoAsAService = (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win'
-const runGoDataAPIAsAService = true
+const runGoDataAPIAsAService = (NODE_PLATFORM || process.env.NODE_PLATFORM) === 'win'
 
 module.exports = {
     getMongoPort,

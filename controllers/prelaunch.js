@@ -24,8 +24,10 @@ const setBuildConfiguration = (config) => {
 const cleanUp = (events, callback) => {
     logger.log('Cleaning up...')
     async.series([
+            // DO NOT KILL MONGO IF LAUNCHED AS A SERVICE
             (callback) => { (!settings.runMongoAsAService && mongo.killMongo(callback)) || callback() },
-            goData.killGoData,
+            // DO NOT KILL GO DATA IF LAUNCHED AS A SERVICE
+            (callback) => { (!settings.runGoDataAPIAsAService && goData.killGoData(callback)) || callback() },
             goData.setAppPort,
             goData.setDbPort,
             (callback) => {
