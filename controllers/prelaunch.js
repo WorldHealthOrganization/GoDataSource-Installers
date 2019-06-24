@@ -25,9 +25,21 @@ const cleanUp = (events, callback) => {
     logger.log('Cleaning up...')
     async.series([
             // DO NOT KILL MONGO IF LAUNCHED AS A SERVICE
-            (callback) => { (!settings.runMongoAsAService && mongo.killMongo(callback)) || callback() },
+            (callback) => {
+                if (settings.runMongoAsAService) {
+                    callback()
+                } else {
+                    mongo.killMongo(callback)
+                }
+            },
             // DO NOT KILL GO DATA IF LAUNCHED AS A SERVICE
-            (callback) => { (!settings.runGoDataAPIAsAService && goData.killGoData(callback)) || callback() },
+            (callback) => {
+                if (settings.runGoDataAPIAsAService) {
+                    callback()
+                } else {
+                    goData.killGoData(callback)
+                }
+            },
             goData.setAppPort,
             goData.setDbPort,
             (callback) => {
