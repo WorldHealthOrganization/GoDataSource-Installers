@@ -17,7 +17,6 @@ const processUtil = require('./../utils/process')
 const goDataAPI = require('./goDataAPI')
 const settings = require('./settings')
 const { nssmStatuses, goDataAPIServiceName, runNssmShell } = require('./nssm')
-const service = require('node-windows').Service
 
 const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
