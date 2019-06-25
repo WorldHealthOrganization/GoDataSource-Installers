@@ -27,20 +27,34 @@ const findPortInUse = (port, callback) => {
                 logger.error(`Error retrieving processes running on port ${port}`)
                 callback(err, null)
             })
+        .catch((e) => {
+            logger.info(e)
+            callback(e, null)
+        })
 }
 
+/**
+ * Terminates a process by pid
+ * @param pid - Process Id
+ * @param callback - Invoked with (err)
+ */
 const killProcess = (pid, callback) => {
     logger.info(`Terminating processes with PID ${pid}...`)
     ps.kill(
         pid,
-        'SIGINT',    // send kill -2, includes graceful kill as advised by Mongo
+        {
+            // send kill -2, includes graceful kill as advised by Mongo
+            signal: 'SIGINT',
+            timeout: 5
+        },
         (err) => {
             if (err) {
                 logger.info(`Error killing process with PID ${pid}: ${err.message}`)
             } else {
                 logger.info(`Process with PID ${pid} terminated!`)
             }
-            callback()
+            // call callback without err. The process may be killed of not in case of an error, proceed without error.
+            callback(null)
         })
 }
 

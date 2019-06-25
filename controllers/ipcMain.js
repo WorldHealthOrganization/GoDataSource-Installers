@@ -3,12 +3,18 @@
 const { ipcMain } = require('electron')
 
 const settings = require('./settings')
+const encryption = require('./encryption')
 
 const logger = require('./../logger/app').logger
+const goDataAPI = require('./goDataAPI')
+
+const { name, version, NODE_PLATFORM } = require('./../package')
+
+const { APP_EXIT, OPEN_LOGS } = require('./../utils/constants')
 
 let state;
 
-const init = (events) => {
+const initSettingsEvents = (events) => {
 
     logger.info('Initializing IPCMain...')
 
@@ -31,12 +37,60 @@ const init = (events) => {
         })
     })
 
-    ipcMain.on('buttonClick-message', (event, ports) => {
+    ipcMain.on('getProductVersion-message', (event, arg) => {
+        logger.log('IPCMain received getProductVersion-message')
+        let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+        event.sender.send('getProductVersion-reply', `${name} ${version}`, platform)
+    })
+
+    ipcMain.on('getBuildNumber-message', (event, arg) => {
+        logger.log('IPCMain received getBuildNumber-message')
+        goDataAPI.getBuildNumber((err, buildNumber) => {
+            event.sender.send('getBuildNumber-reply', buildNumber || 'not set')
+        })
+    })
+
+    ipcMain.on('getEncryptionCapabilities-message', (event, arg) => {
+        logger.log('IPCMain received getEncryptionCapabilities-message')
+        settings.getEncryptionCapability((err, encryptionCapability) => {
+            if (!encryptionCapability) {
+                // send to window result that encryption is not available
+                return event.sender.send('getEncryptionCapabilities-reply', err, false, false)
+            }
+            //retrieve encryption status
+            encryption.getDatabaseEncryptionStatus((err, status) => {
+                event.sender.send('getEncryptionCapabilities-reply', err, true, status)
+            })
+        })
+    })
+
+    ipcMain.on('toggleEncryption-message', (event, arg) => {
+        logger.log('IPCMain received toggleEncryption-message')
+        if (arg) {
+            encryption.encryptDatabase(() => {})
+        } else {
+            encryption.decryptDatabase(() => {})
+        }
+    })
+
+    ipcMain.on('buttonClick-message', (event, arg) => {
         logger.log('IPCMain received buttonClick-message')
-        events(ports.mongoPort, ports.goDataPort, state)
+        events(arg.mongoPort, arg.goDataPort, arg.appType, arg.encryption, state)
     })
 
     logger.info('Initialized IPCMain')
+}
+
+const initSplashEvents = (events) => {
+    ipcMain.on('open-logs-message', (event, arg) => {
+        logger.log('IPCMain received open-logs-message')
+        events(OPEN_LOGS)
+    })
+
+    ipcMain.on('exit-message', (event, arg) => {
+        logger.log('IPCMain received exit-message')
+        events(APP_EXIT)
+    })
 }
 
 function setState(newState) {
@@ -44,6 +98,7 @@ function setState(newState) {
 }
 
 module.exports = {
-    init,
+    initSettingsEvents,
+    initSplashEvents,
     setState
 }

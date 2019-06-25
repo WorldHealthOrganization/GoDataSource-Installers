@@ -9,7 +9,10 @@ const fs = require('fs')
 const AppPaths = require('./../utils/paths')
 const settingsFile = AppPaths.desktopApp.settingsFile
 
+const encryptionController = require('./encryption')
+
 const logger = require('./../logger/app').logger
+const { NODE_PLATFORM } = require('./../package')
 
 /**
  * Reads the .settings file and returns the JSON parsed content as object.
@@ -44,7 +47,7 @@ const setSettings = (settings, callback) => {
 }
 
 /**
- * Reads the .settings file and returns `apiPort` variable
+ * If the application port is cached, it is sent in callback. Otherwise, the .settings file is read and the value of `apiPort` is sent in the callback.
  * @param callback - invoked with (err, port)
  */
 let appPort = null
@@ -58,11 +61,11 @@ const getAppPort = (callback) => {
                 appPort = 8000
                 return callback(null, appPort)
             } else {
-                callback(null, null)
-                throw new Error(`Error setting application port: ${err.message}`)
+                // callback(null, null)
+                throw new Error(`Error getting application port: ${err.message}`)
             }
         }
-        appPort = settings.appPort
+        appPort = settings.appPort || 8000
         callback(null, appPort)
     })
 }
@@ -78,7 +81,8 @@ const setAppPort = (port, callback) => {
             if (err.code === 'ENOENT') {
                 settings = {}
             } else {
-                return callback(err, null)
+                // return callback(err, null)
+                throw new Error(`Error setting application port: ${err.message}`)
             }
         }
         appPort = port
@@ -103,11 +107,11 @@ const getMongoPort = (callback) => {
                 mongoPort = 27017
                 return callback(null, mongoPort)
             } else {
-                callback(null, null)
+                // callback(null, null)
                 throw new Error(`Error setting Mongo port: ${err.message}`)
             }
         }
-        mongoPort = settings.mongoPort
+        mongoPort = settings.mongoPort || 27017
         callback(null, mongoPort)
     })
 }
@@ -123,7 +127,8 @@ const setMongoPort = (port, callback) => {
             if (err.code === 'ENOENT') {
                 settings = {}
             } else {
-                return callback(err, null)
+                // return callback(err, null)
+                throw new Error(`Error setting Mongo port: ${err.message}`)
             }
         }
         mongoPort = port
@@ -133,9 +138,65 @@ const setMongoPort = (port, callback) => {
     })
 }
 
+/**
+ * Reads the .settings file and returns `encryptionCapability` variable
+ * @param callback - invoked with (err, capable)
+ */
+let encryptionCapability = null
+const getEncryptionCapability = (callback) => {
+    if (encryptionCapability) {
+        return callback(null, encryptionCapability)
+    }
+    getSettings((err, settings) => {
+        if (settings && settings.encryptionCapability) {
+            encryptionCapability = settings.encryptionCapability
+            return callback(null, encryptionCapability)
+        }
+        let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+        switch (platform) {
+            case 'win':
+                encryptionController.testEncryptedDummyFile((err, capable) => {
+                    encryptionCapability = capable
+                    setEncryptionCapability(capable, (err) => {
+                        callback(err, capable)
+                    })
+                })
+                break
+            case 'darwin':
+                callback(null, true)
+                break
+            default:
+                callback(null, false)
+                break
+        }
+    })
+}
+
+/**
+ * Reads the .settings file, sets the encryption capability and writes back the .settings file
+ * @param capable
+ * @param callback - Invoked with (err)
+ */
+const setEncryptionCapability = (capable, callback) => {
+    getSettings((err, settings) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                settings = {}
+            } else {
+                return callback(err, null)
+            }
+        }
+        encryptionCapability = capable
+        settings.encryptionCapability = capable
+        logger.info(`Writing encryption capability to settings file...`)
+        setSettings(settings, callback)
+    })
+}
+
 module.exports = {
     getMongoPort,
     setMongoPort,
     getAppPort,
-    setAppPort
+    setAppPort,
+    getEncryptionCapability
 }

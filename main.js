@@ -1,47 +1,48 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, Tray, shell} = require('electron')
-const ProgressBar = require('electron-progressbar')
-const path = require('path')
-const rl = require('readline')
+const {app, dialog} = require('electron')
 
-const async = require('async')
+const {NODE_PLATFORM} = require('./package')
+// If the installation is per machine, the data will be saved in the "data" directory in the installation folder
+// If the installation is per user, the data will be saved in [WindowsDrive]:\Users\{currentUser}\AppData\Roaming\GoData
+// Since there is no way to check if the installation is per user or per machine, we'll consider per user all installations that have the path like \Users\{anythingExceptBackslash}\AppData
+const installationFolder = app.getAppPath()
+const path = require('path')
+const regex = new RegExp('\\\\Users\\\\[^\\\\]+\\\\AppData')
+if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') &&
+    !regex.test(installationFolder)) {
+    app.setPath('userData', path.join(app.getAppPath(), '../../../data'))
+}
+
+const rl = require('readline')
 
 const appVersion = require('./utils/appVersion')
 const AppPaths = require('./utils/paths')
 const productName = AppPaths.desktopApp.package.name
 
-const settings = require('./controllers/settings')
-const ipcMain = require('./controllers/ipcMain')
-const prelaunch = require('./controllers/prelaunch')
-const mongo = require('./controllers/mongo')
-const goData = require('./controllers/goData')
-const goDataAPI = require('./controllers/goDataAPI')
 const logger = require('./logger/app')
 const constants = require('./utils/constants')
+const crashReporter = require('./utils/reporter')
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let tray = null
-let settingsWindow = null
-let progressBar = null
+const appLoading = require('./app/loading')
+const appUpdate = require('./app/update')
+const appSplash = require('./app/splash')
+const appSettings = require('./app/settings')
+const appWebApp = require('./app/web-app')
 
-const createTray = () => {
-    tray = new Tray(path.join(AppPaths.resourcesDirectory, 'icon.png'))
-    const contextMenu = Menu.buildFromTemplate([
-        {
-            label: `Open ${productName}`, click: () => {
-                openWebApp()
-            }
-        },
-        {
-            label: `Settings`, click: () => {
-                openSettings(constants.SETTINGS_WINDOW_SETTING)
-            }
-        },
-        {type: 'separator'},
-        {label: `Quit ${productName}`, role: 'quit'}
-    ])
-    tray.setContextMenu(contextMenu)
+// set up crash reporter
+crashReporter.init()
+
+// Determines if another app instance is running and opens the existing one or launches a new instance
+const checkSingletonInstance = () => {
+    let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+        appWebApp.openWebApp()
+    })
+    if (shouldQuit) {
+        logger.logger.info(`Detected previous ${productName} instance, will quit app...`)
+        app.quit()
+        return true
+    }
+    return false
 }
 
 // This method will be called when Electron has finished
@@ -49,53 +50,41 @@ const createTray = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
 
-    let shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
-        openWebApp()
-    })
+    appLoading.openPleaseWait()
 
-    if (shouldQuit) {
-        logger.logger.info(`Detected previous ${productName} instance, will quit app...`)
-        app.quit()
-        return
-    }
+    // set up logger
+    logger.init((err) => {
+        if (!err) {
 
-    logger.init()
+            logger.logger.info(`Application installed to ${app.getAppPath()}`)
+            logger.logger.info(`Application data directory set to ${app.getAppPath()}`)
 
-    appVersion.getVersion((err, version) => {
-
-        ipcMain.init((mongoPort, goDataPort, state) => {
-            switch (state) {
-                case constants.SETTINGS_WINDOW_LAUNCH:
-                    setPortsInSettings(true, () => {
-                        settingsWindow.close()
-                        launchGoData()
-                    })
-                    break
-                case constants.SETTINGS_WINDOW_SETTING:
-                    setPortsInSettings(false, () => {
-                        settingsWindow.close()
-                    })
-                    break
+            // stop launching app if it is already running
+            if (checkSingletonInstance()) {
+                return
             }
 
-            function setPortsInSettings(immediately, callback) {
-                async.series([
-                        (callback) => {
-                            settings.setMongoPort(mongoPort, callback)
-                        },
-                        (callback) => {
-                            settings.setAppPort(goDataPort, callback)
-                        }
-                    ],
-                    callback)
-            }
-        })
+            // check for update
+            appUpdate.configureUpdate(() => {
 
-        if (err && err.code === 'ENOENT') {
-            // fresh install, no app version set => set version and perform population with early exit
-            openSettings(constants.SETTINGS_WINDOW_LAUNCH)
+                // retrieve version saved on disk to determine if it is first launch or not
+                appVersion.getVersion((err, version) => {
+
+                    // configure events for splash screen and settings screens
+                    appSettings.configureIPCMain()
+                    appSplash.configureIPCMain()
+
+                    // open settings on first launch or launch Go.Data othewise
+                    if (err && err.code === 'ENOENT') {
+                        // fresh install, no app version set => open settings
+                        appSettings.openSettings(constants.SETTINGS_WINDOW_LAUNCH)
+                    } else {
+                        appWebApp.launchGoData((err) => { })
+                    }
+                })
+            })
         } else {
-            launchGoData()
+            //display error that logger was not initialized
         }
     })
 
@@ -106,101 +95,15 @@ app.on('ready', () => {
     readline.on('SIGINT', () => {
         process.emit('SIGINT')
     })
-
 })
-
-function launchGoData() {
-    progressBar = new ProgressBar({
-        title: `Launching ${productName}...`
-    })
-
-    progressBar._window.webContents.openDevTools()
-
-    progressBar.detail = 'Cleaning up...'
-    prelaunch.cleanUp(
-        (event) => {
-
-        },
-        () => {
-            progressBar.detail = 'Creating database...'
-            mongo.init(
-                (event) => {
-                    if (progressBar.isInProgress()) {
-                        if (event.detail) {
-                            progressBar.detail = event.detail
-                        }
-                        if (event.text) {
-                            progressBar.text = event.text
-                        }
-                    }
-                },
-                () => {
-                    goData.init(
-                        (event) => {
-                            if (progressBar.isInProgress()) {
-                                if (event.detail) {
-                                    progressBar.detail = event.detail
-                                }
-                                if (event.text) {
-                                    progressBar.text = event.text
-                                }
-                            }
-                        },
-                        (err, appURL) => {
-                            if (appURL) {
-                                logger.logger.info(`Opening ${productName} at ${appURL}`)
-                                openWebApp(appURL)
-                            }
-                            progressBar.close()
-                            createTray()
-                        })
-                })
-        })
-}
-
-function openWebApp(appURL) {
-    if (appURL) {
-        shell.openExternal(appURL)
-    } else {
-        goDataAPI.getAppPort((err, port) => {
-            if (!err) {
-                shell.openExternal(`http://localhost:${port}`)
-            }
-        })
-    }
-}
-
-function openSettings(settingType) {
-    ipcMain.setState(settingType)
-    if (settingsWindow) {
-        settingsWindow.show()
-        return
-    }
-    settingsWindow = new BrowserWindow({
-        width: 900,
-        height: 400,
-        // resizable: false,
-        center: true,
-        frame: false,
-        show: false
-    })
-    settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings.html'))
-    settingsWindow.on('closed', () => {
-        settingsWindow = null
-    })
-    settingsWindow.once('ready-to-show', () => {
-        settingsWindow.show()
-        settingsWindow.webContents.openDevTools()
-    })
-}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
     // On OS X it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
+    // if (process.platform !== 'darwin') {
+    //     app.quit()
+    // }
 })
 
 app.on('activate', function () {
@@ -212,33 +115,36 @@ app.on('will-quit', function () {
     logger.logger.info('App will now quit!')
 })
 
-const cleanup = (code) => {
-    logger.logger.log(`Exiting program with code ${code}.`)
-    mongo.killMongo()
-    goData.killGoData()
-    process.exit()
-}
+// //do something when app is closing
+// process.on('exit', () => {
+//     // cleanup('EXIT')
+// })
+//
+// //catches ctrl+c event
+// process.on('SIGINT', () => {
+//     // cleanup('SIGINT')
+// })
+//
+// // catches "kill pid" (for example: nodemon restart)
+// process.on('SIGUSR1', () => {
+//     // cleanup('SIGUSR1')
+// })
+// process.on('SIGUSR2', () => {
+//     // cleanup('SIGUSR2')
+// })
 
-//do something when app is closing
-process.on('exit', () => {
-    cleanup('EXIT')
+//catches uncaught exceptions and displays them in the splash screen or a dialog box
+process.on('uncaughtException', (exc) => {
+    logger.logger.error(`Unhandled exception: ${exc}`)
+    if (!appSplash.sendSplashEvent('error', exc.message)) {
+        dialog.showMessageBox({
+            type: 'error',
+            title: `Error`,
+            message: `A ${productName} process crashed.\nError: ${exc.message}.\nPlease relaunch ${productName}.`,
+            buttons: ['Close']
+        }, () => {
+            // Force quit the app
+            process.exit(-1)
+        })
+    }
 })
-
-//catches ctrl+c event
-process.on('SIGINT', () => {
-    cleanup('SIGINT')
-})
-
-// catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', () => {
-    cleanup('SIGUSR1')
-})
-process.on('SIGUSR2', () => {
-    cleanup('SIGUSR2')
-})
-
-//catches uncaught exceptions
-// process.on('uncaughtException', (exc) => {
-// console.log(exc)
-// cleanup('uncaughtException')
-// });
