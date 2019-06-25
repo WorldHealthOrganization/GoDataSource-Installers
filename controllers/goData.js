@@ -11,19 +11,21 @@ const async = require('async')
 const Tail = require('tail').Tail
 const chokidar = require('chokidar')
 const kill = require('kill-port')
+const fs = require('fs')
+const sudo = require('sudo-prompt')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
 const goDataAPI = require('./goDataAPI')
 const settings = require('./settings')
-const { nssmStatuses, goDataAPIServiceName, runNssmShell } = require('./nssm')
+const {nssmStatuses, goDataAPIServiceName, runNssmShell} = require('./nssm')
 
 const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
 
 const pm2 = require(AppPaths.pm2Module)
 
-const {MONGO_PLATFORM} = require('./../package')
+const {MONGO_PLATFORM, NODE_PLATFORM} = require('./../package')
 
 const init = (events, callback) => {
     startGoData(events, callback)
@@ -105,7 +107,7 @@ function startGoDataAsProcess(events, callback) {
                 pm2.disconnect()
             })
         // will contain watcher and tail
-        let options = { }
+        let options = {}
         detectAppStartFromLog(options, events, callback)
     })
 }
@@ -237,7 +239,7 @@ function stopWatchingLogFile(options) {
  */
 function checkGoDataAPIService(callback) {
     let command = ['status', goDataAPIServiceName]
-    runNssmShell(command, { requiresElevation: false }, callback)
+    runNssmShell(command, {requiresElevation: false}, callback)
 }
 
 /**
@@ -246,7 +248,7 @@ function checkGoDataAPIService(callback) {
  */
 function installGoDataAPIService(callback) {
     let command = ['install', goDataAPIServiceName, AppPaths.nodeFile, AppPaths.webApp.launchScript]
-    runNssmShell(command, { requiresElevation: true, serviceName: goDataAPIServiceName }, callback)
+    runNssmShell(command, {requiresElevation: true, serviceName: goDataAPIServiceName}, callback)
 }
 
 /**
@@ -260,10 +262,18 @@ function setGoDataAPIServiceParameters(callback) {
     let errorCommand = ['set', goDataAPIServiceName, appStderr, AppPaths.appLogFile]
     async.parallel([
         (callback) => {
-            runNssmShell(outputCommand, { requiresElevation: true, serviceName: goDataAPIServiceName, serviceParameter: appStdout }, callback)
+            runNssmShell(outputCommand, {
+                requiresElevation: true,
+                serviceName: goDataAPIServiceName,
+                serviceParameter: appStdout
+            }, callback)
         },
         (callback) => {
-            runNssmShell(errorCommand, { requiresElevation: true, serviceName: goDataAPIServiceName, serviceParameter: appStderr }, callback)
+            runNssmShell(errorCommand, {
+                requiresElevation: true,
+                serviceName: goDataAPIServiceName,
+                serviceParameter: appStderr
+            }, callback)
         }
     ], callback)
 }
@@ -274,7 +284,7 @@ function setGoDataAPIServiceParameters(callback) {
  */
 function launchGoDataAPIService(callback) {
     let command = ['start', goDataAPIServiceName]
-    runNssmShell(command, { requiresElevation: true }, callback)
+    runNssmShell(command, {requiresElevation: true}, callback)
 }
 
 /**
@@ -343,10 +353,41 @@ function killGoData(callback) {
     })
 }
 
+/**
+ * Sets 777 to go-data/build for darwin architecture.
+ * It only changes permissions if package.json isn't rwxrwxrwx (assuming that once package.json has rwxrwxrwx, all files have had their permissions changed).
+ * This is to fix a Squirrel-Mac update bug that changes application file permissions and ownership to root when unzipping the update file.
+ * @param callback
+ */
+function setAppPermissions(callback) {
+    let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+    if (platform !== 'darwin') {
+        return callback()
+    }
+    fs.stat(`${AppPaths.webApp.package}.json`, (err, stats) => {
+        if (err) {
+            return callback(new Error('Error reading application permissions'))
+        }
+        if ('0' + (stats.mode & parseInt('777', 8)).toString(8) === '0777') {
+            return callback()
+        }
+        sudo.exec(`chmod -R 777 "${AppPaths.webApp.directory}"`, {
+                name: 'GoData'
+            },
+            (err, stdout, stderr) => {
+                if (err || stderr.length > 0) {
+                    return callback(new Error('Error setting application permissions'))
+                }
+                callback()
+            })
+    })
+}
+
 module.exports = {
     init,
     setAppPort,
     setDbPort,
     startGoData,
     killGoData,
+    setAppPermissions
 }

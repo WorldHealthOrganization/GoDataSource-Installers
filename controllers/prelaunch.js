@@ -40,6 +40,7 @@ const cleanUp = (events, callback) => {
                     goData.killGoData(callback)
                 }
             },
+            goData.setAppPermissions,
             goData.setAppPort,
             goData.setDbPort,
             (callback) => {
