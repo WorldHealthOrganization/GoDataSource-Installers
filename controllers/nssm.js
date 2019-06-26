@@ -6,6 +6,7 @@
 
 const { exec } = require('child_process')
 const sudo = require('sudo-prompt')
+const cptable = require('codepage')
 
 const logger = require('./../logger/app').logger
 const AppPaths = require('./../utils/paths')
@@ -39,6 +40,7 @@ const nssmStatuses = Object.freeze({
 
 // nssm.exe encodes results in UTF16
 const nssmEncoding = 'utf16le'
+let activeCodePage
 
 /**
  * Executes a command using nssm.exe
@@ -49,6 +51,17 @@ const nssmEncoding = 'utf16le'
  * @param callback
  */
 function runNssmShell(command, shellOptions, callback) {
+    // Get active code page once
+    if (!activeCodePage) {
+        getActiveCodePage((err) => {
+            if (err) {
+                return callback(err)
+            }
+            runNssmShell(command, shellOptions, callback)
+        })
+        return
+    }
+
     shellOptions = shellOptions || {}
     logger.info(`Running NSSM command "nssm.exe ${command.join(' ')}"...`)
 
@@ -78,8 +91,8 @@ function runNssmShell(command, shellOptions, callback) {
      * @param data
      */
     function processNssmResult(isError, data) {
-        let result = data.toString(nssmEncoding)
-        logger.info(`NSSM result: ${result}`)
+        let result = cptable.utils.decode(activeCodePage, data).replace(/\0.*$/g,'').trim()
+        logger.info(`NSSM result:\n${result}`)
 
         // throw an error unless the error is a valid status
         let status = undefined
@@ -106,6 +119,22 @@ function runNssmShell(command, shellOptions, callback) {
             callbackCalled = true
         }
     }
+}
+
+/**
+ * Calls 'chcp' to determine active code page, parses the result and returns the active code page on callback
+ * @param callback
+ */
+function getActiveCodePage(callback) {
+    exec('chcp', (error, stdout, stderr) => {
+        if (error || stderr.length > 0) {
+            return callback(error || new Error(stderr))
+        }
+        // parse active code page
+        let parsedActiveCodePage = stdout.replace('Active code page: ', '').trim()
+        activeCodePage = parseInt(parsedActiveCodePage, 10)
+        callback()
+    })
 }
 
 module.exports = {
