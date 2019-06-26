@@ -15,8 +15,8 @@ const AppPaths = require('./../utils/paths')
 const mongoServiceName = "GoDataStorageEngine"
 const goDataAPIServiceName = "GoDataAPI"
 
-// Statuses returned by nssm.exe
-const nssmStatuses = Object.freeze({
+// Valid statuses returned by nssm.exe
+const nssmValidStatuses = Object.freeze({
     ServiceNotInstalled: 'The specified service does not exist as an installed service.',
     ServiceAlreadyInstalled: 'The specified service already exists.',
     ServiceStarted: 'START: The operation completed successfully.',
@@ -38,8 +38,11 @@ const nssmStatuses = Object.freeze({
     }
 })
 
-// nssm.exe encodes results in UTF16
-const nssmEncoding = 'utf16le'
+// Failed statuses returned by nssm.exe. These statuses are recoverable, meaning that they can be fixed by stopping and removing the service.
+const nssmRecoverableStatuses = Object.freeze({
+    ServiceUnexpectedStopped: 'Unexpected status SERVICE_STOPPED'
+})
+
 let activeCodePage
 
 /**
@@ -96,18 +99,33 @@ function runNssmShell(command, shellOptions, callback) {
 
         // throw an error unless the error is a valid status
         let status = undefined
-        for (let key in nssmStatuses) {
-            if (nssmStatuses.hasOwnProperty(key)) {
-                let sanitizedStatus = nssmStatuses[key]
-                if (typeof nssmStatuses[key] === 'function') {
-                    sanitizedStatus = nssmStatuses[key](shellOptions)
-                }
-                if (result.indexOf(sanitizedStatus) > -1) {
-                    status = sanitizedStatus
-                    break
+
+        // First identify if it's a recoverable status
+        determineStatus(nssmRecoverableStatuses)
+        // If status is still not determined, check if it is a valid status
+        if (!status) {
+            determineStatus(nssmValidStatuses)
+        }
+
+        /**
+         * Loops the list of statuses and writes the status variable when a match is found.
+         * @param nssmStatuses
+         */
+        function determineStatus(nssmStatuses) {
+            for (let key in nssmStatuses) {
+                if (nssmStatuses.hasOwnProperty(key)) {
+                    let sanitizedStatus = nssmStatuses[key]
+                    if (typeof nssmStatuses[key] === 'function') {
+                        sanitizedStatus = nssmStatuses[key](shellOptions)
+                    }
+                    if (result.indexOf(sanitizedStatus) > -1) {
+                        status = sanitizedStatus
+                        break
+                    }
                 }
             }
         }
+
         if (!status) {
             logger.info(`Error executing NSSM command "nssm.exe ${command.join(' ')}": ${result}`)
             throw new Error(`Error executing NSSM command "nssm.exe ${command.join(' ')}"`)
@@ -138,7 +156,8 @@ function getActiveCodePage(callback) {
 }
 
 module.exports = {
-    nssmStatuses,
+    nssmValidStatuses,
+    nssmRecoverableStatuses,
     mongoServiceName,
     goDataAPIServiceName,
     runNssmShell

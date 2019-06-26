@@ -152,7 +152,7 @@ const openEmbeddedWindow = (url) => {
             },
             (callback) => {
                 request(url, (error, response) => {
-                    if (error || response.statusCode !== 200) {
+                    if (error || (response && response.statusCode !== 200)) {
                         logger.logger.info(`${url} unreachable`)
                         return callback(new Error(`${url} unreachable`))
                     }

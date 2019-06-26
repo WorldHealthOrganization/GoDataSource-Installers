@@ -13,12 +13,13 @@ const chokidar = require('chokidar')
 const kill = require('kill-port')
 const fs = require('fs')
 const sudo = require('sudo-prompt')
+const request = require('request')
 
 const logger = require('./../logger/app').logger
 const processUtil = require('./../utils/process')
 const goDataAPI = require('./goDataAPI')
 const settings = require('./settings')
-const {nssmStatuses, goDataAPIServiceName, runNssmShell} = require('./nssm')
+const {nssmValidStatuses, nssmRecoverableStatuses, goDataAPIServiceName, runNssmShell} = require('./nssm')
 
 const AppPaths = require('./../utils/paths')
 const productName = AppPaths.desktopApp.package.name
@@ -121,7 +122,7 @@ function startGoDataAsService(events, callback) {
     checkGoDataAPIService((err, status) => {
         switch (status) {
             // service not installed, install service
-            case nssmStatuses.ServiceNotInstalled:
+            case nssmValidStatuses.ServiceNotInstalled:
                 // install service
                 installGoDataAPIService((error, status) => {
                     // set service paramteres for logging
@@ -132,20 +133,42 @@ function startGoDataAsService(events, callback) {
                 })
                 break
             // service in one status that requires just to be started
-            case nssmStatuses.ServiceAlreadyInstalled:
-            case nssmStatuses.ServiceStopped:
-            case nssmStatuses.ServicePaused:
-            case nssmStatuses.ServiceInstalled({goDataAPIServiceName}):
+            case nssmValidStatuses.ServiceAlreadyInstalled:
+            case nssmValidStatuses.ServiceStopped:
+            case nssmValidStatuses.ServicePaused:
+            case nssmValidStatuses.ServiceInstalled({goDataAPIServiceName}):
                 let options = {}
                 detectAppStartFromLog(options, events, callback)
-                launchGoDataAPIService((error, status) => {
+                launchGoDataAPIService((err, status) => {
                     // The callback will not be called here. Once the service is launched, Go.Data takes some time to load
                     // To determine when Go.Data has loaded, we will check the web app log and then the callback will be called
                 })
                 break
-            case nssmStatuses.ServiceRunning:
-                callback()
+            case nssmValidStatuses.ServiceRunning:
+                // If the service is already running, check the version and platform on the service and compare with the version and platform of the API in the app
+                // If the versions are different, it means that an update updated the API and the service hasn't been restarted
+                // Restarting the service should be enough because it is linked to the API path
+                compareServiceAPIWithAppAPI((err, identical) => {
+                    if (identical) {
+                        return callback()
+                    }
+                    let options = {}
+                    detectAppStartFromLog(options, events, callback)
+                    restartGoDataAPIService((err, status) => {
+                        // The callback will not be called here. Once the service is restarted, Go.Data takes some time to load
+                        // To determine when Go.Data has loaded, we will check the web app log and then the callback will be called
+                    })
+                })
                 break
+
+            // RECOVERABLE FAILED STATUSES
+            case nssmRecoverableStatuses.ServiceUnexpectedStopped:
+                uninstallGoDataAPIService(() => {
+                    // recursive call this function to check again the status
+                    startGoDataAsService(events, callback)
+                })
+                break
+
             default:
                 callback(new Error(`Error starting GoData API Service! Service returned status ${status}`))
         }
@@ -234,21 +257,33 @@ function stopWatchingLogFile(options) {
 }
 
 /**
- * Checks the Mongo service using nssm.exe.
+ * Checks the Go.Data API service using nssm.exe.
  * @param callback
  */
 function checkGoDataAPIService(callback) {
+    logger.info('Checking Go.Data API Service status...')
     let command = ['status', goDataAPIServiceName]
     runNssmShell(command, {requiresElevation: false}, callback)
 }
 
 /**
- * Installs Mongo as a service using nssm.exe
+ * Installs Go.Data API as a service using nssm.exe
  * @param callback
  */
 function installGoDataAPIService(callback) {
+    logger.info('Installing Go.Data API Service...')
     let command = ['install', goDataAPIServiceName, AppPaths.nodeFile, AppPaths.webApp.launchScript]
     runNssmShell(command, {requiresElevation: true, serviceName: goDataAPIServiceName}, callback)
+}
+
+/**
+ * Uninstalls Go.Data API service using nssm.exe
+ * @param callback
+ */
+function uninstallGoDataAPIService(callback) {
+    logger.info('Uninstalling Go.Data API Service...')
+    let command = ['remove', goDataAPIServiceName, 'confirm']
+    runNssmShell(command, {requiresElevation: true}, callback)
 }
 
 /**
@@ -279,12 +314,82 @@ function setGoDataAPIServiceParameters(callback) {
 }
 
 /**
- * Starts Mongo as a service using nssm.exe
+ * Starts Go.Data API as a service using nssm.exe
  * @param callback
  */
 function launchGoDataAPIService(callback) {
+    logger.info('Launching Go.Data API Service...')
     let command = ['start', goDataAPIServiceName]
     runNssmShell(command, {requiresElevation: true}, callback)
+}
+
+/**
+ * Restarts Go.Data API service using nssm.exe
+ * @param callback
+ */
+function restartGoDataAPIService(callback) {
+    logger.info('Restarting Go.Data API Service...')
+    let command = ['restart', goDataAPIServiceName]
+    runNssmShell(command, {requiresElevation: true}, callback)
+}
+
+/**
+ * Performs request to service to service /api/system-settings/version to retrieve architecture (x86/x64) and build number
+ * Performs Go.Data API calls to retrieve architecture (x86/x64) and build number
+ * Compares the values and returns result on callback
+ * @param callback (err, bool) - true if service API is identical to app API and false otherwise
+ */
+function compareServiceAPIWithAppAPI(callback) {
+    async.parallel([
+        getServiceInfo,
+        getAppInfo
+    ], (err, results) => {
+        if (err) {
+            return callback(err)
+        }
+        // compare app API results with Service API results
+        callback(null, results[0].build === results[1].build && results[0].arch === results[1].arch)
+    })
+
+    function getServiceInfo(callback) {
+        settings.getAppPort((err, port) => {
+            if (err) {
+                return callback(err)
+            }
+            let url = `http://localhost:${port}/api/system-settings/version`
+            request(url, (err, response, body) => {
+                if (err) {
+                    return callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`))
+                }
+                // parse body to determine build number and architecture
+                try {
+                    let result = JSON.parse(body)
+                    callback(null, {
+                        build: result.build,
+                        arch: result.arch
+                    })
+                }
+                catch (e) {
+                    callback(new Error(`Error retrieving Service API info: ${e.message || JSON.stringify(e)}`))
+                }
+            })
+        })
+    }
+
+    function getAppInfo(callback) {
+        async.parallel([
+            goDataAPI.getBuildNumber,
+            goDataAPI.getBuildArch
+        ], (err, appResults) => {
+            if (err) {
+                return callback(new Error(`Error retrieving app API info: ${err.message || JSON.stringify(err)}`))
+            }
+            callback(null, {
+                build: appResults[0],
+                arch: appResults[1]
+            })
+        })
+    }
 }
 
 /**
