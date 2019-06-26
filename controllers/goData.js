@@ -361,14 +361,18 @@ function killGoData(callback) {
  */
 function setAppPermissions(callback) {
     let platform = process.env.NODE_PLATFORM || NODE_PLATFORM
+    logger.info(`Setting app permissions on platform ${platform}...`)
     if (platform !== 'darwin') {
         return callback()
     }
     fs.stat(`${AppPaths.webApp.package}.json`, (err, stats) => {
         if (err) {
-            return callback(new Error('Error reading application permissions'))
+            logger.info(`Error reading application permissions: ${JSON.stringify(err)}`)
+            return callback(err)
         }
-        if ('0' + (stats.mode & parseInt('777', 8)).toString(8) === '0777') {
+        let packagePermission = '0' + (stats.mode & parseInt('777', 8)).toString(8)
+        logger.log(`Retrieved package.json permission ${packagePermission}`)
+        if (packagePermission === '0777') {
             return callback()
         }
         sudo.exec(`chmod -R 777 "${AppPaths.webApp.directory}"`, {
@@ -376,7 +380,8 @@ function setAppPermissions(callback) {
             },
             (err, stdout, stderr) => {
                 if (err || stderr.length > 0) {
-                    return callback(new Error('Error setting application permissions'))
+                    logger.info(`Error setting application permissions: ${ (err && JSON.stringify(err)) || stderr }`)
+                    return callback(err || new Error(stderr))
                 }
                 callback()
             })
