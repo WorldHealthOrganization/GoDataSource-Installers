@@ -1,3 +1,5 @@
+!include x64.nsh
+
 !macro preInit
   ${ifNot} ${isUpdated}
     SetRegView 64
@@ -12,6 +14,19 @@
   # remove app data on uninstall
   ${GetOptions} $R0 "--updated" $R1
     ${if} ${Errors}
+      # remove services
+      ${$if} ${RunningX64}
+        Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "stop" "GoDataAPI"
+        Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "remove" "GoDataAPI" "confirm"
+        Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "stop" "GoDataStorageEngine"
+        Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "remove" "GoDataStorageEngine" "confirm"
+      ${else}
+        Exec "$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" "stop" "GoDataAPI"
+        Exec "$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" "remove" "GoDataAPI" "confirm"
+        Exec "$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" "stop" "GoDataStorageEngine"
+        Exec "$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" "remove" "GoDataStorageEngine" "confirm"
+      ${endIf}
+
       # remove data for all users
       ${if} $installMode == "all"
         RMDir /r "$INSTDIR\..\data"
