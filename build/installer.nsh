@@ -15,7 +15,7 @@
   ${GetOptions} $R0 "--updated" $R1
     ${if} ${Errors}
       # remove services
-      ${$if} ${RunningX64}
+      ${if} ${RunningX64}
         Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "stop" "GoDataAPI"
         Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "remove" "GoDataAPI" "confirm"
         Exec "$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" "stop" "GoDataStorageEngine"
