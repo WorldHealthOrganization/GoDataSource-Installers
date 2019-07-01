@@ -52,6 +52,14 @@ function getBuildNumber(callback) {
 }
 
 /**
+ * Calls go-data low level API to retrieve the build architecture
+ * @param callback Invoked with (err, buildArch)
+ */
+function getBuildArch(callback) {
+    getGoDataParam('buildArch', callback)
+}
+
+/**
  * Calls go-data low level API to set the build configuration
  * @param configuration - Object that specifies type and platform: {type: 'hub', platform: 'windows-x86'}
  * @param callback - Invoked with (err)
@@ -127,5 +135,6 @@ module.exports = {
     getDbPort,
     setDbPort,
     getBuildNumber,
+    getBuildArch,
     setBuildConfiguration
 }
