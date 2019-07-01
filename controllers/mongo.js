@@ -18,6 +18,7 @@ const processUtil = require('./../utils/process')
 const appVersion = require('./../utils/appVersion')
 const settings = require('./settings')
 const goDataAPI = require('./goDataAPI')
+const { nssmValidStatuses, nssmRecoverableStatuses, mongoServiceName, runNssmShell } = require('./nssm')
 
 const AppPaths = require('./../utils/paths')
 
@@ -114,32 +115,133 @@ function startMongo(events, callback) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
-        if (process.env.ARCH === 'x86' || ARCH === 'x86') {
-            args.push('--storageEngine=mmapv1')
-            args.push('--journal')
+        if (settings.runMongoAsAService) {
+            // Start Mongo as a service - does not need to check the log file because nssm.exe will return the status of the service
+            startMongoService(port, (err, status) => {
+                // When the service is already running, it will no longer write in the log file, therefore call the callback here
+                if (status === nssmValidStatuses.ServiceStarted || status === nssmValidStatuses.ServiceRunning) {
+                    callback()
+                }
+            })
+        } else {
+            // Start Mongo as integrated process
+            startMongoProcess(port)
+            // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
+            watchMongoStart(events, callback)
         }
-        logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`)
-        const startDbProcess = spawn(AppPaths.mongodFile, args)
-
-        startDbProcess.stdout.on('close', (code) => {
-            if (shouldThrowExceptionOnMongoFailure) {
-                throw new Error(`Error: Mongo process exited with code ${code}`)
-            }
-        })
-
-        startDbProcess.stderr.on('data', (data) => {
-            logger.error(data.toString())
-        })
-
-        startDbProcess.stdout.on('data', (data) => {
-            logger.info(data.toString())
-        })
-
-        // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
-        watchMongoStart(events, callback)
 
     })
+}
+
+/**
+ * Starts Mongo on Max & Linux systems using spawn. Results are logged to the Mongo logpath.
+ */
+function startMongoProcess(port) {
+    let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
+    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
+        args.push('--storageEngine=mmapv1')
+        args.push('--journal')
+    }
+    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`)
+    const startDbProcess = spawn(AppPaths.mongodFile, args)
+
+    startDbProcess.stdout.on('close', (code) => {
+        if (shouldThrowExceptionOnMongoFailure) {
+            throw new Error(`Error: Mongo process exited with code ${code}`)
+        }
+    })
+
+    startDbProcess.stderr.on('data', (data) => {
+        logger.error(data.toString())
+    })
+
+    startDbProcess.stdout.on('data', (data) => {
+        logger.info(data.toString())
+    })
+
+}
+
+/**
+ * Starts Mongo on Windows as a service using nssm.exe. Results are logged to the Mongo logpath.
+ * @param port
+ * @param callback(err, status)
+ */
+function startMongoService(port, callback) {
+    checkMongoService((err, status) => {
+        switch (status) {
+            // service not installed, install service
+            case nssmValidStatuses.ServiceNotInstalled:
+                installMongoService(port, () => {
+                    startMongoService(port, callback)
+                })
+                break
+            // service in one status that requires just to be started
+            case nssmValidStatuses.ServiceAlreadyInstalled:
+            case nssmValidStatuses.ServiceStopped:
+            case nssmValidStatuses.ServicePaused:
+            case nssmValidStatuses.ServiceInstalled({mongoServiceName}):
+                launchMongoService(callback)
+                break
+            case nssmValidStatuses.ServiceRunning:
+                callback(null, status)
+                break
+
+            // RECOVERABLE STATUSES
+            case nssmRecoverableStatuses.ServiceUnexpectedStopped:
+                uninstallMongoService(() => {
+                    // recursive call this function to check again the status
+                    startMongoService(port, callback)
+                })
+                break
+
+            default:
+                callback(new Error(`Error starting Mongo Service! Service returned status ${status}`))
+        }
+    })
+}
+
+/**
+ * Checks the Mongo service using nssm.exe.
+ * @param callback
+ */
+function checkMongoService(callback) {
+    logger.info('Checking Mongo Service status...')
+    let command = ['status', mongoServiceName]
+    runNssmShell(command, { requiresElevation: false }, callback)
+}
+
+/**
+ * Installs Mongo as a service using nssm.exe
+ * @param callback
+ */
+function installMongoService(port, callback) {
+    logger.info('Installing Mongo Service...')
+    let command = ['install', mongoServiceName, AppPaths.mongodFile, `--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`]
+    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
+        command.push('--storageEngine=mmapv1')
+        command.push('--journal')
+    }
+    runNssmShell(command,  { requiresElevation: true, serviceName: mongoServiceName }, callback)
+}
+
+/**
+ * Uninstalls Mongo service using nssm.exe
+ * @param callback
+ */
+function uninstallMongoService(callback) {
+    logger.info('Uninstalling Mongo Service...')
+    let command = ['remove', mongoServiceName, 'confirm']
+    runNssmShell(command,  { requiresElevation: true, serviceName: mongoServiceName }, callback)
+}
+
+/**
+ * Starts Mongo as a service using nssm.exe
+ * @param callback
+ */
+function launchMongoService(callback) {
+    logger.info('Launching Mongo Service...')
+    let command = ['start', mongoServiceName]
+    runNssmShell(command, { requiresElevation: true }, callback)
 }
 
 /**
@@ -288,7 +390,7 @@ function watchMongoStart(events, callback) {
 
     // We will use chokidar to scan for changes on the Mongo log file (add, change)
     // When chokidar detects that the mongo log is added, we read it to see if it contains 'waiting for connections' and add a tail listener that
-    // When chokidar detects that the mongo log is changed, we
+    // When chokidar detects that the mongo log is changed, we only tail the file to see 'waiting for connections' from that point
     let called = false
     let tail = null
     let newLog = false
@@ -299,11 +401,13 @@ function watchMongoStart(events, callback) {
         if (!called) {
             switch (event) {
                 case 'add':
+                    logger.info(`Detected new Mongo log in ${DatabaseLogFile}`)
                     newLog = true
                     readMongoLog()
                     tailMongoLog()
                     break
                 case 'change':
+                    logger.info(`Detected change in Mongo log in ${DatabaseLogFile}`)
                     tailMongoLog()
                     break
             }
@@ -329,7 +433,7 @@ function watchMongoStart(events, callback) {
         } else {
             logger.info(`Mongo started, no need for 60 seconds fallback`)
         }
-    }, 180000);
+    }, 180000)
 
     // Removes the watchers from the log file (chokidar) and tail (if any)
     function stopWatchingLogFile() {

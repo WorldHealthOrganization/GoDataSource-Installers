@@ -1,7 +1,9 @@
 'use strict'
 
-const { app, BrowserWindow } = require('electron')
+const {app, BrowserWindow, dialog} = require('electron')
 const path = require('path')
+const request = require('request')
+const async = require('async')
 
 const goData = require('./../controllers/goData')
 const goDataAPI = require('./../controllers/goDataAPI')
@@ -52,7 +54,8 @@ const launchGoData = (callback) => {
 
     prelaunch.setBuildConfiguration(goDataConfiguration)
     prelaunch.cleanUp(
-        (event) => { },
+        (event) => {
+        },
         () => {
             let loadingIndicator = ['⦾', '⦿']
             let index = 0
@@ -77,10 +80,7 @@ const launchGoData = (callback) => {
                                 appSplash.sendSplashEvent('error', err.message)
                                 return callback(err)
                             }
-                            if (appURL) {
-                                logger.logger.info(`Opening ${productName} at ${appURL}`)
-                                openWebApp(appURL)
-                            }
+                            openWebApp(appURL)
                             appSplash.closeSplashScreen()
                             const tray = require('./tray')
                             tray.createTray()
@@ -97,63 +97,112 @@ const launchGoData = (callback) => {
  */
 const openWebApp = (appURL) => {
     if (appURL) {
-        webAppURL = appURL;
+        logger.logger.info(`Opening ${productName} at ${appURL}`)
+        webAppURL = appURL
         openEmbeddedWindow(appURL)
     } else if (webAppURL) {
+        logger.logger.info(`Opening ${productName} at ${webAppURL}`)
         openEmbeddedWindow(webAppURL)
     } else {
         goDataAPI.getAppPort((err, port) => {
             if (!err) {
-                openEmbeddedWindow(`http://localhost:${port}`)
+                let url = `http://localhost:${port}`
+                logger.logger.info(`Opening ${productName} at ${url}`)
+                openEmbeddedWindow(url)
             }
         })
     }
 }
 
-let embeddedAppWindow;
+let embeddedAppWindow
 /**
- * Open Go.Data in an Electron window that loads Go.Data Web portal
+ * Checks the app url for 200 status code and opens Go.Data in an Electron window that loads Go.Data Web portal
  * @param url - The URL where Go.Data is running.
  */
 const openEmbeddedWindow = (url) => {
-    if (!embeddedAppWindow) {
-        embeddedAppWindow = new BrowserWindow({
-            webPreferences: {
-                nodeIntegration: false
+    async.series([
+            checkURL,
+            openWindow
+        ],
+        (err) => {
+            if (err) {
+                //dialog that asks to restart
+                dialog.showMessageBox({
+                    title: `Error`,
+                    message: `An error occurred while launching ${productName} (unreachable app URL). Please restart ${productName}.`,
+                    buttons: ['Restart', 'Close']
+                }, (buttonIndex) => {
+                    switch (buttonIndex) {
+                        case 0:
+                            app.relaunch()
+                            app.exit()
+                            break
+                        case 1:
+                            app.quit()
+                            break
+                    }
+                })
+            }
+        })
+
+    function checkURL(callback) {
+        async.retry({
+                times: 10,
+                interval: 1000
             },
-            show: false,
-            icon: path.join(__dirname, './../build/icon.png')
-        });
+            (callback) => {
+                request(url, (error, response) => {
+                    if (error || (response && response.statusCode !== 200)) {
+                        logger.logger.info(`${url} unreachable`)
+                        return callback(new Error(`${url} unreachable`))
+                    }
+                    callback()
+                })
+            },
+            callback)
+    }
 
-        // maximize window
-        embeddedAppWindow.maximize()
-        // then show it
-        embeddedAppWindow.show()
+    function openWindow(callback) {
+        if (!embeddedAppWindow) {
+            embeddedAppWindow = new BrowserWindow({
+                webPreferences: {
+                    nodeIntegration: false
+                },
+                show: false,
+                icon: path.join(__dirname, './../build/icon.png')
+            })
 
-        // and load the app.
-        embeddedAppWindow.loadURL(url)
+            // maximize window
+            embeddedAppWindow.maximize()
+            // then show it
+            embeddedAppWindow.show()
 
-        // keep name and URL on app title
-        embeddedAppWindow.on('page-title-updated', function (event, title) {
-            event.preventDefault();
-            embeddedAppWindow.setTitle(title)
-        });
+            // and load the app.
+            embeddedAppWindow.loadURL(url)
 
-        // Emitted when the window is closed.
-        embeddedAppWindow.on('closed', function () {
-            // Dereference the window object, usually you would store windows
-            // in an array if your app supports multi windows, this is the time
-            // when you should delete the corresponding element.
-            embeddedAppWindow = null
-        });
+            // keep name and URL on app title
+            embeddedAppWindow.on('page-title-updated', function (event, title) {
+                event.preventDefault()
+                embeddedAppWindow.setTitle(title)
+            })
 
-        app.setApplicationMenu(menu.getMenu(url))
+            // Emitted when the window is closed.
+            embeddedAppWindow.on('closed', function () {
+                // Dereference the window object, usually you would store windows
+                // in an array if your app supports multi windows, this is the time
+                // when you should delete the corresponding element.
+                embeddedAppWindow = null
+            })
 
-    } else {
-        // maximize window
-        embeddedAppWindow.maximize()
-        // then show it
-        embeddedAppWindow.show()
+            app.setApplicationMenu(menu.getMenu(url))
+
+        } else {
+            // maximize window
+            embeddedAppWindow.maximize()
+            // then show it
+            embeddedAppWindow.show()
+        }
+        callback()
     }
 }
 
