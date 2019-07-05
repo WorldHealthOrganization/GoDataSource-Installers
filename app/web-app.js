@@ -151,7 +151,13 @@ const openEmbeddedWindow = (url) => {
                 interval: 1000
             },
             (callback) => {
-                request(url, (error, response) => {
+                request({
+                    url,
+                    port: 443,
+                    rejectUnauthorized: false,
+                    requestCert: true,
+                    agent: false
+                }, (error, response) => {
                     if (error || (response && response.statusCode !== 200)) {
                         logger.logger.info(`${url} unreachable`)
                         return callback(new Error(`${url} unreachable`))
