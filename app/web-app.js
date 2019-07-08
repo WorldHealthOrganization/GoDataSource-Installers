@@ -104,9 +104,17 @@ const openWebApp = (appURL) => {
         logger.logger.info(`Opening ${productName} at ${webAppURL}`)
         openEmbeddedWindow(webAppURL)
     } else {
-        goDataAPI.getAppPort((err, port) => {
+        async.parallel([
+            // get Protocol
+            goDataAPI.getProtocol,
+            // get Public Host
+            goDataAPI.getPublicHost,
+            // get Public Port
+            goDataAPI.getPublicPort
+
+        ], (err, results) => {
             if (!err) {
-                let url = `http://localhost:${port}`
+                let url = `${results[0]}://${results[1]}:${results[2]}`
                 logger.logger.info(`Opening ${productName} at ${url}`)
                 openEmbeddedWindow(url)
             }
