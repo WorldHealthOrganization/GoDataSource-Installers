@@ -60,6 +60,30 @@ function getBuildArch(callback) {
 }
 
 /**
+ * Calls go-data low level API to retrieve the protocol
+ * @param callback Invoked with (err, protocol)
+ */
+function getProtocol(callback) {
+    getGoDataParam('publicProtocol', callback)
+}
+
+/**
+ * Calls go-data low level API to retrieve the public host
+ * @param callback Invoked with (err, host)
+ */
+function getPublicHost(callback) {
+    getGoDataParam('publicHost', callback)
+}
+
+/**
+ * Calls go-data low level API to retrieve the public port
+ * @param callback Invoked with (err, port)
+ */
+function getPublicPort(callback) {
+    getGoDataParam('publicPort', callback)
+}
+
+/**
  * Calls go-data low level API to set the build configuration
  * @param configuration - Object that specifies type and platform: {type: 'hub', platform: 'windows-x86'}
  * @param callback - Invoked with (err)
@@ -136,5 +160,8 @@ module.exports = {
     setDbPort,
     getBuildNumber,
     getBuildArch,
-    setBuildConfiguration
+    setBuildConfiguration,
+    getProtocol,
+    getPublicHost,
+    getPublicPort
 }
