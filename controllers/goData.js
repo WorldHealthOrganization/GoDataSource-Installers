@@ -222,20 +222,15 @@ function detectAppStartFromLog(options, events, callback) {
     })
 
     // Sometimes 'Web server listening at http://localhost:8000' is not caught in the log file.
-    // As a final fallback, set a 30 second timer that calls the callback if it's not previously been called.
+    // As a final fallback, set a 60 second timer that calls the callback if it's not previously been called.
     setTimeout(() => {
-        settings.getAppPort((err, port) => {
-            if (err) {
-                return !called && callback(err)
-            }
-            if (!called) {
-                logger.info(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
-                called = true
-                callback(null, `http://localhost:${port}`)
-            } else {
-                logger.info(`${productName} started, no need for 60 seconds fallback`)
-            }
-        })
+        if (!called) {
+            logger.info(`${productName} start event callback not called, fallback to call callback after 60 seconds`)
+            called = true
+            callback()
+        } else {
+            logger.info(`${productName} started, no need for 60 seconds fallback`)
+        }
     }, 60000)
 
     options.tail.on('error', (err) => {
