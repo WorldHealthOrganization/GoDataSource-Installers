@@ -165,7 +165,7 @@ const openEmbeddedWindow = (url) => {
         async.retry(
             {
                 times: 10,
-                interval: 1000
+                interval: 3000
             },
             (callback) => {
                 // determine request data accordingly to protocol
