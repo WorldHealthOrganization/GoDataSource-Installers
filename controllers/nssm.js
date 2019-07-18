@@ -1,19 +1,19 @@
+'use strict';
+
 /**
  * Used to run Windows exe files as Windows services
  */
 
-'use strict';
+const { exec } = require('child_process');
+const sudo = require('sudo-prompt');
+const cptable = require('codepage');
 
-const { exec } = require('child_process')
-const sudo = require('sudo-prompt')
-const cptable = require('codepage')
-
-const logger = require('./../logger/app').logger
-const AppPaths = require('./../utils/paths')
+const logger = require('./../logger/app').logger;
+const AppPaths = require('./../utils/paths');
 
 // Windows Service names
-const mongoServiceName = "GoDataStorageEngine"
-const goDataAPIServiceName = "GoDataAPI"
+const mongoServiceName = "GoDataStorageEngine";
+const goDataAPIServiceName = "GoDataAPI";
 
 // Valid statuses returned by nssm.exe
 const nssmValidStatuses = Object.freeze({
@@ -23,6 +23,7 @@ const nssmValidStatuses = Object.freeze({
     ServiceStopped: 'SERVICE_STOPPED',
     ServicePaused: 'SERVICE_PAUSED',
     ServiceRunning: 'SERVICE_RUNNING',
+    ServiceManualStopped: 'STOP: The operation completed successfully.',
 
     /**
      * @return {string}
@@ -36,14 +37,14 @@ const nssmValidStatuses = Object.freeze({
     ParameterSet: function (options) {
         return `Set parameter "${options.serviceParameter}" for service "${options.serviceName}".`
     }
-})
+});
 
 // Failed statuses returned by nssm.exe. These statuses are recoverable, meaning that they can be fixed by stopping and removing the service.
 const nssmRecoverableStatuses = Object.freeze({
     ServiceUnexpectedStopped: 'Unexpected status SERVICE_STOPPED'
-})
+});
 
-let activeCodePage
+let activeCodePage;
 
 /**
  * Executes a command using nssm.exe
@@ -58,35 +59,35 @@ function runNssmShell(command, shellOptions, callback) {
     if (!activeCodePage) {
         getActiveCodePage((err) => {
             if (err) {
-                return callback(err)
+                return callback(err);
             }
-            runNssmShell(command, shellOptions, callback)
-        })
-        return
+            runNssmShell(command, shellOptions, callback);
+        });
+        return;
     }
 
-    shellOptions = shellOptions || {}
-    logger.info(`Running NSSM command "nssm.exe ${command.join(' ')}"...`)
+    shellOptions = shellOptions || {};
+    logger.info(`Running NSSM command "nssm.exe ${command.join(' ')}"...`);
 
     // Used for cases when both stdout and stderr are written to call the callback only once
-    let callbackCalled = false
+    let callbackCalled = false;
 
     // Choose whether to run nssm.exe with admin permissions or not
-    let executor = shellOptions.requiresElevation ? sudo.exec : exec
+    let executor = shellOptions.requiresElevation ? sudo.exec : exec;
     let options = shellOptions.requiresElevation ? {
         name: 'GoData'
-    } : null
+    } : null;
 
-    let sanitizedCommand = `${AppPaths.nssmFile} ${command.join(' ')}`
+    let sanitizedCommand = `${AppPaths.nssmFile} ${command.join(' ')}`;
     executor(sanitizedCommand, options, (error, stdout, stderr) => {
         if (error && shellOptions.requiresElevation) {
-            processNssmResult(true, Buffer.from(error.message))
+            processNssmResult(true, Buffer.from(error.message));
         } else if (stderr.length > 0) {
-            processNssmResult(true, Buffer.from(stderr))
+            processNssmResult(true, Buffer.from(stderr));
         } else {
-            processNssmResult(false, Buffer.from(stdout))
+            processNssmResult(false, Buffer.from(stdout));
         }
-    })
+    });
 
     /**
      * Converts nssm result to string and calls the callback
@@ -94,17 +95,17 @@ function runNssmShell(command, shellOptions, callback) {
      * @param data
      */
     function processNssmResult(isError, data) {
-        let result = cptable.utils.decode(activeCodePage, data).replace(/\0.*$/g,'').trim()
-        logger.info(`NSSM result:\n${result}`)
+        let result = cptable.utils.decode(activeCodePage, data).replace(/\0.*$/g,'').trim();
+        logger.info(`NSSM result:\n${result}`);
 
         // throw an error unless the error is a valid status
-        let status = undefined
+        let status = undefined;
 
         // First identify if it's a recoverable status
-        determineStatus(nssmRecoverableStatuses)
+        determineStatus(nssmRecoverableStatuses);
         // If status is still not determined, check if it is a valid status
         if (!status) {
-            determineStatus(nssmValidStatuses)
+            determineStatus(nssmValidStatuses);
         }
 
         /**
@@ -114,27 +115,27 @@ function runNssmShell(command, shellOptions, callback) {
         function determineStatus(nssmStatuses) {
             for (let key in nssmStatuses) {
                 if (nssmStatuses.hasOwnProperty(key)) {
-                    let sanitizedStatus = nssmStatuses[key]
+                    let sanitizedStatus = nssmStatuses[key];
                     if (typeof nssmStatuses[key] === 'function') {
-                        sanitizedStatus = nssmStatuses[key](shellOptions)
+                        sanitizedStatus = nssmStatuses[key](shellOptions);
                     }
                     if (result.indexOf(sanitizedStatus) > -1) {
-                        status = sanitizedStatus
-                        break
+                        status = sanitizedStatus;
+                        break;
                     }
                 }
             }
         }
 
         if (!status) {
-            logger.info(`Error executing NSSM command "nssm.exe ${command.join(' ')}": ${result}`)
-            throw new Error(`Error executing NSSM command "nssm.exe ${command.join(' ')}"`)
+            logger.info(`Error executing NSSM command "nssm.exe ${command.join(' ')}": ${result}`);
+            throw new Error(`Error executing NSSM command "nssm.exe ${command.join(' ')}"`);
         }
 
         // call callback unless previously called
         if (!callbackCalled) {
-            callback(isError ? true : null, status)
-            callbackCalled = true
+            callback(isError ? true : null, status);
+            callbackCalled = true;
         }
     }
 }
@@ -146,13 +147,13 @@ function runNssmShell(command, shellOptions, callback) {
 function getActiveCodePage(callback) {
     exec('chcp', (error, stdout, stderr) => {
         if (error || stderr.length > 0) {
-            return callback(error || new Error(stderr))
+            return callback(error || new Error(stderr));
         }
         // parse active code page
-        let parsedActiveCodePage = stdout.replace('Active code page: ', '').trim()
-        activeCodePage = parseInt(parsedActiveCodePage, 10)
-        callback()
-    })
+        let parsedActiveCodePage = stdout.replace('Active code page: ', '').trim();
+        activeCodePage = parseInt(parsedActiveCodePage, 10);
+        callback();
+    });
 }
 
 module.exports = {
@@ -161,4 +162,4 @@ module.exports = {
     mongoServiceName,
     goDataAPIServiceName,
     runNssmShell
-}
+};

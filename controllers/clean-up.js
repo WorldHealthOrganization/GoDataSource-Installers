@@ -1,20 +1,42 @@
-'use strict'
+'use strict';
 
-const mongo = require('./mongo')
-const goData = require('./goData')
-const settings = require('./settings')
+const mongo = require('./mongo');
+const goData = require('./goData');
+const settings = require('./settings');
+const async = require('async');
 
 /**
  * Kills Mongo and GoData processes.
  */
-const cleanup = () => {
-    mongo.setShouldThrowExceptionOnMongoFailure(false)
+const cleanup = (callback) => {
+    // set default callback
+    callback || (
+        callback = () => {}
+    );
+
     // Mongo process should only be stopped if not running as a service
-    !settings.runMongoAsAService && mongo.killMongo()
+    const jobs = [];
+    if (!settings.runMongoAsAService) {
+        mongo.setShouldThrowExceptionOnMongoFailure(false);
+        jobs.push((callback) => {
+            mongo.killMongo(callback);
+        });
+    }
+
     // Go.Data process should only be stopped if not running as a service
-    ! settings.runGoDataAPIAsAService && goData.killGoData()
-}
+    if (!settings.runGoDataAPIAsAService) {
+        jobs.push((callback) => {
+            goData.killGoData(callback);
+        });
+    }
+
+    // wait for both records to finish
+    async.parallel(
+        jobs,
+        callback
+    );
+};
 
 module.exports = {
     cleanup
-}
+};
