@@ -29,13 +29,14 @@ const nssmValidStatuses = Object.freeze({
      * @return {string}
      */
     ServiceInstalled: function (options) {
-        return `Service "${options.serviceName}" installed successfully!`
+        return `Service "${options.serviceName}" installed successfully!`;
     },
+
     /**
      * @return {string}
      */
     ParameterSet: function (options) {
-        return `Set parameter "${options.serviceParameter}" for service "${options.serviceName}".`
+        return `Set parameter "${options.serviceParameter}" for service "${options.serviceName}".`;
     }
 });
 

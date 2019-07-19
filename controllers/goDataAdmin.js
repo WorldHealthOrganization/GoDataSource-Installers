@@ -1,12 +1,12 @@
-'use strict'
+'use strict';
 
-const {spawn} = require('child_process')
+const {spawn} = require('child_process');
 
-const logger = require('./../logger/app').logger
-const AppPaths = require('./../utils/paths')
+const logger = require('./../logger/app').logger;
+const AppPaths = require('./../utils/paths');
 
-const goData = require('./goData')
-const constants = require('./../utils/constants')
+const goData = require('./goData');
+const constants = require('./../utils/constants');
 
 /**
  * Launches the restore back-up script
@@ -18,38 +18,38 @@ const restoreBackup = (filePath, callback) => {
     goData.killGoData((err) => {
         // All errors will be send in callback in an array
         if (err) {
-            return callback([{type: constants.GO_DATA_KILL_ERROR}])
+            return callback([{type: constants.GO_DATA_KILL_ERROR}]);
         }
 
-        let infoMessage = 'Restoring back-up...'
-        let errorMessage = 'Error restoring back-up'
-        logger.info(infoMessage)
+        let infoMessage = 'Restoring back-up...';
+        let errorMessage = 'Error restoring back-up';
+        logger.info(infoMessage);
 
         // run node backupScript.js --file={filePath}
-        const restoreBackup = spawn(AppPaths.nodeFile, [AppPaths.restoreBackupScriptFile, `--file=${filePath}`])
+        const restoreBackup = spawn(AppPaths.nodeFile, [AppPaths.restoreBackupScriptFile, `--file=${filePath}`]);
 
         // log script errors
         restoreBackup.stderr.on('data', (data) => {
-            logger.error(`${errorMessage}: ${data.toString()}`)
-        })
+            logger.error(`${errorMessage}: ${data.toString()}`);
+        });
 
         restoreBackup.stdout.on('data', (data) => {
-            logger.info(data.toString())
-        })
+            logger.info(data.toString());
+        });
 
         // handle script exit
         restoreBackup.on('close', (code) => {
             // errors may be due to script fail or Go.Data relaunch fail. All of them will be sent in callback
-            let errors = []
+            let errors = [];
 
             // handle case for script error
             if (code) {
-                logger.error(`Back-up restore exit with code ${code}`)
+                logger.error(`Back-up restore exit with code ${code}`);
 
                 // add error that will be sent in callback
-                errors.push({type: constants.GO_DATA_BACKUP_ERROR})
+                errors.push({type: constants.GO_DATA_BACKUP_ERROR});
             } else {
-                logger.info(`Completed back-up restore!`)
+                logger.info(`Completed back-up restore!`);
             }
 
             //Relaunch Go.Data web app
@@ -60,38 +60,37 @@ const restoreBackup = (filePath, callback) => {
                 (error) => {
                     // add launch error to errors if Go.Data launch failed
                     if (error) {
-                        errors.add({type: constants.GO_DATA_LAUNCH_ERROR})
+                        errors.add({type: constants.GO_DATA_LAUNCH_ERROR});
                     }
-                    callback(errors)
-                })
-        })
-    })
-
-}
+                    callback(errors);
+                });
+        });
+    });
+};
 
 /**
  * Launches the reset password script
  * @param callback
  */
 const resetAdminPassword = (callback) => {
-    let info = 'Reseting Admin password...'
-    let error = 'Error reseting Admin password'
-    logger.info(info)
-    const resetPassword = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'reset-admin-password'])
+    let info = 'Reseting Admin password...';
+    let error = 'Error reseting Admin password';
+    logger.info(info);
+    const resetPassword = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'reset-admin-password']);
     resetPassword.stderr.on('data', (data) => {
-        logger.error(`${error}: ${data.toString()}`)
-    })
+        logger.error(`${error}: ${data.toString()}`);
+    });
     resetPassword.on('close', (code) => {
         if (code) {
-            logger.error(`Reset Admin password exit with code ${code}`)
+            logger.error(`Reset Admin password exit with code ${code}`);
         } else {
-            logger.info(`Completed reseting admin password`)
+            logger.info(`Completed reseting admin password`);
         }
-        callback(code)
-    })
-}
+        callback(code);
+    });
+};
 
 module.exports = {
     restoreBackup,
     resetAdminPassword
-}
+};
