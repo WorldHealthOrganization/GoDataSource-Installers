@@ -28,16 +28,6 @@ contextMenu({
 // used to cache the app URL after app is loaded
 let webAppURL = null;
 
-// used at first launch to start web app as hub or consolidation server
-let goDataConfiguration = null;
-/**
- * Getter for goDataConfiguration
- * @returns The goDataConfiguration
- */
-const setGoDataConfiguration = (configuration) => {
-    goDataConfiguration = configuration
-};
-
 /**
  * Opens the splash screen
  * Performs Clean-up (kills apps running on Mongo & Go.Data ports)
@@ -52,7 +42,6 @@ const launchGoData = (callback) => {
     appSplash.openSplashScreen();
     appSplash.sendSplashEvent('event', 'Cleaning up...');
 
-    prelaunch.setBuildConfiguration(goDataConfiguration);
     prelaunch.cleanUp(
         () => {
         },
@@ -254,7 +243,6 @@ const closeWebApp = () => {
 
 module.exports = {
     launchGoData,
-    setGoDataConfiguration,
     openWebApp,
     closeWebApp
 };

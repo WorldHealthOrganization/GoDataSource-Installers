@@ -331,12 +331,8 @@ The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:4
 		- between 1025 and 65535
 		- must be different from `dbport`
 		- defaults to `8000`
-	- --type
-		- `hub` or `consolidation`
-		- it is not advised to change this value after the first Go.Data launch
-		- defaults to `hub`
 
-	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000 --type=consolidation`
+	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000
 
 ### 6. Auto-updater
 

@@ -56,10 +56,7 @@ const openSettings = (settingType) => {
  * Configures the IPC Main and handles the events received from IPC Main
  */
 const configureIPCMain = () => {
-    ipcMain.initSettingsEvents((mongoPort, goDataPort, appType, encryption, state) => {
-
-        // Set the build type
-        appWebApp.setGoDataConfiguration(appType);
+    ipcMain.initSettingsEvents((mongoPort, goDataPort, encryption, state) => {
 
         // Handle encryption event
         let encryptionProcess = platform === 'win' ?

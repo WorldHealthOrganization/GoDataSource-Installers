@@ -16,11 +16,6 @@ const goDataApi = require('./goDataAPI');
 const buildConfiguration = require('./../utils/buildConfiguration');
 const settings = require('./settings');
 
-let goDataType = null;
-const setBuildConfiguration = (config) => {
-    goDataType = config;
-};
-
 const cleanUp = (events, callback) => {
     logger.log('Cleaning up...');
     async.series([
@@ -44,10 +39,7 @@ const cleanUp = (events, callback) => {
             goData.setAppPort,
             goData.setDbPort,
             (callback) => {
-                if (!goDataType) {
-                    return callback();
-                }
-                let configuration = buildConfiguration.mapTypeToBuildConfiguration(goDataType);
+                let configuration = buildConfiguration.mapTypeToBuildConfiguration();
                 goDataApi.setBuildConfiguration(configuration, callback);
             }
         ],
@@ -62,6 +54,5 @@ const cleanUp = (events, callback) => {
 };
 
 module.exports = {
-    setBuildConfiguration,
     cleanUp
 };

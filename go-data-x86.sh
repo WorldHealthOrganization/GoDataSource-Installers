@@ -2,7 +2,6 @@
 
 MONGO_PORT=27017
 GODATA_PORT=8000
-APP_TYPE=hub
 ARCH=x86
 DBPATH=db
 
@@ -15,9 +14,6 @@ case $i in
     ;;
     -port=*|--port=*)
     GODATA_PORT="${i#*=}"
-    ;;
-    -type=*|--type=*)
-    APP_TYPE="${i#*=}"
     ;;
     -dbpath=*|--dbpath=*)
     DBPATH="${i#*=}"
@@ -33,7 +29,6 @@ done
 #set application configuration
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set dbPort ${MONGO_PORT}
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set apiPort ${GODATA_PORT}
-platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set buildType ${APP_TYPE}
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set buildPlatform ${ARCH}
 
 #perform cleanup
