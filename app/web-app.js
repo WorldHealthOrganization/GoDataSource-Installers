@@ -52,7 +52,6 @@ const launchGoData = (callback) => {
     appSplash.openSplashScreen();
     appSplash.sendSplashEvent('event', 'Cleaning up...');
 
-    prelaunch.setBuildConfiguration(goDataConfiguration);
     prelaunch.cleanUp(
         () => {
         },
