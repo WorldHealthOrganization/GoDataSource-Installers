@@ -18,6 +18,8 @@ const settings = require('./settings');
 
 const cleanUp = (events, callback) => {
     logger.log('Cleaning up...');
+    logger.info(`runMongoAsAService = ${settings.runMongoAsAService}`);
+    logger.info(`runGoDataAPIAsAService = ${settings.runGoDataAPIAsAService}`);
     async.series([
             // DO NOT KILL MONGO IF LAUNCHED AS A SERVICE
             (callback) => {

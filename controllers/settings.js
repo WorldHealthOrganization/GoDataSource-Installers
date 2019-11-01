@@ -258,11 +258,7 @@ if (
     runGoDataAPIAsAService = (NODE_PLATFORM || process.env.NODE_PLATFORM) === 'win';
 }
 
-// log
-logger.info(`runMongoAsAService = ${runMongoAsAService}`);
-logger.info(`runGoDataAPIAsAService = ${runGoDataAPIAsAService}`);
-
-
+// export
 module.exports = {
     getMongoPort,
     setMongoPort,
