@@ -48,10 +48,10 @@
       Pop $DontUseServices
 
       ; check if we don't already have app installed at this location and configured installation type
-      IfFileExists "$INSTDIR\winCfg.cgf" file_found file_not_found
+      IfFileExists "$INSTDIR\winCfg.cfg" file_found file_not_found
       IfErrors file_not_found
       file_found:
-        FileOpen $1 "$INSTDIR\winCfg.cgf" r
+        FileOpen $1 "$INSTDIR\winCfg.cfg" r
         FileRead $1 $2
         FileClose $1
         ${WordFind} $2 "installationTypeUseServices=" "+1" $3
@@ -116,7 +116,7 @@
 
 !macro customInstall
   ;Write app config
-  FileOpen $0 "$INSTDIR\winCfg.cgf" w
+  FileOpen $0 "$INSTDIR\winCfg.cfg" w
   IfErrors file_error
   FileWrite $0 "installationTypeUseServices=$installationTypeUseServices"
   FileClose $0
@@ -128,10 +128,10 @@
 
 !macro unregisterFileAssociations
   ;Determine if we use services
-  IfFileExists "$INSTDIR\winCfg.cgf" file_found used_services
+  IfFileExists "$INSTDIR\winCfg.cfg" file_found used_services
   IfErrors used_services
   file_found:
-    FileOpen $1 "$INSTDIR\winCfg.cgf" r
+    FileOpen $1 "$INSTDIR\winCfg.cfg" r
     FileRead $1 $2
     FileClose $1
     ${WordFind} $2 "installationTypeUseServices=" "+1" $3

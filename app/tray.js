@@ -58,7 +58,7 @@ const updateTrayMenu = (disableMenu) => {
 
         // determine if menu options affected by services should be enabled
         const appUsesServices = settings.runMongoAsAService || settings.runGoDataAPIAsAService;
-        serviceOptionsEnabled = !appUsesServices || ( isMongoServiceRunning && isNodeServiceRunning);
+        serviceOptionsEnabled = !appUsesServices || (isMongoServiceRunning && isNodeServiceRunning);
 
         // Create the tray options menu
         const menuOptions = [];

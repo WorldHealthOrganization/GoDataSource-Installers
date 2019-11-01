@@ -8,6 +8,7 @@ const fs = require('fs');
 
 const AppPaths = require('./../utils/paths');
 const settingsFile = AppPaths.desktopApp.settingsFile;
+const winCfgPath = AppPaths.desktopApp.winCfgPath;
 
 const encryptionController = require('./encryption');
 
@@ -194,8 +195,73 @@ const setEncryptionCapability = (capable, callback) => {
     });
 };
 
-const runMongoAsAService = (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win';
-const runGoDataAPIAsAService = (NODE_PLATFORM || process.env.NODE_PLATFORM) === 'win';
+/**
+ * Retrieve win settings
+ * Props: {
+ *  installationTypeUseServices: '0' | '1'
+ * }
+ */
+let cachedWinSettings;
+const retrieveWinSettings = () => {
+    // no win settings ?
+    if (!winCfgPath) {
+        return {};
+    }
+
+    // check if we didn't loaded already
+    if (cachedWinSettings) {
+        return cachedWinSettings;
+    }
+
+    // load settings
+    cachedWinSettings = {};
+    try {
+        // check if win config file exists and
+        if (fs.existsSync(winCfgPath)) {
+            // read win settings
+            const winCfgData = fs.readFileSync(winCfgPath, 'utf8');
+
+            // determine if we should use services or not
+            const reg = /^\s*([a-z0-9]+)\s*=\s*([a-z0-9])\s*$/igm;
+            const regCheck = winCfgData || '';
+            let m;
+            do {
+                m = reg.exec(regCheck);
+                if (m) {
+                    cachedWinSettings[m[1]] = m[2];
+                }
+            } while (m);
+        }
+    } catch (e) {
+        // NOTHING
+    }
+
+    // finished loading win settings
+    return cachedWinSettings;
+};
+
+// determine if we should use services
+let runMongoAsAService;
+let runGoDataAPIAsAService;
+if (
+    winCfgPath && (
+        (NODE_PLATFORM || process.env.NODE_PLATFORM) === 'win' ||
+        (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win'
+    )
+) {
+    const winSettings = retrieveWinSettings();
+    const installationTypeUseServices = winSettings.installationTypeUseServices !== '0';
+    runMongoAsAService = installationTypeUseServices;
+    runGoDataAPIAsAService = installationTypeUseServices;
+} else {
+    runMongoAsAService = (MONGO_PLATFORM || process.env.MONGO_PLATFORM) === 'win';
+    runGoDataAPIAsAService = (NODE_PLATFORM || process.env.NODE_PLATFORM) === 'win';
+}
+
+// log
+logger.info(`runMongoAsAService = ${runMongoAsAService}`);
+logger.info(`runGoDataAPIAsAService = ${runGoDataAPIAsAService}`);
+
 
 module.exports = {
     getMongoPort,
@@ -203,6 +269,7 @@ module.exports = {
     getAppPort,
     setAppPort,
     getEncryptionCapability,
+    retrieveWinSettings,
     runMongoAsAService,
     runGoDataAPIAsAService
 };

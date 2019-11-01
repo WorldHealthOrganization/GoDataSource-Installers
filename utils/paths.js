@@ -27,6 +27,7 @@ let pm2Module = undefined;
 let dbScript = undefined;
 let backupScript = undefined;
 let configScript = undefined;
+let winCfgPath;
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
@@ -38,6 +39,7 @@ if (process.env.NODE_ENV === 'development') {
     dbScript = path.join(__dirname, './../go-data/build/server/install/install.js');
     backupScript = path.join(__dirname, './../go-data/build/server/scripts/restoreBackup.js');
     configScript = path.join(__dirname, './../go-data/build/installer/common/config.js');
+    winCfgPath = path.join(__dirname, './../winCfg.cfg');
 } else {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
@@ -49,6 +51,7 @@ if (process.env.NODE_ENV === 'development') {
     dbScript = path.join(process.resourcesPath, './go-data/build/server/install/install.js');
     backupScript = path.join(process.resourcesPath, './go-data/build/server/scripts/restoreBackup.js');
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
+    winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2');
@@ -70,7 +73,8 @@ module.exports = {
     },
     desktopApp: {
         package: desktopAppPackage,                 // Location of package.json for Go.Data desktop app
-        settingsFile: settingsFile                  // Location of the settings file for Go.Data desktop app
+        settingsFile: settingsFile,                 // Location of the settings file for Go.Data desktop app
+        winCfgPath: winCfgPath                      // Config specific to windows instances
     },
     databaseDirectory: dbDirectory,                 // Location of the Go.Data database
     databaseLogDirectory: dbLogDirectory,           // Location of the Go.Data database logs directory
