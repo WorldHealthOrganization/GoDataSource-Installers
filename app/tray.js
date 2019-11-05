@@ -1,6 +1,6 @@
 'use strict';
 
-const {app, Menu, Tray, dialog} = require('electron');
+const {app, Menu, Tray, dialog, shell} = require('electron');
 const path = require('path');
 
 const AppPaths = require('./../utils/paths');
@@ -111,6 +111,58 @@ const updateTrayMenu = (disableMenu) => {
         }, {
             label: `Check for updates`,
             click: checkUpdates
+        });
+
+        // Log directories
+        menuOptions.push({
+            type: 'separator'
+        }, {
+            label: `Log directories`,
+            submenu: [
+                {
+                    label: 'Application',
+                    click: () => {
+                        try {
+                            shell.openItem(AppPaths.appLogDirectory);
+                        } catch (e) {
+                            dialog.showMessageBox({
+                                type: 'warning',
+                                title: ``,
+                                message: `Couldn't open application logs directory ( "${AppPaths.appLogDirectory}" )`,
+                                buttons: ['Ok']
+                            });
+                        }
+                    }
+                }, {
+                    label: 'API',
+                    click: () => {
+                        try {
+                            shell.openItem(AppPaths.webApp.logDirectory);
+                        } catch (e) {
+                            dialog.showMessageBox({
+                                type: 'warning',
+                                title: ``,
+                                message: `Couldn't open api logs directory ( "${AppPaths.webApp.logDirectory}" )`,
+                                buttons: ['Ok']
+                            });
+                        }
+                    }
+                }, {
+                    label: 'Database',
+                    click: () => {
+                        try {
+                            shell.openItem(AppPaths.dbLogDirectory);
+                        } catch (e) {
+                            dialog.showMessageBox({
+                                type: 'warning',
+                                title: ``,
+                                message: `Couldn't open database logs directory ( "${AppPaths.databaseLogDirectory}" )`,
+                                buttons: ['Ok']
+                            });
+                        }
+                    }
+                }
+            ]
         });
 
         // Option Quit

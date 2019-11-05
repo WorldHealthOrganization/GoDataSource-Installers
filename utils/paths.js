@@ -18,6 +18,7 @@ const resourceDirectory = path.join(__dirname, './../resources');
 const windowsDirectory = path.join(__dirname, './../windows');
 
 let webAppDirectory = undefined;
+let webAppLogDirectory = undefined;
 let mongodPath = undefined;
 let mongoPath = undefined;
 let mongoDirectory = undefined;
@@ -30,6 +31,7 @@ let configScript = undefined;
 let winCfgPath;
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
+    webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     mongoPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongo${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     mongoDirectory = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin`);
@@ -42,6 +44,7 @@ if (process.env.NODE_ENV === 'development') {
     winCfgPath = path.join(__dirname, './../winCfg.cfg');
 } else {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
+    webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     mongoPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongo${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     mongoDirectory = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin`);
@@ -65,6 +68,7 @@ module.exports = {
     appDirectory: appDirectory,
     webApp: {
         directory: webAppDirectory,                 // Location of the Go.Data web app directory
+        logDirectory: webAppLogDirectory,           // Location of the Go.Data web app logs directory
         launchScript: webAppLaunchScript,           // Location of the Go.Data main file (server/server.js)
         package: webAppPackage,                     // Location of package.json for Go.Data web app
         currentVersion: webAppVersion,              // Version of Go.Data web app taken from package.json
