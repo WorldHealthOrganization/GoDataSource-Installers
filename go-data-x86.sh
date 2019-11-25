@@ -35,11 +35,20 @@ platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/con
 echo "Stopping PM2 process..."
 platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 stop server
 
-echo "Stopping process on port ${MONGO_PORT}..."
-kill -9 $(lsof -t -i:${MONGO_PORT})
+#wait 1 second
+sleep 1
 
 echo "Stopping process on port ${GODATA_PORT}..."
 kill -9 $(lsof -t -i:${GODATA_PORT})
+
+#wait 1 second
+sleep 1
+
+echo "Stopping process on port ${MONGO_PORT}..."
+kill -9 $(lsof -t -i:${MONGO_PORT})
+
+#wait 1 second
+sleep 1
 
 #create path for Mongo
 mkdir -p ${DBPATH}/data
@@ -72,5 +81,21 @@ fi
 
 #start Go.Data
 platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 start go-data/build/server/server.js --interpreter=platforms/linux/${ARCH}/default/node/bin/node
+
+#wait for both services to start
+#api & mongo
+echo ""
+printf "Starting Go.Data server ( might take a while )"
+while :
+do
+    if [[ `lsof -t -i:${GODATA_PORT}` ]]
+    then
+        break
+    fi
+    printf "."
+    sleep 0.5
+done
+echo ""
+echo "Go.Data server is running"
 
 exit 0
