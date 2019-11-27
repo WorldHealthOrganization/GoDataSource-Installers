@@ -69,6 +69,7 @@ const launchGoData = (callback) => {
                                 appSplash.sendSplashEvent('error', err.message);
                                 return callback(err);
                             }
+                            logger.logger.info(`Open web app from launchGoData (${appURL})`);
                             openWebApp(appURL);
                             appSplash.closeSplashScreen();
                             const tray = require('./tray');
@@ -86,11 +87,11 @@ const launchGoData = (callback) => {
  */
 const openWebApp = (appURL) => {
     if (appURL) {
-        logger.logger.info(`Opening ${productName} at ${appURL}`);
+        logger.logger.info(`1. Opening ${productName} at ${appURL}`);
         webAppURL = appURL;
         openEmbeddedWindow(appURL);
     } else if (webAppURL) {
-        logger.logger.info(`Opening ${productName} at ${webAppURL}`);
+        logger.logger.info(`2. Opening ${productName} at ${webAppURL}`);
         openEmbeddedWindow(webAppURL);
     } else {
         async.parallel([
@@ -100,11 +101,10 @@ const openWebApp = (appURL) => {
             goDataAPI.getPublicHost,
             // get Public Port
             goDataAPI.getPublicPort
-
         ], (err, results) => {
             if (!err) {
                 let url = `${results[0]}://${results[1]}:${results[2]}`;
-                logger.logger.info(`Opening ${productName} at ${url}`);
+                logger.logger.info(`3. Opening ${productName} at ${url}`);
                 openEmbeddedWindow(url);
             }
         })
@@ -112,27 +112,57 @@ const openWebApp = (appURL) => {
 };
 
 let embeddedAppWindow;
+
+let openEmbeddedWindowCalledUrl;
+
 /**
  * Checks the app url for 200 status code and opens Go.Data in an Electron window that loads Go.Data Web portal
  * @param url - The URL where Go.Data is running.
  */
 const openEmbeddedWindow = (url) => {
+    // do we need to wait for previous checkURL to finish since it isn't required anymore ?
+    if (openEmbeddedWindowCalledUrl === url) {
+        // already in process of opening this url
+        logger.logger.info(`Already checking '${url}'...`);
+        return;
+    } else if (!openEmbeddedWindowCalledUrl) {
+        // NOTHING TO DO
+        // must open browser window
+        logger.logger.info(`Checking '${url}'...`);
+    } else if (openEmbeddedWindowCalledUrl !== url) {
+        // must wait for async.series to finish
+        logger.logger.info(`Waiting for checking '${openEmbeddedWindowCalledUrl}' to finish since url has changed to '${url}'...`);
+        setTimeout(
+            () => {
+                openEmbeddedWindow(url);
+            },
+            200
+        );
+        return;
+    }
+
     // determine if we use a secure connection
     // this is the easiest way to check this, since otherwise we would have to change in multiple places and not only where we use openEmbeddedWindow
     const usesSSL = (url || '').toLowerCase().startsWith('https:');
 
     // validate url
+    openEmbeddedWindowCalledUrl = url;
     async.series(
         [
             checkURL,
             openWindow
         ],
         (err) => {
-            if (err) {
+            if (
+                err &&
+                openEmbeddedWindowCalledUrl === url
+            ) {
                 //dialog that asks to restart
+                const errMsg = `An error occurred while launching ${productName} (${err.message}). Please restart ${productName}.`;
+                logger.logger.error(errMsg);
                 dialog.showMessageBox({
                     title: `Error`,
-                    message: `An error occurred while launching ${productName} (${err.message}). Please restart ${productName}.`,
+                    message: errMsg,
                     buttons: ['Restart', 'Close']
                 }, (buttonIndex) => {
                     switch (buttonIndex) {
@@ -145,7 +175,14 @@ const openEmbeddedWindow = (url) => {
                             break;
                     }
                 });
+            } else if (openEmbeddedWindowCalledUrl === url) {
+                logger.logger.info('Browser window opened...');
+            } else {
+                logger.logger.info(`Url changed from '${openEmbeddedWindowCalledUrl}' to '${url}', so there is no point in using the old url...`);
             }
+
+            // reset url caller
+            openEmbeddedWindowCalledUrl = undefined;
         }
     );
 
@@ -159,6 +196,11 @@ const openEmbeddedWindow = (url) => {
                 interval: 3000
             },
             (callback) => {
+                // we don't need to check this one since url changed
+                if (openEmbeddedWindowCalledUrl !== url) {
+                    return callback();
+                }
+
                 // determine request data accordingly to protocol
                 const requestData = usesSSL ?
                     {
@@ -190,6 +232,12 @@ const openEmbeddedWindow = (url) => {
 
     // display electron browser window
     function openWindow(callback) {
+        // we don't need to display this one since url changed
+        if (openEmbeddedWindowCalledUrl !== url) {
+            return callback();
+        }
+
+        // display browser window
         if (!embeddedAppWindow) {
             embeddedAppWindow = new BrowserWindow({
                 webPreferences: {

@@ -22,6 +22,8 @@ const async = require('async');
 
 const productName = AppPaths.desktopApp.package.name;
 
+const logger = require('./../logger/app');
+
 let tray = null;
 
 let serviceOptionsEnabled = false;
@@ -189,6 +191,7 @@ const createTray = () => {
         // double click on app tray icon event
         tray.on('double-click', () => {
             if (serviceOptionsEnabled) {
+                logger.logger.info(`Open web app from createTray...`);
                 appWebApp.openWebApp();
             }
         });
@@ -357,6 +360,7 @@ const startServices = () => {
         updateTrayMenu();
 
         // display electron browser window
+        logger.logger.info(`Open web app from startServices...`);
         openWebApp();
     });
 };
