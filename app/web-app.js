@@ -122,7 +122,8 @@ const openEmbeddedWindow = (url) => {
     const usesSSL = (url || '').toLowerCase().startsWith('https:');
 
     // validate url
-    async.series([
+    async.series(
+        [
             checkURL,
             openWindow
         ],
@@ -131,7 +132,7 @@ const openEmbeddedWindow = (url) => {
                 //dialog that asks to restart
                 dialog.showMessageBox({
                     title: `Error`,
-                    message: `An error occurred while launching ${productName} (unreachable app URL). Please restart ${productName}.`,
+                    message: `An error occurred while launching ${productName} (${err.message}). Please restart ${productName}.`,
                     buttons: ['Restart', 'Close']
                 }, (buttonIndex) => {
                     switch (buttonIndex) {
@@ -145,7 +146,8 @@ const openEmbeddedWindow = (url) => {
                     }
                 });
             }
-        });
+        }
+    );
 
     // before displaying electron browser window we need to make sure Go.Data api / web works
     function checkURL(callback) {

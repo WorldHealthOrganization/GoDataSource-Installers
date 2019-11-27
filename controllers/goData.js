@@ -401,65 +401,93 @@ function compareServiceAPIWithAppAPI(callback) {
  * @param callback Invoked with (err, result)
  */
 function killGoData(callback) {
-
-    callback || (callback = () => {
-    });
+    // set default callback
+    if (!callback) {
+        callback = () => {};
+    }
 
     // delete the PM2 process
     logger.info('Attempt to terminate previous Go.Data process...');
     pm2.connect(true, (err) => {
-
         if (err) {
             err = new Error(`Error connecting PM2 process: ${err.message}`);
             logger.error(err.message);
             return callback(err);
         }
-        logger.info(`Deleting PM2 ${productName} process...`);
-        pm2.delete(productName, (err) => {
-            if (err) {
-                logger.error(`Error deleting PM2 ${productName} process: ${err.message}`);
-            } else {
-                logger.info(`Deleted PM2 ${productName} process!`);
-            }
-            pm2.disconnect();
-            goDataAPI.getAppPort((err, port) => {
-                if (err) {
-                    err = new Error(`Error retrieving ${productName} API PORT: ${err.message}`);
-                    logger.error(err.message);
-                    return callback(err);
-                    // throw err
-                }
-                if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
-                    kill(port)
-                        .then((result) => {
-                            if (result.stderr && result.stderr.length > 0) {
-                                logger.error(`Error killing process on port ${port}: ${result.stderr}`);
-                                return callback(result.stderr);
 
-                            }
-                            logger.info(`Killed process on port ${port}`);
-                            callback();
-                        })
-                        .catch((e) => {
-                            logger.error(`Error killing process on port ${port}: ${e}`);
-                            callback(e);
-                        });
+        logger.info(`Stopping PM2 ${productName} process before delete...`);
+        pm2.stop(productName, (err) => {
+            if (
+                err &&
+                err.message &&
+                err.message.toLowerCase().indexOf('process name not found') > -1
+            ) {
+                logger.error(`Process PM2 ${productName} not found`);
+            } else if (err) {
+                logger.error(`Error stopping PM2 ${productName} process: ${err.message}`);
+            } else {
+                logger.info(`Stopped PM2 ${productName} process!`);
+            }
+
+            logger.info(`Deleting PM2 ${productName} process...`);
+            pm2.delete(productName, (err) => {
+                if (
+                    err &&
+                    err.message &&
+                    err.message.toLowerCase().indexOf('process name not found') > -1
+                ) {
+                    logger.error(`Process PM2 ${productName} not found`);
+                } else if (err) {
+                    logger.error(`Error deleting PM2 ${productName} process: ${err.message}`);
                 } else {
-                    processUtil.findPortInUse(port, (err, processes) => {
-                        if (processes && processes.length > 0) {
-                            async.each(
-                                processes.map(p => p.pid),
-                                processUtil.killProcess,
-                                callback
-                            );
-                        } else {
-                            callback();
-                        }
-                    })
+                    logger.info(`Deleted PM2 ${productName} process!`);
                 }
-            })
-        })
-    })
+                pm2.disconnect();
+                goDataAPI.getAppPort((err, port) => {
+                    if (err) {
+                        err = new Error(`Error retrieving ${productName} API PORT: ${err.message}`);
+                        logger.error(err.message);
+                        return callback(err);
+                        // throw err
+                    }
+                    if (process.env.MONGO_PLATFORM === 'linux' || MONGO_PLATFORM === 'linux') {
+                        kill(port)
+                            .then((result) => {
+                                if (result.stderr && result.stderr.length > 0) {
+                                    logger.error(`Error killing process on port ${port}: ${result.stderr}`);
+                                    return callback(result.stderr);
+
+                                }
+                                logger.info(`Killed process on port ${port}`);
+                                callback();
+                            })
+                            .catch((e) => {
+                                logger.error(`Error killing process on port ${port}: ${e}`);
+                                callback(e);
+                            });
+                    } else {
+                        processUtil.findPortInUse(port, (err, processes) => {
+                            if (processes && processes.length > 0) {
+                                // filter out pid 0
+                                processes = processes.filter(p => p.pid !== 0 && p.pid !== '0');
+                                if (processes && processes.length > 0) {
+                                    async.each(
+                                        processes.map(p => p.pid),
+                                        processUtil.killProcess,
+                                        callback
+                                    );
+                                } else {
+                                    callback();
+                                }
+                            } else {
+                                callback();
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    });
 }
 
 /**

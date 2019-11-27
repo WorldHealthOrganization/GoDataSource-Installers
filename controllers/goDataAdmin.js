@@ -26,7 +26,10 @@ const restoreBackup = (filePath, callback) => {
         logger.info(infoMessage);
 
         // run node backupScript.js --file={filePath}
-        const restoreBackup = spawn(AppPaths.nodeFile, [AppPaths.restoreBackupScriptFile, `--file=${filePath}`]);
+        const restoreBackup = spawn(
+            AppPaths.nodeFile,
+            [AppPaths.restoreBackupScriptFile, `--file=${filePath}`]
+        );
 
         // log script errors
         restoreBackup.stderr.on('data', (data) => {
@@ -76,7 +79,10 @@ const resetAdminPassword = (callback) => {
     let info = 'Reseting Admin password...';
     let error = 'Error reseting Admin password';
     logger.info(info);
-    const resetPassword = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'reset-admin-password']);
+    const resetPassword = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.databaseScriptFile, 'reset-admin-password']
+    );
     resetPassword.stderr.on('data', (data) => {
         logger.error(`${error}: ${data.toString()}`);
     });

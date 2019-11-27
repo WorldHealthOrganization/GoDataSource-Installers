@@ -105,7 +105,10 @@ function getGoDataParam(param, callback) {
     let log = true; // used to stop logging after script exits
     logger.info(`Retrieving ${productName} ${param} from ${productName} API...`);
     let value = null, error = null;
-    const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'get', param])
+    const goDataConfigProcess = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.webApp.configScript, 'get', param]
+    )
         .on('exit', (code) => {
             log = false;
             logger.info(`${productName} Web 'get ${param}' exited with code ${code}`);
@@ -136,7 +139,10 @@ function getGoDataParam(param, callback) {
 function setGoDataParam(param, value, callback) {
     let log = true; // used to stop logging after script exits
     logger.info(`Setting ${productName} ${param} ${value} using ${productName} API...`);
-    const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'set', param, value])
+    const goDataConfigProcess = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.webApp.configScript, 'set', param, value]
+    )
         .on('exit', (code) => {
             log = false;
             logger.info(`${productName} 'set ${param} ${value}' exited with code ${code}`);
