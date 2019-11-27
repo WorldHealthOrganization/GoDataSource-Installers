@@ -112,6 +112,7 @@ const openWebApp = (appURL) => {
 };
 
 let embeddedAppWindow;
+let embeddedAppWindowTimeout;
 
 let openEmbeddedWindowCalledUrl;
 
@@ -120,6 +121,12 @@ let openEmbeddedWindowCalledUrl;
  * @param url - The URL where Go.Data is running.
  */
 const openEmbeddedWindow = (url) => {
+    // stop parallel timeout calls
+    if (embeddedAppWindowTimeout) {
+        clearTimeout(embeddedAppWindowTimeout);
+        embeddedAppWindowTimeout = undefined;
+    }
+
     // do we need to wait for previous checkURL to finish since it isn't required anymore ?
     if (openEmbeddedWindowCalledUrl === url) {
         // already in process of opening this url
@@ -132,11 +139,12 @@ const openEmbeddedWindow = (url) => {
     } else if (openEmbeddedWindowCalledUrl !== url) {
         // must wait for async.series to finish
         logger.logger.info(`Waiting for checking '${openEmbeddedWindowCalledUrl}' to finish since url has changed to '${url}'...`);
-        setTimeout(
+        embeddedAppWindowTimeout = setTimeout(
             () => {
+                embeddedAppWindowTimeout = undefined;
                 openEmbeddedWindow(url);
             },
-            200
+            500
         );
         return;
     }
