@@ -225,11 +225,12 @@ const openEmbeddedWindow = (url) => {
                     (error, response) => {
                         // no response from our api ?
                         if (error || (response && response.statusCode !== 200)) {
-                            logger.logger.info(`${url} unreachable`);
-                            return callback(new Error(`${url} unreachable`));
+                            logger.logger.info(`'${url}' unreachable`);
+                            return callback(new Error(`'${url}' unreachable`));
                         }
 
                         // api connection established
+                        logger.logger.info(`Got response from '${url}'`);
                         callback();
                     }
                 );
