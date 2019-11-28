@@ -28,7 +28,10 @@ const testEncryptedDummyFile = (callback) => {
 
             let result = false;
 
-            const startEncryptionProcess = spawn('cipher', ['/e', AppPaths.testEncryptionDirectory]);
+            const startEncryptionProcess = spawn(
+                'cipher',
+                ['/e', AppPaths.testEncryptionDirectory]
+            );
             startEncryptionProcess.stdout.on('close', () => {
                 rimraf(AppPaths.testEncryptionDirectory, () => {
                     callback(null, result);
@@ -73,7 +76,10 @@ const getDatabaseEncryptionStatus = (callback) => {
      */
     function getWinEncStatus(callback) {
         let result = false;
-        const startEncryptionProcess = spawn('cipher', ['/c', AppPaths.appDirectory]);
+        const startEncryptionProcess = spawn(
+            'cipher',
+            ['/c', AppPaths.appDirectory]
+        );
         startEncryptionProcess.stdout.on('close', () => {
             callback(null, result);
         });
@@ -96,7 +102,10 @@ const getDatabaseEncryptionStatus = (callback) => {
      */
     function getMacEncStatus(callback) {
         let result = false;
-        const startEncryptionProcess = spawn('fdesetup', ['status']);
+        const startEncryptionProcess = spawn(
+            'fdesetup',
+            ['status']
+        );
         startEncryptionProcess.stdout.on('close', () => {
             callback(null, result);
         });
@@ -162,7 +171,10 @@ function changeDatabaseEncryption(encryptionFlag, callback) {
     function changeWinDbEnc(callback) {
         let result = false;
 
-        const startEncryptionProcess = spawn('cipher', [encryptionFlag ? '/e' : '/d', `/s:${AppPaths.appDirectory}`]);
+        const startEncryptionProcess = spawn(
+            'cipher',
+            [encryptionFlag ? '/e' : '/d', `/s:${AppPaths.appDirectory}`]
+        );
         startEncryptionProcess.stdout.on('close', () => {
             callback(null, result);
         });
@@ -199,7 +211,10 @@ function changeDatabaseEncryption(encryptionFlag, callback) {
             '-e', 'end tell'
         ];
 
-        const startEncryptionProcess = spawn('osascript', osaScriptArgs);
+        const startEncryptionProcess = spawn(
+            'osascript',
+            osaScriptArgs
+        );
 
         startEncryptionProcess.stdout.on('close', () => {
             callback(null, result);

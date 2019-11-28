@@ -143,7 +143,10 @@ function startMongoProcess(port) {
         args.push('--journal');
     }
     logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`);
-    const startDbProcess = spawn(AppPaths.mongodFile, args);
+    const startDbProcess = spawn(
+        AppPaths.mongodFile,
+        args
+    );
 
     startDbProcess.stdout.on('close', (code) => {
         if (shouldThrowExceptionOnMongoFailure) {
@@ -295,7 +298,10 @@ function populateDatabase(events, callback) {
     events({wait: true});
 
     events({text: `Populating database...`});
-    const setupDbProcess = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'init-database']);
+    const setupDbProcess = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.databaseScriptFile, 'init-database']
+    );
     setupDbProcess.stderr.on('data', (data) => {
         logger.error(`Error populating database: ${data.toString()}`);
         events({text: `Populating database...`, detail: data.toString()});
@@ -325,7 +331,10 @@ function populateDatabase(events, callback) {
 function migrateDatabase(oldVersion, newVersion, events, callback) {
     logger.info('Migrating database...');
     events({text: 'Migrating database...'});
-    const migrateDatabase = spawn(AppPaths.nodeFile, [AppPaths.databaseScriptFile, 'migrate-database', 'from', oldVersion, 'to', newVersion]);
+    const migrateDatabase = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.databaseScriptFile, 'migrate-database', 'from', oldVersion, 'to', newVersion]
+    );
     migrateDatabase.stderr.on('data', (data) => {
         logger.error(`Error migrating database: ${data.toString()}`);
         events({text: 'Migrating database...', detail: data.toString()});
@@ -349,12 +358,12 @@ function migrateDatabase(oldVersion, newVersion, events, callback) {
  * @param callback Invoked with (err, result)
  */
 function killMongo(callback) {
-
-    callback || (callback = () => {
-    });
+    // set default callback
+    if (!callback) {
+        callback = () => {};
+    }
 
     logger.info('Attempt to terminate previous Mongo process...');
-
     goDataAPI.getDbPort((err, port) => {
         if (err) {
             logger.error(`Error reading Mongo port: ${err.message}`);
@@ -378,17 +387,23 @@ function killMongo(callback) {
         } else {
             processUtil.findPortInUse(port, (err, processes) => {
                 if (processes && processes.length > 0) {
-                    async.each(
-                        processes.map(p => p.pid),
-                        processUtil.killProcess,
-                        callback
-                    );
+                    // filter out pid 0
+                    processes = processes.filter(p => p.pid !== 0 && p.pid !== '0');
+                    if (processes && processes.length > 0) {
+                        async.each(
+                            processes.map(p => p.pid),
+                            processUtil.killProcess,
+                            callback
+                        );
+                    } else {
+                        callback();
+                    }
                 } else {
                     callback();
                 }
             });
         }
-    })
+    });
 }
 
 /**
