@@ -280,7 +280,7 @@ const updateAPISettings = (settings) => {
     // convert settings to string if necessary
     settings = typeof settings === 'string' ?
         settings :
-        JSON.stringify(settings);
+        JSON.stringify(settings, null, 2);
 
     // save settings
     try {
