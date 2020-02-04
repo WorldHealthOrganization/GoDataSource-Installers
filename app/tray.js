@@ -193,6 +193,10 @@ const updateTrayMenu = (disableMenu) => {
                         buttons: ['Ok']
                     });
                 } else {
+                    // restore old value
+                    updateTrayMenu();
+
+                    // show error message
                     dialog.showMessageBox({
                         type: 'error',
                         title: '',

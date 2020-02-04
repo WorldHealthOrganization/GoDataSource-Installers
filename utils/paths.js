@@ -57,7 +57,7 @@ if (process.env.NODE_ENV === 'development') {
     backupScript = path.join(process.resourcesPath, './go-data/build/server/scripts/restoreBackup.js');
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
     winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
-    apiConfigPath = path.join(__dirname, './go-data/build/server/config.json');
+    apiConfigPath = path.join(process.resourcesPath, './go-data/build/server/config.json');
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2');
