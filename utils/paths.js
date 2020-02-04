@@ -29,6 +29,7 @@ let dbScript = undefined;
 let backupScript = undefined;
 let configScript = undefined;
 let winCfgPath;
+let apiConfigPath;
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -42,6 +43,7 @@ if (process.env.NODE_ENV === 'development') {
     backupScript = path.join(__dirname, './../go-data/build/server/scripts/restoreBackup.js');
     configScript = path.join(__dirname, './../go-data/build/installer/common/config.js');
     winCfgPath = path.join(__dirname, './../winCfg.cfg');
+    apiConfigPath = path.join(__dirname, './../go-data/build/server/config.json');
 } else {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -55,6 +57,7 @@ if (process.env.NODE_ENV === 'development') {
     backupScript = path.join(process.resourcesPath, './go-data/build/server/scripts/restoreBackup.js');
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
     winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
+    apiConfigPath = path.join(__dirname, './go-data/build/server/config.json');
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2');
@@ -96,5 +99,6 @@ module.exports = {
     pm2File: pm2File,                               // Location of the PM2 javascript file (to be used with child process)
     resourcesDirectory: resourceDirectory,
     windowsDirectory: windowsDirectory,
-    testEncryptionDirectory: testEnctryptionDirectory
+    testEncryptionDirectory: testEnctryptionDirectory,
+    apiConfigPath: apiConfigPath                    // Path to api config.json file
 };
