@@ -9,6 +9,7 @@ const fs = require('fs');
 const AppPaths = require('./../utils/paths');
 const settingsFile = AppPaths.desktopApp.settingsFile;
 const winCfgPath = AppPaths.desktopApp.winCfgPath;
+const apiConfigPath = AppPaths.apiConfigPath;
 
 const encryptionController = require('./encryption');
 
@@ -240,6 +241,62 @@ const retrieveWinSettings = () => {
     return cachedWinSettings;
 };
 
+/**
+ * Retrieve api settings ( config.json )
+ */
+const retrieveAPISettings = () => {
+    // no api settings ?
+    if (!apiConfigPath) {
+        return {};
+    }
+
+    // load settings
+    let apiConfig = {};
+    try {
+        // check if api config file exists and
+        if (fs.existsSync(apiConfigPath)) {
+            // read api settings
+            const apiConfigData = fs.readFileSync(apiConfigPath, 'utf8');
+            apiConfig = JSON.parse(apiConfigData);
+        }
+    } catch (e) {
+        // NOTHING
+    }
+
+    // finished loading api settings
+    return apiConfig;
+};
+
+/**
+ * Update api settings ( config.json )
+ * @return {boolean} True if saved with success, false otherwise
+ */
+const updateAPISettings = (settings) => {
+    // no api settings ?
+    if (!apiConfigPath) {
+        return false;
+    }
+
+    // convert settings to string if necessary
+    settings = typeof settings === 'string' ?
+        settings :
+        JSON.stringify(settings, null, 2);
+
+    // save settings
+    try {
+        fs.writeFileSync(apiConfigPath, settings);
+    } catch (e) {
+        // log error
+        logger.error(`Error saving API settings: ${e}`);
+
+        // an error occurred
+        return false;
+    }
+
+    // settings saved
+    return true;
+};
+
 // determine if we should use services
 let runMongoAsAService;
 let runGoDataAPIAsAService;
@@ -266,6 +323,8 @@ module.exports = {
     setAppPort,
     getEncryptionCapability,
     retrieveWinSettings,
+    retrieveAPISettings,
+    updateAPISettings,
     runMongoAsAService,
     runGoDataAPIAsAService
 };

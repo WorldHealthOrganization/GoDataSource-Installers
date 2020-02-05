@@ -74,14 +74,14 @@ const updateTrayMenu = (disableMenu) => {
 
         // Options "Reset Password"
         menuOptions.push({
-            label: `Reset Admin Password`,
+            label: 'Reset Admin Password',
             enabled: serviceOptionsEnabled,
             click: resetAdminPassword
         });
 
         // Option Restore Backup
         menuOptions.push({
-            label: `Restore Backup`,
+            label: 'Restore Backup',
             enabled: serviceOptionsEnabled,
             click: restoreBackup
         });
@@ -90,7 +90,7 @@ const updateTrayMenu = (disableMenu) => {
         menuOptions.push({
             type: 'separator'
         }, {
-            label: `Settings`,
+            label: 'Settings',
             click: openSettings
         });
 
@@ -99,10 +99,10 @@ const updateTrayMenu = (disableMenu) => {
             menuOptions.push({
                 type: 'separator'
             }, isMongoServiceRunning || isNodeServiceRunning ? {
-                label: `Stop services`,
+                label: 'Stop services',
                 click: stopServices
             } : {
-                label: `Start services`,
+                label: 'Start services',
                 click: startServices
             });
         }
@@ -111,7 +111,7 @@ const updateTrayMenu = (disableMenu) => {
         menuOptions.push({
             type: 'separator'
         }, {
-            label: `Check for updates`,
+            label: 'Check for updates',
             click: checkUpdates
         });
 
@@ -119,7 +119,7 @@ const updateTrayMenu = (disableMenu) => {
         menuOptions.push({
             type: 'separator'
         }, {
-            label: `Log directories`,
+            label: 'Log directories',
             submenu: [
                 {
                     label: 'Application',
@@ -129,7 +129,7 @@ const updateTrayMenu = (disableMenu) => {
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
-                                title: ``,
+                                title: '',
                                 message: `Couldn't open application logs directory ( "${AppPaths.appLogDirectory}" )`,
                                 buttons: ['Ok']
                             });
@@ -143,7 +143,7 @@ const updateTrayMenu = (disableMenu) => {
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
-                                title: ``,
+                                title: '',
                                 message: `Couldn't open api logs directory ( "${AppPaths.webApp.logDirectory}" )`,
                                 buttons: ['Ok']
                             });
@@ -157,7 +157,7 @@ const updateTrayMenu = (disableMenu) => {
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
-                                title: ``,
+                                title: '',
                                 message: `Couldn't open database logs directory ( "${AppPaths.databaseLogDirectory}" )`,
                                 buttons: ['Ok']
                             });
@@ -165,6 +165,46 @@ const updateTrayMenu = (disableMenu) => {
                     }
                 }
             ]
+        });
+
+        // Remove / Don't remove tokens on api server start / restart
+        let apiSettings = settings.retrieveAPISettings();
+        menuOptions.push({
+            type: 'separator'
+        }, {
+            type: 'checkbox',
+            checked: apiSettings.signoutUsersOnRestart,
+            label: 'Sign out all users on api restart',
+            click: (menuItem) => {
+                // retrieve again api settings
+                apiSettings = settings.retrieveAPISettings();
+
+                // change "Sign out all users on api restart" flag
+                apiSettings.signoutUsersOnRestart = menuItem.checked;
+
+                // save settings
+                if (settings.updateAPISettings(apiSettings)) {
+                    dialog.showMessageBox({
+                        type: 'info',
+                        title: 'Sign out users on api server restart',
+                        message: apiSettings.signoutUsersOnRestart ?
+                            'Users will be signed out on api restart from now one' :
+                            'Users won\'t be signed out on api restart from now one',
+                        buttons: ['Ok']
+                    });
+                } else {
+                    // restore old value
+                    updateTrayMenu();
+
+                    // show error message
+                    dialog.showMessageBox({
+                        type: 'error',
+                        title: '',
+                        message: `An error occurred while trying to update api settings. Please check logs.`,
+                        buttons: ['Ok']
+                    });
+                }
+            }
         });
 
         // Option Quit
@@ -191,7 +231,7 @@ const createTray = () => {
         // double click on app tray icon event
         tray.on('double-click', () => {
             if (serviceOptionsEnabled) {
-                logger.logger.info(`Open web app from createTray...`);
+                logger.logger.info('Open web app from createTray...');
                 appWebApp.openWebApp();
             }
         });
@@ -360,7 +400,7 @@ const startServices = () => {
         updateTrayMenu();
 
         // display electron browser window
-        logger.logger.info(`Open web app from startServices...`);
+        logger.logger.info('Open web app from startServices...');
         openWebApp();
     });
 };
