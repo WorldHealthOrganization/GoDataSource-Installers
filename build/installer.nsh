@@ -268,13 +268,13 @@
     nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
 
     ; determine what changed
-    ${if} $enableConfigRewrite = 1
+    ${if} $enableConfigRewrite == true
       nsJSON::Set enableConfigRewrite /value true
     ${else}
       nsJSON::Set enableConfigRewrite /value false
-      nsJSON::Set public protocol /value $ConfigProtocolValue
-      nsJSON::Set public host /value $ConfigHostValue
-      nsJSON::Set public port /value $ConfigPortValue
+      nsJSON::Set public protocol /value '"$ConfigProtocolValue"'
+      nsJSON::Set public host /value '"$ConfigHostValue"'
+      nsJSON::Set public port /value '"$ConfigPortValue"'
     ${endIf}
 
     ; write - flush
