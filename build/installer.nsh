@@ -1,8 +1,14 @@
+; Includes
 !include x64.nsh
 !include nsDialogs.nsh
 !include LogicLib.nsh
 !include MUI2.nsh
 !include WordFunc.nsh
+
+; Plugins
+!addplugindir /x86-unicode "${__FILEDIR__}\win\plugins\x86-unicode"
+!addplugindir /x86-ansi "${__FILEDIR__}\win\plugins\x86-ansi"
+!addplugindir /amd64-unicode "${__FILEDIR__}\win\plugins\amd64-unicode"
 
 ;------------------------
 ;Page - Installation type:
@@ -27,10 +33,19 @@
   Var UseServices
   Var DontUseServices
   Var installationTypeUseServices
+  Var AllowRewrite
+  Var EnableConfigRewrite
+  Var DontAllowRewrite
+  Var ConfigProtocol
+  Var ConfigProtocolValue
+  Var ConfigHost
+  Var ConfigHostValue
+  Var ConfigPort
+  Var ConfigPortValue
 
 ;  Create dialog
   Function "${CREATE}"
-    !insertmacro MUI_HEADER_TEXT "Choose Installation type" "Chose if application should use services"
+    !insertmacro MUI_HEADER_TEXT "GoData application" "Configure application"
 
     nsDialogs::Create 1018
     Pop $Dialog
@@ -39,12 +54,14 @@
       Abort
     ${EndIf}
 
-    ${NSD_CreateGroupBox} 0% 5u 100% 45u "Installation type"
+    ; START OF Installation type - with or without services
+    ${NSD_CreateGroupBox} 0 0 100% 38u "Installation type"
     Pop $0
-      ${NSD_CreateRadioButton} 3% 19u 94% 10u "Application and services (recommended for server installations)"
+    ${NSD_AddStyle} $0 ${WS_GROUP}
+      ${NSD_CreateRadioButton} 3% 12u 94% 10u "Application and services (recommended for server installations)"
       Pop $UseServices
 
-      ${NSD_CreateRadioButton} 3% 33u 94% 10u "Application without services (recommended for local stand-alone installations)"
+      ${NSD_CreateRadioButton} 3% 24u 94% 10u "Application without services (recommended for local stand-alone installations)"
       Pop $DontUseServices
 
       ; check if we don't already have app installed at this location and configured installation type
@@ -66,12 +83,116 @@
       file_not_found:
         ${NSD_Check} $UseServices
       file_finish:
+    ; END OF Installation type - with or without services
+
+    ; START OF Rewrite api settings - enable / disable rewrite
+    ${NSD_CreateGroupBox} 0 40u 100% 93u "Rewrite api config file"
+    Pop $1
+    ${NSD_AddStyle} $1 ${WS_GROUP}
+      ${NSD_CreateRadioButton} 3% 52u 94% 10u "Allow config rewrite ( system will try to determine domain and other settings )"
+      Pop $AllowRewrite
+      ${NSD_OnClick} $AllowRewrite ShowHideConfigData
+
+      ${NSD_CreateRadioButton} 3% 64u 94% 10u "Disable config rewrite ( you will have to configure the application )"
+      Pop $DontAllowRewrite
+      ${NSD_OnClick} $DontAllowRewrite ShowHideConfigData
+
+      ; START OF - No rewrite config inputs
+      ; Protocol
+      ${NSD_CreateLabel} 3% 80u 12% 15u "Protocol"
+      Pop $2
+	    ${NSD_CreateDropList} 17% 80u 80% 15u ""
+	    Pop $ConfigProtocol
+	    ${NSD_CB_AddString} $ConfigProtocol "http"
+	    ${NSD_CB_AddString} $ConfigProtocol "https"
+	    ${NSD_CB_SelectString} $ConfigProtocol "http"
+
+      ; Host
+      ${NSD_CreateLabel} 3% 97u 12% 15u "Host"
+      Pop $3
+	    ${NSD_CreateText} 17% 97u 80% 15u "localhost"
+	    Pop $ConfigHost
+
+      ; Port
+      ${NSD_CreateLabel} 3% 114u 12% 15u "Port"
+      Pop $4
+	    ${NSD_CreateNumber} 17% 114u 80% 15u "8000"
+	    Pop $ConfigPort
+      ; END OF - No rewrite config inputs
+
+      ; check if we don't already have app installed at this location - to retrieve the current settings
+      IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
+      IfErrors file_not_found2
+      file_found2:
+        ; read JSON api config file
+        nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
+        ; determine if api config is rewritable
+        StrCpy $EnableConfigRewrite ""
+        nsJSON::Get enableConfigRewrite
+        Pop $EnableConfigRewrite
+        ${if} $EnableConfigRewrite == "false"
+          ; not rewritable
+          ${NSD_Check} $DontAllowRewrite
+        ${else}
+          ${NSD_Check} $AllowRewrite
+        ${endIf}
+
+        ; determine if we have protocol, url and port
+        ; Protocol
+        StrCpy $ConfigProtocolValue ""
+        nsJSON::Get public protocol
+        Pop $ConfigProtocolValue
+        ${if} $ConfigProtocolValue != ""
+          ${NSD_CB_SelectString} $ConfigProtocol "$ConfigProtocolValue"
+        ${endIf}
+
+        ; Host
+        StrCpy $ConfigHostValue ""
+        nsJSON::Get public host
+        Pop $ConfigHostValue
+        ${if} $ConfigHostValue != ""
+          ${NSD_SetText} $ConfigHost $ConfigHostValue
+        ${endIf}
+
+        ; Port
+        StrCpy $ConfigPortValue ""
+        nsJSON::Get public port
+        Pop $ConfigPortValue
+        ${if} $ConfigPortValue != ""
+          ${NSD_SetText} $ConfigPort $ConfigPortValue
+        ${endIf}
+
+        ; finished
+        goto file_finish2
+      file_not_found2:
+        ; default value
+        ${NSD_Check} $AllowRewrite
+      file_finish2:
+
+	    ; disable / enable components
+	    Call ShowHideConfigData
+    ; END OF Rewrite api settings - enable / disable rewrite
 
     nsDialogs::Show
   FunctionEnd
 
+  ; Handle Config show / hide settings
+  Function ShowHideConfigData
+    ${NSD_GetState} $DontAllowRewrite $0
+    ${if} $0 = 1
+	    EnableWindow $ConfigProtocol 1
+	    EnableWindow $ConfigHost 1
+	    EnableWindow $ConfigPort 1
+    ${else}
+	    EnableWindow $ConfigProtocol 0
+	    EnableWindow $ConfigHost 0
+	    EnableWindow $ConfigPort 0
+    ${endIf}
+  FunctionEnd
+
 ;  Leave dialog
   Function "${LEAVE}"
+    ; START OF - determine if we should use services or not
     ${NSD_GetState} $DontUseServices $0
 
     ; write settings
@@ -82,6 +203,20 @@
       ;With services
       StrCpy $installationTypeUseServices 1
     ${endIf}
+    ; END OF - determine if we should use services or not
+
+    ; START OF - determine if we should allow api config file rewrite or not
+    ${NSD_GetState} $DontAllowRewrite $0
+    ${if} $0 = 1
+      ; Disable rewrite
+      StrCpy $enableConfigRewrite false
+      ${NSD_GetText} $ConfigProtocol $ConfigProtocolValue
+      ${NSD_GetText} $ConfigHost $ConfigHostValue
+      ${NSD_GetText} $ConfigPort $ConfigPortValue
+    ${else}
+      StrCpy $enableConfigRewrite true
+    ${endIf}
+    ; END OF - determine if we should allow api config file rewrite or not
   FunctionEnd
 !macroend
 
@@ -124,6 +259,28 @@
   file_error:
     MessageBox MB_OK "Error opening app config file"
   file_finish:
+
+  ; START OF - write to api config file
+  IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found3 file_finish3
+  IfErrors file_finish3
+  file_found3:
+    ; read JSON api config file
+    nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
+
+    ; determine what changed
+    ${if} $enableConfigRewrite == true
+      nsJSON::Set enableConfigRewrite /value true
+    ${else}
+      nsJSON::Set enableConfigRewrite /value false
+      nsJSON::Set public protocol /value '"$ConfigProtocolValue"'
+      nsJSON::Set public host /value '"$ConfigHostValue"'
+      nsJSON::Set public port /value '"$ConfigPortValue"'
+    ${endIf}
+
+    ; write - flush
+    nsJSON::Serialize /format /file "$INSTDIR\resources\go-data\build\server\config.json"
+  file_finish3:
+  ; END OF - write to api config file
 !macroend
 
 !macro unregisterFileAssociations

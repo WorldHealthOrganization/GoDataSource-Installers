@@ -23,8 +23,33 @@ const { NODE_PLATFORM, MONGO_PLATFORM } = require('./../package');
 const getSettings = (callback) => {
     fs.readFile(settingsFile, (err, data) => {
         if (err) return callback(err);
+
+        // retrieve settings
         let settings = JSON.parse(data.toString());
-        callback(null, settings);
+
+        // determine if api port is the same as the one from app setting
+        const apiPort = retrieveAPIPort();
+        if (
+            !settings ||
+            apiPort !== settings.appPort
+        ) {
+            // initialize settings if we need to
+            if (!settings) {
+                settings = {};
+            }
+
+            // set the new port
+            settings.appPort = apiPort;
+
+            // update settings
+            setSettings(settings, () => {
+                // finished
+                callback(null, settings);
+            });
+        } else {
+            // finished
+            callback(null, settings);
+        }
     });
 };
 
@@ -61,14 +86,14 @@ const getAppPort = (callback) => {
     getSettings((err, settings) => {
         if (err) {
             if (err.code === 'ENOENT') {
-                appPort = 8000;
+                appPort = retrieveAPIPort();
                 return callback(null, appPort);
             } else {
                 // callback(null, null)
                 throw new Error(`Error getting application port: ${err.message}`);
             }
         }
-        appPort = settings.appPort || 8000;
+        appPort = settings.appPort || retrieveAPIPort();
         callback(null, appPort);
     });
 };
@@ -295,6 +320,25 @@ const updateAPISettings = (settings) => {
 
     // settings saved
     return true;
+};
+
+/**
+ * Retrieve API port
+ * @returns {string} Api port or default port
+ */
+const retrieveAPIPort = () => {
+    // determine if api port is the same as the one from app setting
+    let apiSettings = retrieveAPISettings();
+    if (
+        apiSettings &&
+        apiSettings.public &&
+        apiSettings.public.port
+    ) {
+        return parseInt(apiSettings.public.port);
+    }
+
+    // default port
+    return 8000;
 };
 
 // determine if we should use services
