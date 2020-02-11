@@ -11,23 +11,25 @@
 !addplugindir /amd64-unicode "${__FILEDIR__}\win\plugins\amd64-unicode"
 
 ;------------------------
-;Page - Installation type:
+;Page - Configure App:
 ; - Application and services (recommended for server installations)
 ; - Application without services (recommended for local stand-alone installations)
+; - Rewrite api config file
+; - Enable / Disable Cors
 
 ;Page declaration
-!macro pageInstallationTypeDeclare
+!macro pageConfigureAppDeclare
   PageEx ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}custom
-    PageCallbacks ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iType.Create_${MUI_UNIQUEID} ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iType.Leave_${MUI_UNIQUEID}
+    PageCallbacks ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iCApp.Create_${MUI_UNIQUEID} ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iCApp.Leave_${MUI_UNIQUEID}
 
     Caption " "
   PageExEnd
 
-  !insertmacro pageInstallationTypeFunctions ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iType.Create_${MUI_UNIQUEID} ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iType.Leave_${MUI_UNIQUEID}
+  !insertmacro pageConfigureAppFunctions ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iCApp.Create_${MUI_UNIQUEID} ${MUI_PAGE_UNINSTALLER_FUNCPREFIX}iCApp.Leave_${MUI_UNIQUEID}
 !macroend
 
 ;Page functions
-!macro pageInstallationTypeFunctions CREATE LEAVE
+!macro pageConfigureAppFunctions CREATE LEAVE
 ; Variables
   Var Dialog
   Var UseServices
@@ -42,6 +44,8 @@
   Var ConfigHostValue
   Var ConfigPort
   Var ConfigPortValue
+  Var ConfigEnableCors
+  Var ConfigEnableCorsValue
 
 ;  Create dialog
   Function "${CREATE}"
@@ -55,13 +59,13 @@
     ${EndIf}
 
     ; START OF Installation type - with or without services
-    ${NSD_CreateGroupBox} 0 0 100% 38u "Installation type"
+    ${NSD_CreateGroupBox} 0 0 100% 36u "Installation type"
     Pop $0
     ${NSD_AddStyle} $0 ${WS_GROUP}
-      ${NSD_CreateRadioButton} 3% 12u 94% 10u "Application and services (recommended for server installations)"
+      ${NSD_CreateRadioButton} 3% 10u 94% 10u "Application and services (recommended for server installations)"
       Pop $UseServices
 
-      ${NSD_CreateRadioButton} 3% 24u 94% 10u "Application without services (recommended for local stand-alone installations)"
+      ${NSD_CreateRadioButton} 3% 22u 94% 10u "Application without services (recommended for local stand-alone installations)"
       Pop $DontUseServices
 
       ; check if we don't already have app installed at this location and configured installation type
@@ -86,92 +90,110 @@
     ; END OF Installation type - with or without services
 
     ; START OF Rewrite api settings - enable / disable rewrite
-    ${NSD_CreateGroupBox} 0 40u 100% 93u "Rewrite api config file"
+    ${NSD_CreateGroupBox} 0 38u 100% 80u "Rewrite api config file"
     Pop $1
     ${NSD_AddStyle} $1 ${WS_GROUP}
-      ${NSD_CreateRadioButton} 3% 52u 94% 10u "Allow config rewrite ( system will try to determine domain and other settings )"
+      ${NSD_CreateRadioButton} 3% 48u 94% 10u "Allow config rewrite ( system will try to determine domain and other settings )"
       Pop $AllowRewrite
       ${NSD_OnClick} $AllowRewrite ShowHideConfigData
 
-      ${NSD_CreateRadioButton} 3% 64u 94% 10u "Disable config rewrite ( you will have to configure the application )"
+      ${NSD_CreateRadioButton} 3% 60u 94% 10u "Disable config rewrite ( you will have to configure the application )"
       Pop $DontAllowRewrite
       ${NSD_OnClick} $DontAllowRewrite ShowHideConfigData
 
       ; START OF - No rewrite config inputs
       ; Protocol
-      ${NSD_CreateLabel} 3% 80u 12% 15u "Protocol"
+      ${NSD_CreateLabel} 3% 74u 12% 12u "Protocol"
       Pop $2
-	    ${NSD_CreateDropList} 17% 80u 80% 15u ""
+	    ${NSD_CreateDropList} 17% 74u 80% 12u ""
 	    Pop $ConfigProtocol
 	    ${NSD_CB_AddString} $ConfigProtocol "http"
 	    ${NSD_CB_AddString} $ConfigProtocol "https"
 	    ${NSD_CB_SelectString} $ConfigProtocol "http"
 
       ; Host
-      ${NSD_CreateLabel} 3% 97u 12% 15u "Host"
+      ${NSD_CreateLabel} 3% 88u 12% 12u "Host"
       Pop $3
-	    ${NSD_CreateText} 17% 97u 80% 15u "localhost"
+	    ${NSD_CreateText} 17% 88u 80% 12u "localhost"
 	    Pop $ConfigHost
 
       ; Port
-      ${NSD_CreateLabel} 3% 114u 12% 15u "Port"
+      ${NSD_CreateLabel} 3% 101u 12% 12u "Port"
       Pop $4
-	    ${NSD_CreateNumber} 17% 114u 80% 15u "8000"
+	    ${NSD_CreateNumber} 17% 101u 80% 12u "8000"
 	    Pop $ConfigPort
       ; END OF - No rewrite config inputs
-
-      ; check if we don't already have app installed at this location - to retrieve the current settings
-      IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
-      IfErrors file_not_found2
-      file_found2:
-        ; read JSON api config file
-        nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
-        ; determine if api config is rewritable
-        StrCpy $EnableConfigRewrite ""
-        nsJSON::Get enableConfigRewrite
-        Pop $EnableConfigRewrite
-        ${if} $EnableConfigRewrite == "false"
-          ; not rewritable
-          ${NSD_Check} $DontAllowRewrite
-        ${else}
-          ${NSD_Check} $AllowRewrite
-        ${endIf}
-
-        ; determine if we have protocol, url and port
-        ; Protocol
-        StrCpy $ConfigProtocolValue ""
-        nsJSON::Get public protocol
-        Pop $ConfigProtocolValue
-        ${if} $ConfigProtocolValue != ""
-          ${NSD_CB_SelectString} $ConfigProtocol "$ConfigProtocolValue"
-        ${endIf}
-
-        ; Host
-        StrCpy $ConfigHostValue ""
-        nsJSON::Get public host
-        Pop $ConfigHostValue
-        ${if} $ConfigHostValue != ""
-          ${NSD_SetText} $ConfigHost $ConfigHostValue
-        ${endIf}
-
-        ; Port
-        StrCpy $ConfigPortValue ""
-        nsJSON::Get public port
-        Pop $ConfigPortValue
-        ${if} $ConfigPortValue != ""
-          ${NSD_SetText} $ConfigPort $ConfigPortValue
-        ${endIf}
-
-        ; finished
-        goto file_finish2
-      file_not_found2:
-        ; default value
-        ${NSD_Check} $AllowRewrite
-      file_finish2:
-
-	    ; disable / enable components
-	    Call ShowHideConfigData
     ; END OF Rewrite api settings - enable / disable rewrite
+
+    ; START OF Enable / Disable cors
+    ${NSD_CreateCheckbox} 0 123u 100% 10u "Enable Cross-Origin Resource Sharing"
+    Pop $ConfigEnableCors
+    ; END OF Enable / Disable cors
+
+    ; START OF Load settings from api config file
+    ; check if we don't already have app installed at this location - to retrieve the current settings
+    IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
+    IfErrors file_not_found2
+    file_found2:
+      ; read JSON api config file
+      nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
+      ; determine if api config is rewritable
+      StrCpy $EnableConfigRewrite ""
+      nsJSON::Get enableConfigRewrite
+      Pop $EnableConfigRewrite
+      ${if} $EnableConfigRewrite == "false"
+        ; not rewritable
+        ${NSD_Check} $DontAllowRewrite
+      ${else}
+        ${NSD_Check} $AllowRewrite
+      ${endIf}
+
+      ; determine if we have protocol, url and port
+      ; Protocol
+      StrCpy $ConfigProtocolValue ""
+      nsJSON::Get public protocol
+      Pop $ConfigProtocolValue
+      ${if} $ConfigProtocolValue != ""
+        ${NSD_CB_SelectString} $ConfigProtocol "$ConfigProtocolValue"
+      ${endIf}
+
+      ; Host
+      StrCpy $ConfigHostValue ""
+      nsJSON::Get public host
+      Pop $ConfigHostValue
+      ${if} $ConfigHostValue != ""
+        ${NSD_SetText} $ConfigHost $ConfigHostValue
+      ${endIf}
+
+      ; Port
+      StrCpy $ConfigPortValue ""
+      nsJSON::Get public port
+      Pop $ConfigPortValue
+      ${if} $ConfigPortValue != ""
+        ${NSD_SetText} $ConfigPort $ConfigPortValue
+      ${endIf}
+
+      ; CORS is enabled ?
+      StrCpy $ConfigEnableCorsValue ""
+      nsJSON::Get cors enabled
+      Pop $ConfigEnableCorsValue
+      ${if} $ConfigEnableCorsValue == "true"
+        ${NSD_Check} $ConfigEnableCors
+      ${else}
+        ${NSD_Uncheck} $ConfigEnableCors
+      ${endIf}
+
+      ; finished
+      goto file_finish2
+    file_not_found2:
+      ; default value
+      ${NSD_Check} $AllowRewrite
+      ${NSD_Uncheck} $ConfigEnableCors
+    file_finish2:
+
+    ; disable / enable components
+    Call ShowHideConfigData
+    ; END OF Load settings from api config file
 
     nsDialogs::Show
   FunctionEnd
@@ -217,16 +239,25 @@
       StrCpy $enableConfigRewrite true
     ${endIf}
     ; END OF - determine if we should allow api config file rewrite or not
+
+    ; START OF - CORS enabled / disabled
+    ${NSD_GetState} $ConfigEnableCors $0
+    ${if} $0 = 1
+      StrCpy $ConfigEnableCorsValue true
+    ${else}
+      StrCpy $ConfigEnableCorsValue false
+    ${endIf}
+    ; END OF - CORS enabled / disabled
   FunctionEnd
 !macroend
 
 ;Init page
-!macro customPageInstallationType
+!macro customPageConfigureApp
   !verbose push
   !verbose ${MUI_VERBOSE}
 
   !insertmacro MUI_PAGE_INIT
-  !insertmacro pageInstallationTypeDeclare
+  !insertmacro pageConfigureAppDeclare
 
   !verbose pop
 !macroend
@@ -236,7 +267,7 @@
 ;------------------------
 ;Add custom pages after change directory page
 !macro customPageAfterChangeDir
-  !insertmacro customPageInstallationType
+  !insertmacro customPageConfigureApp
 !macroend
 ;------------------------
 
@@ -260,7 +291,7 @@
     MessageBox MB_OK "Error opening app config file"
   file_finish:
 
-  ; START OF - write to api config file
+  ; START OF - write to api config file & enable / disable CORS
   IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found3 file_finish3
   IfErrors file_finish3
   file_found3:
@@ -277,10 +308,17 @@
       nsJSON::Set public port /value '"$ConfigPortValue"'
     ${endIf}
 
+    ; write enable / disable CORS
+    ${if} $ConfigEnableCorsValue == true
+      nsJSON::Set cors enabled /value true
+    ${else}
+      nsJSON::Set cors enabled /value false
+    ${endIf}
+
     ; write - flush
     nsJSON::Serialize /format /file "$INSTDIR\resources\go-data\build\server\config.json"
   file_finish3:
-  ; END OF - write to api config file
+  ; END OF - write to api config file & enable / disable CORS
 !macroend
 
 !macro unregisterFileAssociations
