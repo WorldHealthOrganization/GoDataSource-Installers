@@ -371,15 +371,17 @@
 !macro customUnInstall
   ClearErrors
   # remove app data on uninstall
+  ${GetParameters} $R0
   ${GetOptions} $R0 "--updated" $R1
-    ${if} ${Errors}
-      # remove data for all users
-      ${if} $installMode == "all"
-        RMDir /r "$INSTDIR\..\data"
-      ${else}
-        RMDir /r "$APPDATA\${APP_FILENAME}"
-      ${endIf}
-      MessageBox MB_YESNO|MB_ICONQUESTION "Go.Data requires a system reboot to finish the uninstall. Do you want to reboot now?" IDNO +2
-      Reboot
-    ${endif}
+  # having errors means that this isn't an update
+  ${if} ${Errors}
+    # remove data for all users
+    ${if} $installMode == "all"
+      RMDir /r "$INSTDIR\..\data"
+    ${else}
+      RMDir /r "$APPDATA\${APP_FILENAME}"
+    ${endIf}
+    MessageBox MB_YESNO|MB_ICONQUESTION "Go.Data requires a system reboot to finish the uninstall. Do you want to reboot now?" IDNO +2
+    Reboot
+  ${endif}
 !macroend
