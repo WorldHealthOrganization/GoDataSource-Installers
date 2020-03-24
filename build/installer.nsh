@@ -368,6 +368,108 @@
   no_services:
 !macroend
 
+; Custom remove files, so we don't delete specific directories that we need to keep
+!macro customRemoveFiles
+  ; default - old way: RMDir /r /REBOOTOK $INSTDIR
+  Var /GLOBAL DirToClean
+  Var /GLOBAL Step ; install / resources / go-data-build / go-data-build-server
+
+  # remove app data on uninstall
+  ClearErrors
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "--updated" $R1
+  ${if} ${Errors}
+    ; this is not an update, it is a full uninstall
+    RMDir /r /REBOOTOK $INSTDIR
+    Goto Finish
+  ${endif}
+
+  ; new way, delete only what should be deleted
+  ; remove files & directories from first level that aren't needed
+  ClearErrors
+  StrCpy $DirToClean $INSTDIR
+  StrCpy $Step "install"
+  Main:
+    ClearErrors
+    FindFirst $R0 $R1 "$DirToClean\*.*"
+    IfErrors Exit
+
+    Top:
+      StrCmp $R1 "." Next
+      StrCmp $R1 ".." Next
+      IfFileExists "$DirToClean\$R1\*.*" Directory DeleteFile
+
+      ; Handle directories
+      Directory:
+        ; ignore directories
+        StrCmp $Step "install" Dirs1 Dirs1Finish
+        Dirs1:
+          StrCmp $R1 "resources" Next
+          Goto DirsFinish
+
+        Dirs1Finish:
+        StrCmp $Step "resources" Dirs2 Dirs2Finish
+        Dirs2:
+          StrCmp $R1 "go-data" Next
+          Goto DirsFinish
+
+        Dirs2Finish:
+        StrCmp $Step "go-data-build" Dirs3 Dirs3Finish
+        Dirs3:
+          StrCmp $R1 "backups" Next
+          StrCmp $R1 "server" Next
+          Goto DirsFinish
+        Dirs3Finish:
+
+        StrCmp $Step "go-data-build-server" Dirs4 DirsFinish
+        Dirs4:
+          StrCmp $R1 "storage" Next
+
+        ; not an ignore directory, so we need to delete it
+        DirsFinish:
+          RMDir /r /REBOOTOK "$DirToClean\$R1"
+          Goto Next
+
+      DeleteFile:
+        Delete "$DirToClean\$R1"
+
+      Next:
+        ClearErrors
+        FindNext $R0 $R1
+        IfErrors Exit
+      Goto Top
+
+    Exit:
+    FindClose $R0
+
+    ; cleanup steps
+    ; Resources
+    StrCmp $Step "install" Step1Job Step2
+      Step1Job:
+        StrCpy $DirToClean "$DirToClean\resources"
+        StrCpy $Step "resources"
+        Goto Main
+
+    ; go-data - jump over go-data directory, go directly into build directory, otherwise we need to make sure we don't delete that one too
+    Step2:
+      StrCmp $Step "resources" Step2Job Step3
+        Step2Job:
+          StrCpy $DirToClean "$DirToClean\go-data\build"
+          StrCpy $Step "go-data-build"
+          Goto Main
+
+    ; go-data storage
+    Step3:
+      StrCmp $Step "go-data-build" Step3Job Finish
+        Step3Job:
+          StrCpy $DirToClean "$DirToClean\server"
+          StrCpy $Step "go-data-build-server"
+          Goto Main
+
+    ; Finished
+    Finish:
+!macroend
+
 !macro customUnInstall
   ClearErrors
   # remove app data on uninstall
