@@ -52,10 +52,6 @@
   Function "${CREATE}"
     !insertmacro MUI_HEADER_TEXT "GoData application" "Configure application"
 
-    ; disable next / install button until everything is valid
-    GetDlgItem $sNext $HWNDPARENT 1
-    Call EnableDisableNextButton
-
     nsDialogs::Create 1018
     Pop $Dialog
 
@@ -201,6 +197,10 @@
     ; disable / enable components
     Call ShowHideConfigData
     ; END OF Load settings from api config file
+
+    ; disable next / install button until everything is valid
+    GetDlgItem $sNext $HWNDPARENT 1
+    Call EnableDisableNextButton
 
     nsDialogs::Show
   FunctionEnd
