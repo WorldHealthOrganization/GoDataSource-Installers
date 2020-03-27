@@ -46,10 +46,15 @@
   Var ConfigPortValue
   Var ConfigEnableCors
   Var ConfigEnableCorsValue
+  Var sNext
 
 ;  Create dialog
   Function "${CREATE}"
     !insertmacro MUI_HEADER_TEXT "GoData application" "Configure application"
+
+    ; disable next / install button until everything is valid
+    GetDlgItem $sNext $HWNDPARENT 1
+    Call EnableDisableNextButton
 
     nsDialogs::Create 1018
     Pop $Dialog
@@ -64,9 +69,11 @@
     ${NSD_AddStyle} $0 ${WS_GROUP}
       ${NSD_CreateRadioButton} 3% 10u 94% 10u "Application and services (recommended for server installations)"
       Pop $UseServices
+      ${NSD_OnClick} $UseServices InstallationTypeChanged
 
       ${NSD_CreateRadioButton} 3% 22u 94% 10u "Application without services (recommended for local stand-alone installations)"
       Pop $DontUseServices
+      ${NSD_OnClick} $DontUseServices InstallationTypeChanged
 
       ; check if we don't already have app installed at this location and configured installation type
       IfFileExists "$INSTDIR\winCfg.cfg" file_found file_not_found
@@ -85,7 +92,7 @@
         ${endIf}
         goto file_finish
       file_not_found:
-        ${NSD_Check} $UseServices
+        ; Don't choose anything to force user to choose
       file_finish:
     ; END OF Installation type - with or without services
 
@@ -210,6 +217,23 @@
 	    EnableWindow $ConfigHost 0
 	    EnableWindow $ConfigPort 0
     ${endIf}
+  FunctionEnd
+
+  ; Enable / Disable next / install button
+  Function EnableDisableNextButton
+    ${NSD_GetState} $DontUseServices $0
+    ${NSD_GetState} $UseServices $1
+    ${if} $0 = 1
+      ${OrIf} $1 = 1
+        EnableWindow $sNext 1
+    ${Else}
+      EnableWindow $sNext 0
+    ${EndIf}
+  FunctionEnd
+
+  ; Installation Type Checked
+  Function InstallationTypeChanged
+    Call EnableDisableNextButton
   FunctionEnd
 
 ;  Leave dialog
