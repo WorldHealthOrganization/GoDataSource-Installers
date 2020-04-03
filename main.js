@@ -66,6 +66,7 @@ app.on('ready', () => {
                     fs.existsSync(AppPaths.apiConfigPath)
                 ) {
                     // merge missing settings
+                    logger.logger.info(`Merging API config file "${AppPaths.webApp.winOldNewApiCfgPath}" to "${AppPaths.apiConfigPath}"`);
                     const newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewApiCfgPath));
                     const currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiConfigPath));
                     const mergeJSONMethod = (newS, keepS) => {
@@ -88,8 +89,10 @@ app.on('ready', () => {
                         });
                     };
                     mergeJSONMethod(newSettings, currentSettings);
+                    logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewApiCfgPath}"`);
 
                     // save the new settings
+                    logger.logger.info(`Writing new API settings to "${AppPaths.apiConfigPath}"`);
                     fs.writeFileSync(
                         AppPaths.apiConfigPath,
                         JSON.stringify(
@@ -98,13 +101,16 @@ app.on('ready', () => {
                             2
                         )
                     );
+                    logger.logger.info(`Finished writing new API settings to "${AppPaths.apiConfigPath}"`);
 
                     // delete old settings
+                    logger.logger.info(`Removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
                     fs.unlinkSync(AppPaths.webApp.winOldNewApiCfgPath);
+                    logger.logger.info(`Finished removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
                 }
             }
             catch (eImportNewSettings) {
-                logger.logger.error(`Error mergin new API settings '${eImportNewSettings.message}'`);
+                logger.logger.error(`Error merging new API settings '${eImportNewSettings.message}'`);
             }
 
             // stop launching app if it is already running
