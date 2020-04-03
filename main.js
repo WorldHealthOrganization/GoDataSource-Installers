@@ -28,6 +28,8 @@ const appUpdate = require('./app/update');
 const appSplash = require('./app/splash');
 const appSettings = require('./app/settings');
 const appWebApp = require('./app/web-app');
+const fs = require('fs');
+const _ = require('lodash');
 
 // set up crash reporter
 crashReporter.init();
@@ -47,15 +49,69 @@ const checkSingletonInstance = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-
+    // show loading
     appLoading.openPleaseWait();
 
     // set up logger
     logger.init((err) => {
         if (!err) {
-
+            // log
             logger.logger.info(`Application installed to ${app.getAppPath()}`);
             logger.logger.info(`Application data directory set to ${app.getAppPath()}`);
+
+            // check if we need to merge old windows settings
+            try {
+                if (
+                    fs.existsSync(AppPaths.webApp.winOldNewApiCfgPath) &&
+                    fs.existsSync(AppPaths.apiConfigPath)
+                ) {
+                    // merge missing settings
+                    logger.logger.info(`Merging API config file "${AppPaths.webApp.winOldNewApiCfgPath}" to "${AppPaths.apiConfigPath}"`);
+                    const newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewApiCfgPath));
+                    const currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiConfigPath));
+                    const mergeJSONMethod = (newS, keepS) => {
+                        _.each(newS, (value, prop) => {
+                            // missing value, merge it as it is
+                            if (keepS[prop] === undefined) {
+                                keepS[prop] = value;
+                            } else {
+                                // property exists, if object or array we need to merge it recursively without overwriting prop values
+                                if (
+                                    _.isArray(value) ||
+                                    _.isObject(value)
+                                ) {
+                                    // check recursively
+                                    mergeJSONMethod(value, keepS[prop])
+                                } else {
+                                    // NOTHING TO DO, keep old value
+                                }
+                            }
+                        });
+                    };
+                    mergeJSONMethod(newSettings, currentSettings);
+                    logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewApiCfgPath}"`);
+
+                    // save the new settings
+                    logger.logger.info(`Writing new API settings to "${AppPaths.apiConfigPath}"`);
+                    fs.writeFileSync(
+                        AppPaths.apiConfigPath,
+                        JSON.stringify(
+                            currentSettings,
+                            null,
+                            2
+                        )
+                    );
+                    logger.logger.info(`Finished writing new API settings to "${AppPaths.apiConfigPath}"`);
+
+                    // delete old settings
+                    logger.logger.info(`Removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
+                    fs.unlinkSync(AppPaths.webApp.winOldNewApiCfgPath);
+                    logger.logger.info(`Finished removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
+                }
+            }
+            catch (eImportNewSettings) {
+                logger.logger.error(`Error merging new API settings '${eImportNewSettings.message}'`);
+            }
 
             // stop launching app if it is already running
             if (checkSingletonInstance()) {
