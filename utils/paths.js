@@ -30,6 +30,7 @@ let backupScript = undefined;
 let configScript = undefined;
 let winCfgPath;
 let apiConfigPath;
+let winOldNewApiCfgPath;
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -44,6 +45,7 @@ if (process.env.NODE_ENV === 'development') {
     configScript = path.join(__dirname, './../go-data/build/installer/common/config.js');
     winCfgPath = path.join(__dirname, './../winCfg.cfg');
     apiConfigPath = path.join(__dirname, './../go-data/build/server/config.json');
+    winOldNewApiCfgPath = path.join(__dirname, './../config.json.backup_new');
 } else {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -58,6 +60,7 @@ if (process.env.NODE_ENV === 'development') {
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
     winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
     apiConfigPath = path.join(process.resourcesPath, './go-data/build/server/config.json');
+    winOldNewApiCfgPath = path.join(process.resourcesPath, './../../config.json.backup_new');
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2');
@@ -76,7 +79,8 @@ module.exports = {
         package: webAppPackage,                     // Location of package.json for Go.Data web app
         currentVersion: webAppVersion,              // Version of Go.Data web app taken from package.json
         installedVersion: webAppInstalledVersion,   // Location of file that contains the version of the installed Go.Data web
-        configScript: configScript                  // Location of the script to call Go.Data configuration API
+        configScript: configScript,                 // Location of the script to call Go.Data configuration API
+        winOldNewApiCfgPath: winOldNewApiCfgPath    // Location of the new installation API config file
     },
     desktopApp: {
         package: desktopAppPackage,                 // Location of package.json for Go.Data desktop app

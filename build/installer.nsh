@@ -138,6 +138,9 @@
     IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
     IfErrors file_not_found2
     file_found2:
+      ; clone file so we can use it to keep previous settings
+      CopyFiles "$INSTDIR\resources\go-data\build\server\config.json" "$INSTDIR\..\config.json.backup"
+
       ; read JSON api config file
       nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
       ; determine if api config is rewritable
@@ -255,12 +258,12 @@
     ${NSD_GetState} $DontAllowRewrite $0
     ${if} $0 = 1
       ; Disable rewrite
-      StrCpy $enableConfigRewrite false
+      StrCpy $EnableConfigRewrite false
       ${NSD_GetText} $ConfigProtocol $ConfigProtocolValue
       ${NSD_GetText} $ConfigHost $ConfigHostValue
       ${NSD_GetText} $ConfigPort $ConfigPortValue
     ${else}
-      StrCpy $enableConfigRewrite true
+      StrCpy $EnableConfigRewrite true
     ${endIf}
     ; END OF - determine if we should allow api config file rewrite or not
 
@@ -296,6 +299,7 @@
 ;------------------------
 
 !macro preInit
+ ; Set default install location
   ${ifNot} ${isUpdated}
     SetRegView 64
     WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\Go.Data\bin"
@@ -319,11 +323,21 @@
   IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found3 file_finish3
   IfErrors file_finish3
   file_found3:
+    ; backup new file and copy back old one
+    ; new properties from new file will be merged once app is started
+    IfFileExists "$INSTDIR\..\config.json.backup" file_old_config_found file_old_config_not_found
+    IfErrors file_old_config_not_found
+    file_old_config_found:
+      CopyFiles "$INSTDIR\resources\go-data\build\server\config.json" "$INSTDIR\..\config.json.backup_new"
+      CopyFiles "$INSTDIR\..\config.json.backup" "$INSTDIR\resources\go-data\build\server\config.json"
+      Delete "$INSTDIR\..\config.json.backup"
+    file_old_config_not_found:
+
     ; read JSON api config file
     nsJSON::Set /file "$INSTDIR\resources\go-data\build\server\config.json"
 
     ; determine what changed
-    ${if} $enableConfigRewrite == true
+    ${if} $EnableConfigRewrite == true
       nsJSON::Set enableConfigRewrite /value true
     ${else}
       nsJSON::Set enableConfigRewrite /value false
