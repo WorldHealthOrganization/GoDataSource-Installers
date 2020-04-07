@@ -30,7 +30,9 @@ let backupScript = undefined;
 let configScript = undefined;
 let winCfgPath;
 let apiConfigPath;
+let apiDataSourcePath;
 let winOldNewApiCfgPath;
+let winOldNewDatasourceCfgPath;
 if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -45,7 +47,9 @@ if (process.env.NODE_ENV === 'development') {
     configScript = path.join(__dirname, './../go-data/build/installer/common/config.js');
     winCfgPath = path.join(__dirname, './../winCfg.cfg');
     apiConfigPath = path.join(__dirname, './../go-data/build/server/config.json');
+    apiDataSourcePath = path.join(__dirname, './../go-data/build/server/datasources.json');
     winOldNewApiCfgPath = path.join(__dirname, './../config.json.backup_new');
+    winOldNewDatasourceCfgPath = path.join(__dirname, './../datasources.json.backup_new');
 } else {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
@@ -60,7 +64,9 @@ if (process.env.NODE_ENV === 'development') {
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
     winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
     apiConfigPath = path.join(process.resourcesPath, './go-data/build/server/config.json');
+    apiDataSourcePath = path.join(process.resourcesPath, './go-data/build/server/datasources.json');
     winOldNewApiCfgPath = path.join(process.resourcesPath, './../../config.json.backup_new');
+    winOldNewDatasourceCfgPath = path.join(process.resourcesPath, './../../datasources.json.backup_new');
 }
 
 const pm2File = path.join(pm2Module, 'bin/pm2');
@@ -80,7 +86,8 @@ module.exports = {
         currentVersion: webAppVersion,              // Version of Go.Data web app taken from package.json
         installedVersion: webAppInstalledVersion,   // Location of file that contains the version of the installed Go.Data web
         configScript: configScript,                 // Location of the script to call Go.Data configuration API
-        winOldNewApiCfgPath: winOldNewApiCfgPath    // Location of the new installation API config file
+        winOldNewApiCfgPath: winOldNewApiCfgPath,   // Location of the new installation API config file
+        winOldNewDatasourceCfgPath: winOldNewDatasourceCfgPath // Location of the new installation API datasource file
     },
     desktopApp: {
         package: desktopAppPackage,                 // Location of package.json for Go.Data desktop app
@@ -104,5 +111,6 @@ module.exports = {
     resourcesDirectory: resourceDirectory,
     windowsDirectory: windowsDirectory,
     testEncryptionDirectory: testEnctryptionDirectory,
-    apiConfigPath: apiConfigPath                    // Path to api config.json file
+    apiConfigPath: apiConfigPath,                   // Path to api config.json file
+    apiDataSourcePath: apiDataSourcePath            // Path to api datasource.json file
 };

@@ -61,33 +61,38 @@ app.on('ready', () => {
 
             // check if we need to merge old windows settings
             try {
+                // method used to merge newS into keepS
+                let newSettings;
+                let currentSettings;
+                const mergeJSONMethod = (newS, keepS) => {
+                    _.each(newS, (value, prop) => {
+                        // missing value, merge it as it is
+                        if (keepS[prop] === undefined) {
+                            keepS[prop] = value;
+                        } else {
+                            // property exists, if object or array we need to merge it recursively without overwriting prop values
+                            if (
+                                _.isArray(value) ||
+                                _.isObject(value)
+                            ) {
+                                // check recursively
+                                mergeJSONMethod(value, keepS[prop])
+                            } else {
+                                // NOTHING TO DO, keep old value
+                            }
+                        }
+                    });
+                };
+
+                // config.json
                 if (
                     fs.existsSync(AppPaths.webApp.winOldNewApiCfgPath) &&
                     fs.existsSync(AppPaths.apiConfigPath)
                 ) {
                     // merge missing settings
                     logger.logger.info(`Merging API config file "${AppPaths.webApp.winOldNewApiCfgPath}" to "${AppPaths.apiConfigPath}"`);
-                    const newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewApiCfgPath));
-                    const currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiConfigPath));
-                    const mergeJSONMethod = (newS, keepS) => {
-                        _.each(newS, (value, prop) => {
-                            // missing value, merge it as it is
-                            if (keepS[prop] === undefined) {
-                                keepS[prop] = value;
-                            } else {
-                                // property exists, if object or array we need to merge it recursively without overwriting prop values
-                                if (
-                                    _.isArray(value) ||
-                                    _.isObject(value)
-                                ) {
-                                    // check recursively
-                                    mergeJSONMethod(value, keepS[prop])
-                                } else {
-                                    // NOTHING TO DO, keep old value
-                                }
-                            }
-                        });
-                    };
+                    newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewApiCfgPath));
+                    currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiConfigPath));
                     mergeJSONMethod(newSettings, currentSettings);
                     logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewApiCfgPath}"`);
 
@@ -107,6 +112,36 @@ app.on('ready', () => {
                     logger.logger.info(`Removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
                     fs.unlinkSync(AppPaths.webApp.winOldNewApiCfgPath);
                     logger.logger.info(`Finished removing backup API settings from "${AppPaths.webApp.winOldNewApiCfgPath}"`);
+                }
+
+                // datasource.json
+                if (
+                    fs.existsSync(AppPaths.webApp.winOldNewDatasourceCfgPath) &&
+                    fs.existsSync(AppPaths.apiDataSourcePath)
+                ) {
+                    // merge missing settings
+                    logger.logger.info(`Merging API datasource file "${AppPaths.webApp.winOldNewDatasourceCfgPath}" to "${AppPaths.apiDataSourcePath}"`);
+                    newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewDatasourceCfgPath));
+                    currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiDataSourcePath));
+                    mergeJSONMethod(newSettings, currentSettings);
+                    logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewDatasourceCfgPath}"`);
+
+                    // save the new settings
+                    logger.logger.info(`Writing new API settings to "${AppPaths.apiDataSourcePath}"`);
+                    fs.writeFileSync(
+                        AppPaths.apiDataSourcePath,
+                        JSON.stringify(
+                            currentSettings,
+                            null,
+                            2
+                        )
+                    );
+                    logger.logger.info(`Finished writing new API settings to "${AppPaths.apiDataSourcePath}"`);
+
+                    // delete old settings
+                    logger.logger.info(`Removing backup API settings from "${AppPaths.webApp.winOldNewDatasourceCfgPath}"`);
+                    fs.unlinkSync(AppPaths.webApp.winOldNewDatasourceCfgPath);
+                    logger.logger.info(`Finished removing backup API settings from "${AppPaths.webApp.winOldNewDatasourceCfgPath}"`);
                 }
             }
             catch (eImportNewSettings) {
