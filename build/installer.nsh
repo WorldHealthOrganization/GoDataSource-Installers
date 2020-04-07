@@ -134,7 +134,7 @@
     ; END OF Enable / Disable cors
 
     ; START OF Load settings from api config file
-    ; check if we don't already have app installed at this location - to retrieve the current settings
+    ; check if we don't already have app installed at this location - to retrieve the current API settings
     IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
     IfErrors file_not_found2
     file_found2:
@@ -196,6 +196,15 @@
       ${NSD_Check} $AllowRewrite
       ${NSD_Uncheck} $ConfigEnableCors
     file_finish2:
+
+    ; check if we don't already have app installed at this location - to retrieve the current datasource settings - e.g.  db, SMTP
+    IfFileExists "$INSTDIR\resources\go-data\build\server\datasources.json" file_datasource_found file_datasource_not_found
+    IfErrors file_datasource_not_found
+    file_datasource_found:
+      ; clone file so we can use it to keep previous settings
+      CopyFiles "$INSTDIR\resources\go-data\build\server\datasources.json" "$INSTDIR\..\datasources.json.backup"
+    file_datasource_not_found:
+    ; END OF datasource.json backup
 
     ; disable / enable components
     Call ShowHideConfigData
@@ -324,7 +333,7 @@
   IfErrors file_finish3
   file_found3:
     ; backup new file and copy back old one
-    ; new properties from new file will be merged once app is started
+    ; new properties from new file will be merged once app is started ( by windows application )
     IfFileExists "$INSTDIR\..\config.json.backup" file_old_config_found file_old_config_not_found
     IfErrors file_old_config_not_found
     file_old_config_found:
@@ -357,6 +366,22 @@
     nsJSON::Serialize /format /file "$INSTDIR\resources\go-data\build\server\config.json"
   file_finish3:
   ; END OF - write to api config file & enable / disable CORS
+
+  ; DATASOURCE.JSON
+  ; backup new file and copy back old one
+  ; new properties from new file will be merged once app is started ( by windows application )
+  IfFileExists "$INSTDIR\resources\go-data\build\server\datasources.json" file_datasource_found2 file_datasource_not_found2
+  IfErrors file_datasource_not_found2
+  file_datasource_found2:
+    IfFileExists "$INSTDIR\..\datasources.json.backup" file_old_datasource_found file_old_datasource_not_found
+    IfErrors file_old_datasource_not_found
+    file_old_datasource_found:
+      CopyFiles "$INSTDIR\resources\go-data\build\server\datasources.json" "$INSTDIR\..\datasources.json.backup_new"
+      CopyFiles "$INSTDIR\..\datasources.json.backup" "$INSTDIR\resources\go-data\build\server\datasources.json"
+      Delete "$INSTDIR\..\datasources.json.backup"
+    file_old_datasource_not_found:
+  file_datasource_not_found2:
+  ; END OF datasource.json backup
 !macroend
 
 !macro unregisterFileAssociations
