@@ -116,10 +116,10 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                             rimraf(macosPath, err => {
                                 if (err) {
                                     console.log(`Error deleting __MACOSX folder at path ${macosPath}: ${err.message}`);
-                                    return callback(err);
+                                    return callback(err, file);
                                 }
                                 console.log(`Deleted __MACOSX folder at path ${macosPath}`);
-                                return callback();
+                                return callback(null, file);
                             })
                         })
                         .catch((err) => {
@@ -127,12 +127,22 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                         });
                 };
 
-                const afterUnzip = () => {
+                const afterUnzip = (err, file) => {
                     unzipped++;
                     if (unzipped === data.Contents.length - folders) {
                         console.log(`Completed unzipping resources`);
                     } else {
                         console.log(`${data.Contents.length - folders - unzipped} files remaining...`);
+                    }
+
+                    // remove zip file
+                    if (fs.existsSync(file)) {
+                        try {
+                            console.log(`Removing file "${file}"`);
+                            fs.unlinkSync(file);
+                        } catch (rmErr) {
+                            console.log('Error removing file');
+                        }
                     }
                 };
 
