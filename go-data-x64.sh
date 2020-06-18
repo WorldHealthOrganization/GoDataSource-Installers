@@ -63,8 +63,8 @@ VERSION_PATH=${DBPATH}/.appVersion
 if [ ! -f ${VERSION_PATH} ]; then
     #perform database population
     echo "Populating database..."
-    platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
     platforms/linux/${ARCH}/default/node/bin/node go-data/build/server/install/install.js init-database
+    platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
 else
     #perform database migration if version is different
     settings_version=$(cat "$VERSION_PATH")
@@ -76,6 +76,7 @@ else
     else
         echo "Migrating database from version ${settings_version} to ${app_version}..."
         platforms/linux/${ARCH}/default/node/bin/node go-data/build/server/install/install.js migrate-database from ${settings_version} to ${app_version}
+        platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
     fi
 fi
 
