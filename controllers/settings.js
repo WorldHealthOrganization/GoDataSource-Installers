@@ -132,14 +132,14 @@ const getMongoPort = (callback) => {
     getSettings((err, settings) => {
         if (err) {
             if (err.code === 'ENOENT') {
-                mongoPort = 27017;
+                mongoPort = 27000;
                 return callback(null, mongoPort);
             } else {
                 // callback(null, null)
                 throw new Error(`Error setting Mongo port: ${err.message}`);
             }
         }
-        mongoPort = settings.mongoPort || 27017;
+        mongoPort = settings.mongoPort || 27000;
         callback(null, mongoPort);
     });
 };
