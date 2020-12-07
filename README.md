@@ -322,7 +322,7 @@ The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:4
 		- specifies the port for Mongo
 		- between 1025 and 65535
 		- must be different from `port`
-		- defaults to `27017`
+		- defaults to `27000`
 	- --dbpath
 		- specifies the path for Mongo files
 		- defaults to `db`
