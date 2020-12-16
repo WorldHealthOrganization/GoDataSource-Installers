@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Go.Data Settings</title>
+    <link rel="stylesheet" type="text/css" href="settings.css">
+</head>
+<body>
+<h1 id="settingsTitle"></h1>
+<div>
+
+    <!-- Hub / Consolidation switch -->
+
+    <label id="settingDetails"></label>
+
+    <div class="toggle" id="typeSelector">
+        <input type="radio" name="sizeBy" value="hub" id="goDataHub" checked="checked"/>
+        <label for="goDataHub">Hub</label>
+        <input type="radio" name="sizeBy" value="consolidation" id="goDataConsolidation"/>
+        <label for="goDataConsolidation">Consolidation Server</label>
+    </div>
+
+
+
+    <div class="setting">
+        <label>Mongo Port</label>
+        <input type="number" id="mongoPort">
+    </div>
+    <div class="setting">
+        <label>Go.Data Port</label>
+        <input type="number" id="goDataPort">
+    </div>
+
+    <div id="encryption">
+    <label id="encryptionLabel">Checking data encryption settings...</label>
+    <input id="encryptionSwitch" class="switch" type="checkbox" checked>
+    </div>
+
+    <button id="settingsButton"></button>
+
+    <div id="productVersoinHolder">
+        <label id="productVersion">Go.Data</label>
+        <br>
+        <label id="productBuildNumber">Build</label>
+    </div>
+</div>
+<script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+</script>
+</body>
+</html>

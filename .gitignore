@@ -1,0 +1,6 @@
+.idea
+app-management
+dist
+go-data/build
+node_modules
+platforms

@@ -1,0 +1,365 @@
+@font-face {
+  font-family: "Roboto-Thin";
+  src: url('../../../resources/fonts/Roboto-Light.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto-Medium";
+  src: url('../../../resources/fonts/Roboto-Medium.ttf') format("truetype");
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url('../../../resources/fonts/Roboto-Regular.ttf') format("truetype");
+}
+
+@-webkit-keyframes outerRotate1 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@-moz-keyframes outerRotate1 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@-o-keyframes outerRotate1 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes outerRotate1 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@-webkit-keyframes outerRotate2 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@-moz-keyframes outerRotate2 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@-o-keyframes outerRotate2 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@keyframes outerRotate2 {
+  0% {
+    transform: translate(-50%, -50%) rotate(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@-webkit-keyframes textColour {
+  0% {
+    color: #fff;
+  }
+  100% {
+    color: #5cd1be;
+  }
+}
+@-moz-keyframes textColour {
+  0% {
+    color: #fff;
+  }
+  100% {
+    color: #5cd1be;
+  }
+}
+@-o-keyframes textColour {
+  0% {
+    color: #fff;
+  }
+  100% {
+    color: #5cd1be;
+  }
+}
+@keyframes textColour {
+  0% {
+    color: #fff;
+  }
+  100% {
+    color: #5cd1be;
+  }
+}
+html {
+  font-size: 62.5%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", sans-serif;
+  width: 100vw;
+  height: 100vh;
+  background: #222;
+  overflow-x: hidden;
+}
+
+.e-bottom {
+  position: absolute;
+  top: 90%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 500px;
+  height: 50px;
+}
+
+.e-bottom .m-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 500px;
+  height: 50px;
+  color: #888;
+  text-align: center;
+  z-index: 20;
+  text-transform: uppercase;
+}
+
+.e-bottom .m-loader .e-text {
+  font-size: 14px;
+  font-size: 1.4rem;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.e-loadholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 240px;
+  height: 240px;
+  border: 5px solid #3b877b;
+  border-radius: 120px;
+  box-sizing: border-box;
+}
+.e-loadholder:after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  content: " ";
+  display: block;
+  background: #222;
+  transform-origin: center;
+  z-index: 0;
+}
+.e-loadholder:after {
+  width: 100px;
+  height: 200%;
+  -webkit-animation: outerRotate2 30s infinite linear;
+  -moz-animation: outerRotate2 30s infinite linear;
+  -o-animation: outerRotate2 30s infinite linear;
+  animation: outerRotate2 30s infinite linear;
+}
+.e-loadholder .m-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 200px;
+  height: 200px;
+  color: #888;
+  text-align: center;
+  border: 5px solid #4db0a0;
+  border-radius: 100px;
+  box-sizing: border-box;
+  z-index: 20;
+  text-transform: uppercase;
+}
+.e-loadholder .m-loader:after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  content: " ";
+  display: block;
+  background: #222;
+  transform-origin: center;
+  z-index: -1;
+}
+.e-loadholder .m-loader:after {
+  width: 100px;
+  height: 106%;
+  -webkit-animation: outerRotate1 15s infinite linear;
+  -moz-animation: outerRotate1 15s infinite linear;
+  -o-animation: outerRotate1 15s infinite linear;
+  animation: outerRotate1 15s infinite linear;
+}
+.e-loadholder .m-loader .e-text {
+  font-size: 14px;
+  font-size: 1.4rem;
+  line-height: 130px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  -webkit-animation: textColour 1s alternate linear infinite;
+  -moz-animation: textColour 1s alternate linear infinite;
+  -o-animation: textColour 1s alternate linear infinite;
+  animation: textColour 1s alternate linear infinite;
+  display: block;
+  width: 140px;
+  height: 140px;
+  text-align: center;
+  border: 5px solid #5cd1be;
+  border-radius: 70px;
+  box-sizing: border-box;
+  z-index: 20;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+.e-loadholder .m-loader .e-text:before, .e-loadholder .m-loader .e-text:after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  content: " ";
+  display: block;
+  background: #222;
+  transform-origin: center;
+  z-index: -1;
+}
+.e-loadholder .m-loader .e-text:before {
+  width: 110%;
+  height: 40px;
+  -webkit-animation: outerRotate2 3.5s infinite linear;
+  -moz-animation: outerRotate2 3.5s infinite linear;
+  -o-animation: outerRotate2 3.5s infinite linear;
+  animation: outerRotate2 3.5s infinite linear;
+}
+.e-loadholder .m-loader .e-text:after {
+  width: 40px;
+  height: 110%;
+  -webkit-animation: outerRotate1 8s infinite linear;
+  -moz-animation: outerRotate1 8s infinite linear;
+  -o-animation: outerRotate1 8s infinite linear;
+  animation: outerRotate1 8s infinite linear;
+}
+
+#particleCanvas-White {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 100%;
+  height: 50%;
+  opacity: 0.1;
+}
+
+#particleCanvas-Blue {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-51%, -50%);
+  -moz-transform: translate(-51%, -50%);
+  -ms-transform: translate(-51%, -50%);
+  -o-transform: translate(-51%, -50%);
+  transform: translate(-51%, -50%);
+  width: 300px;
+  height: 300px;
+}
+
+:not(input):not(textarea),
+:not(input):not(textarea)::after,
+:not(input):not(textarea)::before {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+input, button, textarea, :focus {
+  outline: none; // You should add some other style for :focus to help UX/a11y
+}
+
+#button-container {
+  display: none;
+  position: absolute;
+  bottom: 65px;
+  transform: translateY(-50%);
+  right: 16px;
+  z-index: 999;
+}
+
+.go-data-button {
+  display: block;
+  width: 120px;
+  height: 40px;
+  color: #a2a2a2;
+  font-family: "Roboto", sans-serif;
+  border: 2px solid #404040;
+  font-size: 16px;
+  background-color: #222;
+  margin: 5px 0px;
+}
