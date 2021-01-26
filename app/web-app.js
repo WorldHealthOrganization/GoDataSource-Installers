@@ -166,7 +166,8 @@ const openEmbeddedWindow = (url) => {
                 openEmbeddedWindowCalledUrl === url
             ) {
                 //dialog that asks to restart
-                const errMsg = `An error occurred while launching ${productName} (${err.message}). Please restart ${productName}.`;
+                const errMsg = `The address '${url}' was not reachable from the current machine.` +
+                    'Please check that this address is correct and that you do see the Go.Data login page, if not you can try restarting the application.';
                 logger.logger.error(errMsg);
                 dialog.showMessageBox({
                     title: `Error`,
@@ -201,7 +202,7 @@ const openEmbeddedWindow = (url) => {
         async.retry(
             {
                 times: 10,
-                interval: 2000
+                interval: 1000
             },
             (callback) => {
                 // we don't need to check this one since url changed
