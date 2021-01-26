@@ -207,10 +207,21 @@ function detectAppStartFromLog(options, events, callback) {
             logger.info(`Successfully started ${productName} web app!`);
             events({text: `Successfully started ${productName} web app!`});
 
-            const urlIndex = log.indexOf('http');
-            if (urlIndex > -1 && !called) {
+            // determine url from api settings
+            let apiSettings = settings.retrieveAPISettings();
+            if (
+                !called &&
+                apiSettings &&
+                apiSettings.public &&
+                apiSettings.public.protocol &&
+                apiSettings.public.host &&
+                apiSettings.public.port
+            ) {
                 called = true;
-                return callback(null, log.substring(urlIndex));
+                return callback(
+                    null,
+                    `${apiSettings.public.protocol}://${apiSettings.public.host}:${apiSettings.public.port}`
+                );
             }
 
             if (!called) {

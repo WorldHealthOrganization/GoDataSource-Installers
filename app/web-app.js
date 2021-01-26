@@ -201,7 +201,7 @@ const openEmbeddedWindow = (url) => {
         async.retry(
             {
                 times: 10,
-                interval: 3000
+                interval: 2000
             },
             (callback) => {
                 // we don't need to check this one since url changed
@@ -223,10 +223,38 @@ const openEmbeddedWindow = (url) => {
                 request(
                     requestData,
                     (error, response) => {
+                        // tell what url will be tested
+                        logger.logger.info(`Testing API: '${url}'`);
+
                         // no response from our api ?
-                        if (error || (response && response.statusCode !== 200)) {
-                            logger.logger.info(`'${url}' unreachable`);
-                            return callback(new Error(`'${url}' unreachable`));
+                        if (
+                            error ||
+                            (response && response.statusCode !== 200)
+                        ) {
+                            // construct error message
+                            let errMsg = `'${url}' unreachable`;
+
+                            // attach status code
+                            if (
+                                response &&
+                                response.statusCode !== undefined
+                            ) {
+                                errMsg += ` - status: ${response.statusCode}`;
+                            }
+
+                            // attach error details
+                            if (
+                                error &&
+                                error.toString
+                            ) {
+                                errMsg += ` - ${error.toString()}`;
+                            }
+
+                            // log error message
+                            logger.logger.error(errMsg);
+
+                            // return error
+                            return callback(new Error(errMsg));
                         }
 
                         // api connection established
