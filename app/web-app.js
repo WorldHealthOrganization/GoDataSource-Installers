@@ -7,6 +7,7 @@ const async = require('async');
 
 const goData = require('./../controllers/goData');
 const goDataAPI = require('./../controllers/goDataAPI');
+const settings = require('./../controllers/settings');
 
 const appSplash = require('./splash');
 
@@ -153,47 +154,101 @@ const openEmbeddedWindow = (url) => {
     // this is the easiest way to check this, since otherwise we would have to change in multiple places and not only where we use openEmbeddedWindow
     const usesSSL = (url || '').toLowerCase().startsWith('https:');
 
-    // validate url
+    // method sued to validate and open electron browser window
+    let checkLocalHost = true;
+    const checkLocalHostHistory = checkLocalHost;
+    const urlHistory = url;
     openEmbeddedWindowCalledUrl = url;
-    async.series(
-        [
-            checkURL,
-            openWindow
-        ],
-        (err) => {
-            if (
-                err &&
-                openEmbeddedWindowCalledUrl === url
-            ) {
-                //dialog that asks to restart
-                const errMsg = `The address '${url}' was not reachable from the current machine.` +
-                    'Please check that this address is correct and that you do see the Go.Data login page, if not you can try restarting the application.';
-                logger.logger.error(errMsg);
-                dialog.showMessageBox({
-                    title: `Error`,
-                    message: errMsg,
-                    buttons: ['Restart', 'Close']
-                }, (buttonIndex) => {
-                    switch (buttonIndex) {
-                        case 0:
-                            app.relaunch();
-                            app.exit();
-                            break;
-                        case 1:
-                            app.quit();
-                            break;
+    const validateUrlAndOpenElectronWindow = (err) => {
+        // did we get an error while checking that api was started ?
+        if (
+            err &&
+            openEmbeddedWindowCalledUrl === url
+        ) {
+            // construct error message
+            const errMsg = checkLocalHostHistory && !checkLocalHost ?  (
+                    `The addresses '${urlHistory}' and '${url}' weren't reachable from the current machine. ` +
+                        'Please check that this address is correct and that you do see the Go.Data login page, if not you can try restarting the application.'
+                ) : (
+                    `The address '${url}' was not reachable from the current machine. ` +
+                        'Please check that this address is correct and that you do see the Go.Data login page, if not you can try restarting the application.'
+                );
+
+            // log error message
+            logger.logger.error(errMsg);
+
+            // try checking for localhost
+            if (checkLocalHost) {
+                // test the localhost url too
+                try {
+                    const apiSettings = settings.retrieveAPISettings();
+                    if (
+                        apiSettings &&
+                        apiSettings.public &&
+                        apiSettings.public.port
+                    ) {
+                        // determine localhost url
+                        url = `http://localhost:${apiSettings.public.port}`;
+                        openEmbeddedWindowCalledUrl = url;
+
+                        // reset check localhost
+                        checkLocalHost = false;
+
+                        // check the localhost api url - maybe we struck gold
+                        checkURL(validateUrlAndOpenElectronWindow);
+
+                        // finished
+                        return;
                     }
-                });
-            } else if (openEmbeddedWindowCalledUrl === url) {
-                logger.logger.info('Browser window opened...');
-            } else {
-                logger.logger.info(`Url changed from '${openEmbeddedWindowCalledUrl}' to '${url}', so there is no point in using the old url...`);
+                } catch(e) {
+                    // construct error message
+                    let errMsg = 'Error trying to open connection to localhost api';
+
+                    // attach error details
+                    if (
+                        e &&
+                        e.toString
+                    ) {
+                        errMsg += ` - ${e.toString()}`;
+                    }
+
+                    // log error message
+                    logger.logger.error(errMsg);
+                }
             }
 
-            // reset url caller
+            // display dialog that asks to restart
+            dialog.showMessageBox({
+                title: 'Error',
+                message: errMsg,
+                buttons: ['Restart', 'Close']
+            }, (buttonIndex) => {
+                switch (buttonIndex) {
+                    case 0:
+                        app.relaunch();
+                        app.exit();
+                        break;
+                    case 1:
+                        app.quit();
+                        break;
+                }
+            });
+
+            // finished
             openEmbeddedWindowCalledUrl = undefined;
+            return;
         }
-    );
+
+        // open window
+        openWindow(() => {
+            // success
+            logger.logger.info('Browser window opened...');
+            openEmbeddedWindowCalledUrl = undefined;
+        });
+    }
+
+    // check api url
+    checkURL(validateUrlAndOpenElectronWindow);
 
     // before displaying electron browser window we need to make sure Go.Data api / web works
     function checkURL(callback) {

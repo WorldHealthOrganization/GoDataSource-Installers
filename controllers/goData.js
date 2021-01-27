@@ -208,7 +208,7 @@ function detectAppStartFromLog(options, events, callback) {
             events({text: `Successfully started ${productName} web app!`});
 
             // determine url from api settings
-            let apiSettings = settings.retrieveAPISettings();
+            const apiSettings = settings.retrieveAPISettings();
             if (
                 !called &&
                 apiSettings &&
