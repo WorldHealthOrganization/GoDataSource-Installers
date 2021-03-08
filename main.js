@@ -17,6 +17,7 @@ const rl = require('readline');
 
 const appVersion = require('./utils/appVersion');
 const AppPaths = require('./utils/paths');
+const Migrate = require('./utils/migrate');
 const productName = AppPaths.desktopApp.package.name;
 
 const logger = require('./logger/app');
@@ -64,21 +65,44 @@ app.on('ready', () => {
                 // method used to merge newS into keepS
                 let newSettings;
                 let currentSettings;
-                const mergeJSONMethod = (newS, keepS) => {
+                const mergeJSONMethod = (
+                    configOrDatasource,
+                    newS,
+                    keepS,
+                    previousPath
+                ) => {
                     _.each(newS, (value, prop) => {
                         // missing value, merge it as it is
                         if (keepS[prop] === undefined) {
                             keepS[prop] = value;
                         } else {
                             // property exists, if object or array we need to merge it recursively without overwriting prop values
+                            const fullPropPath = previousPath + `${previousPath ? '.' : ''}${prop}`;
                             if (
                                 _.isArray(value) ||
                                 _.isObject(value)
                             ) {
                                 // check recursively
-                                mergeJSONMethod(value, keepS[prop])
+                                const migrator = _.get(Migrate, `${configOrDatasource}.${fullPropPath}`);
+                                if (_.isFunction(migrator)) {
+                                    keepS[prop] = migrator(keepS[prop]);
+                                } else {
+                                    // recursive merge
+                                    mergeJSONMethod(
+                                        configOrDatasource,
+                                        value,
+                                        keepS[prop],
+                                        fullPropPath
+                                    );
+                                }
                             } else {
-                                // NOTHING TO DO, keep old value
+                                // keep old value or migrate
+                                const migrator = _.get(Migrate, `${configOrDatasource}.${fullPropPath}`);
+                                if (_.isFunction(migrator)) {
+                                    keepS[prop] = migrator(keepS[prop]);
+                                } else {
+                                    // NOTHING TO DO, keep old value
+                                }
                             }
                         }
                     });
@@ -93,7 +117,12 @@ app.on('ready', () => {
                     logger.logger.info(`Merging API config file "${AppPaths.webApp.winOldNewApiCfgPath}" to "${AppPaths.apiConfigPath}"`);
                     newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewApiCfgPath));
                     currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiConfigPath));
-                    mergeJSONMethod(newSettings, currentSettings);
+                    mergeJSONMethod(
+                        'config',
+                        newSettings,
+                        currentSettings,
+                        ''
+                    );
                     logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewApiCfgPath}"`);
 
                     // save the new settings
@@ -123,7 +152,12 @@ app.on('ready', () => {
                     logger.logger.info(`Merging API datasource file "${AppPaths.webApp.winOldNewDatasourceCfgPath}" to "${AppPaths.apiDataSourcePath}"`);
                     newSettings = JSON.parse(fs.readFileSync(AppPaths.webApp.winOldNewDatasourceCfgPath));
                     currentSettings = JSON.parse(fs.readFileSync(AppPaths.apiDataSourcePath));
-                    mergeJSONMethod(newSettings, currentSettings);
+                    mergeJSONMethod(
+                        'datasource',
+                        newSettings,
+                        currentSettings,
+                        ''
+                    );
                     logger.logger.info(`Merged finished for "${AppPaths.webApp.winOldNewDatasourceCfgPath}"`);
 
                     // save the new settings
