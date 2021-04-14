@@ -46,6 +46,8 @@
   Var ConfigPortValue
   Var ConfigEnableCors
   Var ConfigEnableCorsValue
+  Var ConfigAdminEmail
+  Var ConfigAdminEmailValue
   Var sNext
 
 ;  Create dialog
@@ -93,7 +95,7 @@
     ; END OF Installation type - with or without services
 
     ; START OF Rewrite api settings - enable / disable rewrite
-    ${NSD_CreateGroupBox} 0 38u 100% 80u "Rewrite api config file"
+    ${NSD_CreateGroupBox} 0 38u 100% 52u "Rewrite api config file"
     Pop $1
     ${NSD_AddStyle} $1 ${WS_GROUP}
       ${NSD_CreateRadioButton} 3% 48u 94% 10u "Allow config rewrite ( system will try to determine domain and other settings )"
@@ -106,32 +108,40 @@
 
       ; START OF - No rewrite config inputs
       ; Protocol
-      ${NSD_CreateLabel} 3% 74u 12% 12u "Protocol"
+      ${NSD_CreateLabel} 3% 75u 10% 12u "Protocol"
       Pop $2
-	    ${NSD_CreateDropList} 17% 74u 80% 12u ""
+	    ${NSD_CreateDropList} 13% 73u 11% 12u ""
 	    Pop $ConfigProtocol
 	    ${NSD_CB_AddString} $ConfigProtocol "http"
 	    ${NSD_CB_AddString} $ConfigProtocol "https"
 	    ${NSD_CB_SelectString} $ConfigProtocol "http"
 
       ; Host
-      ${NSD_CreateLabel} 3% 88u 12% 12u "Host"
+      ${NSD_CreateLabel} 25% 75u 5% 12u "Host"
       Pop $3
-	    ${NSD_CreateText} 17% 88u 80% 12u "localhost"
+	    ${NSD_CreateText} 31% 73u 50% 12u "localhost"
 	    Pop $ConfigHost
 
       ; Port
-      ${NSD_CreateLabel} 3% 101u 12% 12u "Port"
+      ${NSD_CreateLabel} 82% 75u 5% 12u "Port"
       Pop $4
-	    ${NSD_CreateNumber} 17% 101u 80% 12u "8000"
+	    ${NSD_CreateNumber} 87% 73u 10% 12u "8000"
 	    Pop $ConfigPort
       ; END OF - No rewrite config inputs
     ; END OF Rewrite api settings - enable / disable rewrite
 
     ; START OF Enable / Disable cors
-    ${NSD_CreateCheckbox} 0 123u 100% 10u "Enable Cross-Origin Resource Sharing"
+    ${NSD_CreateCheckbox} 0 95u 100% 10u "Enable Cross-Origin Resource Sharing"
     Pop $ConfigEnableCors
     ; END OF Enable / Disable cors
+
+    ; START OF Admin account email
+    ${NSD_CreateLabel} 0 110u 13% 12u "Admin email"
+    Pop $5
+      ${NSD_CreateText} 14% 108u 85% 12u "admin@who.int"
+      Pop $ConfigAdminEmail
+      ${NSD_OnChange} $ConfigAdminEmail AdminEmailChanged
+    ; END OF Admin account email
 
     ; START OF Load settings from api config file
     ; check if we don't already have app installed at this location - to retrieve the current API settings
@@ -189,6 +199,14 @@
         ${NSD_Uncheck} $ConfigEnableCors
       ${endIf}
 
+      ; Admin Email
+      StrCpy $ConfigAdminEmailValue ""
+      nsJSON::Get adminEmail
+      Pop $ConfigAdminEmailValue
+      ${if} $ConfigAdminEmailValue != ""
+        ${NSD_SetText} $ConfigAdminEmail $ConfigAdminEmailValue
+      ${endIf}
+
       ; finished
       goto file_finish2
     file_not_found2:
@@ -233,14 +251,32 @@
 
   ; Enable / Disable next / install button
   Function EnableDisableNextButton
-    ${NSD_GetState} $DontUseServices $0
-    ${NSD_GetState} $UseServices $1
-    ${if} $0 = 1
-      ${OrIf} $1 = 1
-        EnableWindow $sNext 1
-    ${Else}
-      EnableWindow $sNext 0
+    ; START OF Installation type - with or without services
+    StrCpy $0 0
+    ${NSD_GetState} $DontUseServices $1
+    ${NSD_GetState} $UseServices $2
+    ${if} $1 = 1
+      ${OrIf} $2 = 1
+        StrCpy $0 1
     ${EndIf}
+    ; END OF Installation type - with or without services
+
+    ; START OF Admin Email
+    StrCpy $3 0
+    ${NSD_GetText} $ConfigAdminEmail $4
+    ${if} $4 != ""
+      StrCpy $3 1
+    ${endIf}
+    ; END OF Admin Email
+
+    ; enable / disable next button
+    ${if} $0 = 1
+      ${AndIf} $3 = 1
+        EnableWindow $sNext 1
+    ${else}
+      EnableWindow $sNext 0
+    ${endIf}
+
   FunctionEnd
 
   ; Installation Type Checked
@@ -248,7 +284,12 @@
     Call EnableDisableNextButton
   FunctionEnd
 
-;  Leave dialog
+  ; Admin Email Changed
+  Function AdminEmailChanged
+    Call EnableDisableNextButton
+  FunctionEnd
+
+  ; Leave dialog
   Function "${LEAVE}"
     ; START OF - determine if we should use services or not
     ${NSD_GetState} $DontUseServices $0
@@ -284,6 +325,11 @@
       StrCpy $ConfigEnableCorsValue false
     ${endIf}
     ; END OF - CORS enabled / disabled
+
+    ; START OF - Admin email
+    ${NSD_GetText} $ConfigAdminEmail $ConfigAdminEmailValue
+    ; END OF - Admin email
+
   FunctionEnd
 !macroend
 
@@ -361,6 +407,9 @@
     ${else}
       nsJSON::Set cors enabled /value false
     ${endIf}
+
+    ; write admin email
+    nsJSON::Set adminEmail /value '"$ConfigAdminEmailValue"'
 
     ; write - flush
     nsJSON::Serialize /format /file "$INSTDIR\resources\go-data\build\server\config.json"
