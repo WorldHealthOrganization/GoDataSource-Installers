@@ -92,7 +92,7 @@
     "electron-rebuild": "^1.8.2",
     "eslint": "^5.16.0",
     "fs-extra": "^7.0.1",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.21"
   },
   "dependencies": {
     "async": "^2.6.1",
