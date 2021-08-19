@@ -27,9 +27,6 @@ const configureUpdater = (events, callback) => {
             case 'x64':
                 autoUpdater.updateConfigPath = path.join(__dirname, internalBuild ? 'app-update-x64-internal.yml' : 'app-update-x64.yml');
                 break;
-            case 'x86':
-                autoUpdater.updateConfigPath = path.join(__dirname, internalBuild ? 'app-update-x86-internal.yml' : 'app-update-x86.yml');
-                break;
         }
     }
     autoUpdater.on('update-available', () => {

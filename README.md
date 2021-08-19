@@ -122,7 +122,7 @@ Create a Webstorm NodeJS configuration with the following settings:
     Node interpreter: ./node_modules/.bin/electron
     Javascript file: main.js
     Environment variables:
-        ARCH - x64 or x86 - will install 64-bit or 32-bit components
+        ARCH - x64 - will install 64-bit
         MONGO_PLATFORM - win (for Windows), darwin (for Mac), deb (for Debian), linux (for Linux), rhel (for RHEL) or ubuntu (for Ubuntu)
         NODE_PLATFORM - win (for Windows), darwin (for Mac), linux (for Linux, Debian, RHEL, Ubuntu)
         OSVERSION - default (when no OS version is specified) or the OS version (5.5, 6 and 7 for Red Hat and 14 and 16 for Ubuntu)
@@ -151,15 +151,7 @@ Note: In any script, these variables should have the same value:
     ARCH with -c.extraMetadata.ARCH
     VERSION with -c.extraMetadata.OSVERSION
 
-##### 3.1. Build for Windows x86
-
-Building for Windows x86 requires a 32-bit Windows machine. The project can be configured on a native 32-bit machine or on a virtual machine with a 32-bit Windows.
-
-It is important to run `npm install` and `npm run build` commands on the 64-bit version because some npm libraries have versions of 32 and 64 bits and the 32 bit versions must be installed.
-
-`npm run dist:win:32`
-
-##### 3.2. Build for Windows x64
+##### 3.1. Build for Windows x64
 
 Building for Windows x64 requires a 64-bit Windows machine.
 
@@ -167,27 +159,15 @@ It is important to run `npm install` and `npm run build` commands on the 64-bit 
 
 `npm run dist:win:64`
 
-##### 3.3. Build for Mac x64
+##### 3.2. Build for Mac x64
 
 Building for Mac OS x64 requires a 64-bit Mac.
 
 `npm run dist:osx:64`
 
-##### 3.4. Build for Linux x86
+##### 3.3. Build for Linux x64
 
-Building for Linux x86 requires a 32-bit Linux machine. We used Ubuntu 16 x86 to build for all x86 distributions in a virtual machine.
-
-To build the GUI installer:
-
-`npm run dist:linux:32`
-
-To build the CLI installer:
-
-`npm run dist:linux:cli:86`
-
-##### 3.5. Build for Linux x64
-
-Building for Linux x86 requires a 64-bit Linux machine. We used Ubuntu 16 x64 to build for all x64 distributions in a virtual machine.
+Building for Linux x64 requires a 64-bit Linux machine. We used Ubuntu 16 x64 to build for all x64 distributions in a virtual machine.
 
 To build the GUI installer:
 
@@ -201,16 +181,7 @@ To build the CLI installer:
 
 The files must be deployed on the same server that is used for auto-update (in this case, <http://54.164.207.48:42000/>).
 
-##### 4.1. General deployment
-
-The deployment is split in 2 directories: `x64` and `x86` with their respective builds.
-
-- Mac deployment: x64 only
-- Windows deployment: x86 and x64
-- Linux deployment: x86 and x64
-- Linux CLI deployment: x86 and x64
-
-##### 4.2. Windows deployment
+##### 4.1. Windows deployment
 
 Go to the `x64` directory on the server.
 
@@ -226,9 +197,7 @@ Copy the new 64-bit version files on the server `x64` directory:
 - Go.Data Setup *new-version*.exe.blockmap
 - latest.yml
 
-Go to the `x86` directory on the server and repeat the steps above with the new 32-bit build.
-
-##### 4.3. Mac deployment
+##### 4.2. Mac deployment
 
 Go to the `x64` directory on the server.
 
@@ -244,11 +213,11 @@ Copy the new version files on the server `x64` directory:
 - Go.Data-*new-version*.dmg
 - latest-mac.yml
 
-##### 4.4. Linux deployment
+##### 4.3. Linux deployment
 
 TBD
 
-##### 4.5. Linux CLI deployment
+##### 4.4. Linux CLI deployment
 
 Go to the `x64` directory on the server.
 
@@ -260,22 +229,7 @@ Copy the new 64-bit version file on the server `x64` directory:
 
 - go-data-linux-x64.tar.gz
 
-Go to the `x86` directory on the server and repeat the steps above with the new 32-bit build.
-
-##### 4.6. Overview
-
-The `x86` folder structure should be the following:
-
-    .
-    ├── old-version-directory-1                                 # i.e. 11.0.0
-    ├── old-version-directory-2                                 # i.e. 11.1.0
-    ├── old-version-directory-3                                 # i.e. 11.2.0
-    ├── old-version-directory-4                                 # i.e. 11.2.1
-    ├── go-data-linux-x86.gz                                    # Linux 32-bit CLI installer
-    ├── Go.Data Setup version.exe                               # Windows 32-bit installer
-    ├── Go.Data Setup version.exe.blockmap                      # file used by Windows auto-updater
-    ├── latest.yml                                              # file used by Windows auto-updater
-    └── TBD.yml                                                 # file used by Linux auto-updater
+##### 4.5. Overview
 
 The `x64` folder structure should be the following:
 
@@ -298,45 +252,41 @@ The `x64` folder structure should be the following:
 The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:42000/>
 
 ##### 5.1. Windows installer
-- Download the x86 or x64 installer and run.
+- Download the x64 installer and run.
 ##### 5.2. Mac installer
 - Download the x64 Mac installer and run.
 ##### 5.3. Linux installer
 - TBD
 ##### 5.4. Linux CLI installer
-- Open Terminal and download the x86 or x64 installer
+- Open Terminal and download the x64 installer
 
-	`wget http://54.164.207.48:42000/x86/go-data-linux-x86.tar.gz`
-
-    `wget http://54.164.207.48:42000/x64/go-data-linux-x64.tar.gz`
+- `wget http://54.164.207.48:42000/x64/go-data-linux-x64.tar.gz`
 
 - Unzip the files
-
-	`tar -xvzf go-data-linux-x86.tar.gz`
 
     `tar -xvzf go-data-linux-x64.tar.gz`
 
 - Run the launch script. Optionally, the following arguments can be passed:
 
-	- --dbport
-		- specifies the port for Mongo
-		- between 1025 and 65535
-		- must be different from `port`
-		- defaults to `27000`
-	- --dbpath
-		- specifies the path for Mongo files
-		- defaults to `db`
-	- --port
-		- specifies the port for Go.Data
-		- between 1025 and 65535
-		- must be different from `dbport`
-		- defaults to `8000`
+    - --dbport
+        - specifies the port for Mongo
+        - between 1025 and 65535
+        - must be different from `port`
+        - defaults to `27000`
+    - --dbpath
+        - specifies the path for Mongo files
+        - defaults to `db`
+    - --port
+        - specifies the port for Go.Data
+        - between 1025 and 65535
+        - must be different from `dbport`
+        - defaults to `8000`
 
-	`./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000
+    `./go-data-x64 --dbport=3001 --dbpath=~/Desktop/db --port=3000
 
 ### 6. Auto-updater
 
-The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml` and `updater/app-update-x86.yml`.
+The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml`.
 
 To publish a new update, increase the version number in `package.json` and in `go-data/build/package.json`, build the app for distribution and upload the following files on the update server:
 - for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
