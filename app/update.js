@@ -31,7 +31,11 @@ const configureUpdate = (next) => {
                     resizable: false,
                     center: true,
                     frame: false,
-                    show: false
+                    show: false,
+                    webPreferences: {
+                        nodeIntegration: true,
+                        contextIsolation: false
+                    }
                 });
                 updateScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'));
 

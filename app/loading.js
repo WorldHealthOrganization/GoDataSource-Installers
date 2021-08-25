@@ -18,7 +18,11 @@ const openPleaseWait = () => {
             resizable: false,
             center: true,
             frame: false,
-            show: false
+            show: false,
+            webPreferences: {
+                nodeIntegration: true,
+                contextIsolation: false
+            }
         });
         pleaseWaitScreen.loadFile(path.join(AppPaths.windowsDirectory, 'please-wait', 'index.html'));
 
