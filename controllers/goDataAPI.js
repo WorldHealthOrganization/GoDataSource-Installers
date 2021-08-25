@@ -123,8 +123,24 @@ function getGoDataParam(param, callback) {
     });
     goDataConfigProcess.stderr.on('data', (data) => {
         if (data) {
-            log && logger.error(`${productName} 'get ${param}' error: ${data.toString()}`);
+            // set error
             error = data.toString();
+
+            // if dev & debug ignore debugger errors
+            // this way we can test using debugger too
+            if (
+                process.env &&
+                process.env.NODE_ENV === 'development' &&
+                error && (
+                    error.toLowerCase().indexOf('debugger listening') > -1 ||
+                    error.toLowerCase().indexOf('debugger attached') > -1 ||
+                    error.toLowerCase().indexOf('waiting for the debugger to disconnect') > -1
+                )
+            ) {
+                error = null;
+            } else {
+                log && logger.error(`${productName} 'get ${param}' error: ${error}`);
+            }
         }
     });
 }
@@ -152,9 +168,29 @@ function setGoDataParam(param, value, callback) {
         callback(null, data.toString());
     });
     goDataConfigProcess.stderr.on('data', (data) => {
-        log && logger.error(`${productName} 'set ${param} ${value}' error: ${data.toString()}`);
-        // callback(data.toString())
-        throw new Error(`Error setting ${productName} ${param}. Please run ${productName} as Administrator.`);
+        let error;
+        if (data) {
+            error = data.toString();
+        }
+
+        // if dev & debug ignore debugger errors
+        // this way we can test using debugger too
+        if (
+            process.env &&
+            process.env.NODE_ENV === 'development' &&
+            error && (
+                error.toLowerCase().indexOf('debugger listening') > -1 ||
+                error.toLowerCase().indexOf('debugger attached') > -1 ||
+                error.toLowerCase().indexOf('waiting for the debugger to disconnect') > -1
+            )
+        ) {
+            // nothing - just to be consistent with getter
+        } else {
+            log && logger.error(`${productName} 'set ${param} ${value}' error: ${error}`);
+
+            // callback(data.toString())
+            throw new Error(`Error setting ${productName} ${param}. Please run ${productName} as Administrator.`);
+        }
     });
 }
 
