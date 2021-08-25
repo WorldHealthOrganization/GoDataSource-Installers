@@ -255,8 +255,8 @@ const resetAdminPassword = () => {
         title: `${productName} Reset Password`,
         message: 'Are you sure you want to reset the current admin password to default?',
         buttons: ['Yes', 'No']
-    }, (buttonIndex) => {
-        if (buttonIndex === 0) {
+    }).then((data) => {
+        if (data.response === 0) {
             appLoading.openPleaseWait();
             // Call Go Data Admin controller to reset Admin password
             goDataAdmin.resetAdminPassword((code) => {
@@ -264,11 +264,11 @@ const resetAdminPassword = () => {
                 dialog.showMessageBox({
                     type: code ? 'error' : 'info',
                     title: `${productName} Reset Password`,
-                    message: code ? 'An error occurred while reseting the admin password' : 'Admin password was successfully reset.'
+                    message: code ? 'An error occurred while resetting the admin password' : 'Admin password was successfully reset.'
                 });
             })
         }
-    })
+    });
 };
 
 /**
@@ -280,23 +280,27 @@ const restoreBackup = () => {
         title: 'Select file to restore back-up',
         properties: ['openFile'],
         message: 'Select file to restore back-up'
-    }, (paths) => {
-        if (paths && paths[0]) {
+    }).then((pathsData) => {
+        if (
+            pathsData &&
+            pathsData.filePaths &&
+            pathsData.filePaths.length > 0
+        ) {
             // Ask user to confirm backup restore
             dialog.showMessageBox({
                 type: 'warning',
                 title: `${productName} Restore Back-up`,
                 message: `${productName} will be unavailable while restoring back-up. Are you sure you want to proceed?`,
                 buttons: ['Yes', 'No']
-            }, (buttonIndex) => {
+            }).then((data) => {
 
                 // proceed with backup restore
-                if (buttonIndex === 0) {
+                if (data.response === 0) {
 
                     appLoading.openPleaseWait();
 
                     // Call Go Data Admin controller to reset Admin password
-                    goDataAdmin.restoreBackup(paths[0], (errors) => {
+                    goDataAdmin.restoreBackup(pathsData.filePaths[0], (errors) => {
 
                         // set default results to success
                         let type = 'info';

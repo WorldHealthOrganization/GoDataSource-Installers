@@ -35,8 +35,8 @@ const configureUpdater = (events, callback) => {
             title: 'Go.Data Updater',
             message: 'A new Go.Data version is available, do you want to update now?',
             buttons: ['Yes', 'No']
-        }, (buttonIndex) => {
-            if (buttonIndex === 0) {
+        }).then((data) => {
+            if (data.response === 0) {
                 autoUpdater.downloadUpdate();
                 callback(null, true);
             } else {
