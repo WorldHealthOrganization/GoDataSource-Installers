@@ -222,8 +222,8 @@ const openEmbeddedWindow = (url) => {
                 title: 'Error',
                 message: errMsg,
                 buttons: ['Restart', 'Close']
-            }, (buttonIndex) => {
-                switch (buttonIndex) {
+            }).then((data) => {
+                switch (data.response) {
                     case 0:
                         app.relaunch();
                         app.exit();

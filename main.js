@@ -273,7 +273,7 @@ process.on('uncaughtException', (exc) => {
             title: `Error`,
             message: `A ${productName} process crashed.\nError: ${exc.message}.\nPlease relaunch ${productName}.`,
             buttons: ['Close']
-        }, () => {
+        }).then(() => {
             // Force quit the app
             process.exit(-1);
         });
