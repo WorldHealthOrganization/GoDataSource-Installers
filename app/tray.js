@@ -418,8 +418,8 @@ const stopServices = () => {
         title: `${productName} Stop Services`,
         message: `Are you sure you want to stop ${productName} services?`,
         buttons: ['Yes', 'No']
-    }, (buttonIndex) => {
-        if (buttonIndex === 0) {
+    }).then((data) => {
+        if (data.response === 0) {
             // display loading
             appLoading.openPleaseWait();
 
