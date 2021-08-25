@@ -37,7 +37,7 @@ crashReporter.init();
 
 // Determines if another app instance is running and opens the existing one or launches a new instance
 const checkSingletonInstance = () => {
-    let shouldQuit = app.makeSingleInstance(() => {});
+    const shouldQuit = !app.requestSingleInstanceLock();
     if (shouldQuit) {
         logger.logger.info(`Detected previous ${productName} instance, will quit app...`);
         app.quit();

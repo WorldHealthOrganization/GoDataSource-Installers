@@ -125,12 +125,12 @@ const updateTrayMenu = (disableMenu) => {
                     label: 'Application',
                     click: () => {
                         try {
-                            shell.openItem(AppPaths.appLogDirectory);
+                            shell.openPath(AppPaths.appLogDirectory);
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
                                 title: '',
-                                message: `Couldn't open application logs directory ( "${AppPaths.appLogDirectory}" )`,
+                                message: `Couldn't open application logs directory ( "${AppPaths.appLogDirectory}" - "${e.message}" )`,
                                 buttons: ['Ok']
                             });
                         }
@@ -139,12 +139,12 @@ const updateTrayMenu = (disableMenu) => {
                     label: 'API',
                     click: () => {
                         try {
-                            shell.openItem(AppPaths.webApp.logDirectory);
+                            shell.openPath(AppPaths.webApp.logDirectory);
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
                                 title: '',
-                                message: `Couldn't open api logs directory ( "${AppPaths.webApp.logDirectory}" )`,
+                                message: `Couldn't open api logs directory ( "${AppPaths.webApp.logDirectory}" - "${e.message}" )`,
                                 buttons: ['Ok']
                             });
                         }
@@ -153,12 +153,12 @@ const updateTrayMenu = (disableMenu) => {
                     label: 'Database',
                     click: () => {
                         try {
-                            shell.openItem(AppPaths.dbLogDirectory);
+                            shell.openPath(AppPaths.databaseLogDirectory);
                         } catch (e) {
                             dialog.showMessageBox({
                                 type: 'warning',
                                 title: '',
-                                message: `Couldn't open database logs directory ( "${AppPaths.databaseLogDirectory}" )`,
+                                message: `Couldn't open database logs directory ( "${AppPaths.databaseLogDirectory}" - "${e.message}" )`,
                                 buttons: ['Ok']
                             });
                         }

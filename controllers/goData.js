@@ -513,7 +513,7 @@ function setAppPermissions(callback) {
     if (platform !== 'darwin') {
         return callback();
     }
-    fs.stat(`${AppPaths.webApp.package}.json`, (err, stats) => {
+    fs.stat(AppPaths.webApp.package, (err, stats) => {
         if (err) {
             logger.info(`Error reading application permissions: ${JSON.stringify(err)}`);
             return callback(err);

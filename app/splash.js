@@ -49,7 +49,7 @@ const configureIPCMain = () => {
                 app.quit();
                 break;
             case constants.OPEN_LOGS:
-                shell.openItem(AppPaths.appLogDirectory);
+                shell.openPath(AppPaths.appLogDirectory);
                 break;
         }
     });
