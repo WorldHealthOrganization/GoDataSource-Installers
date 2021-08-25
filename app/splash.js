@@ -23,7 +23,11 @@ const openSplashScreen = () => {
         resizable: false,
         center: true,
         frame: false,
-        show: false
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
     });
     splashScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'));
 
@@ -49,7 +53,7 @@ const configureIPCMain = () => {
                 app.quit();
                 break;
             case constants.OPEN_LOGS:
-                shell.openItem(AppPaths.appLogDirectory);
+                shell.openPath(AppPaths.appLogDirectory);
                 break;
         }
     });

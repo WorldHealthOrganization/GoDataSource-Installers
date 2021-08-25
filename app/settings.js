@@ -39,7 +39,11 @@ const openSettings = (settingType) => {
         resizable: false,
         center: true,
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,
-        show: false
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
     });
     settingsWindow.setMenu(null);
     settingsWindow.loadFile(path.join(AppPaths.windowsDirectory, 'settings', 'settings.html'));

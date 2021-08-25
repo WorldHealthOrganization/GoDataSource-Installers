@@ -138,10 +138,6 @@ function startMongo(events, callback) {
  */
 function startMongoProcess(port) {
     let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`];
-    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
-        args.push('--storageEngine=mmapv1');
-        args.push('--journal');
-    }
     logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`);
     const startDbProcess = spawn(
         AppPaths.mongodFile,
@@ -220,10 +216,6 @@ function checkMongoService(callback) {
 function installMongoService(port, callback) {
     logger.info('Installing Mongo Service...');
     let command = ['install', mongoServiceName, AppPaths.mongodFile, `--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`];
-    if (process.env.ARCH === 'x86' || ARCH === 'x86') {
-        command.push('--storageEngine=mmapv1');
-        command.push('--journal');
-    }
     runNssmShell(command,  { requiresElevation: true, serviceName: mongoServiceName }, callback);
 }
 

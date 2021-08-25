@@ -1,6 +1,6 @@
 'use strict';
 
-const {app, BrowserWindow, dialog} = require('electron');
+const {app, BrowserWindow, dialog, Menu} = require('electron');
 const path = require('path');
 const request = require('request');
 const async = require('async');
@@ -222,8 +222,8 @@ const openEmbeddedWindow = (url) => {
                 title: 'Error',
                 message: errMsg,
                 buttons: ['Restart', 'Close']
-            }, (buttonIndex) => {
-                switch (buttonIndex) {
+            }).then((data) => {
+                switch (data.response) {
                     case 0:
                         app.relaunch();
                         app.exit();
@@ -364,7 +364,7 @@ const openEmbeddedWindow = (url) => {
             });
 
             // replace default electron browser menu with a custom one
-            app.setApplicationMenu(menu.getMenu(url));
+            Menu.setApplicationMenu(menu.getMenu(url));
         } else {
             // maximize window
             embeddedAppWindow.maximize();

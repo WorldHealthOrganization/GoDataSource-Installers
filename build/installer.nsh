@@ -451,32 +451,21 @@
     ${endIf}
   used_services:
     ;Remove services
-    ${if} ${RunningX64}
-      ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataAPI' $1
-      DetailPrint "GoDataAPI remove returned $1"
-      Sleep 1000
+    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataAPI' $1
+    DetailPrint "GoDataAPI remove returned $1"
+    Sleep 1000
 
-      ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataAPI confirm' $2
-      DetailPrint "GoDataAPI remove returned $2"
-      Sleep 1000
+    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataAPI confirm' $2
+    DetailPrint "GoDataAPI remove returned $2"
+    Sleep 1000
 
-      ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataStorageEngine' $3
-      DetailPrint "GoDataStorageEngine stop returned $3"
-      Sleep 1000
+    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataStorageEngine' $3
+    DetailPrint "GoDataStorageEngine stop returned $3"
+    Sleep 1000
 
-      ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataStorageEngine confirm' $4
-      DetailPrint "GoDataStorageEngine remove returned $4"
-      Sleep 1000
-    ${else}
-      ExecWait '"$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" stop GoDataAPI'
-      Sleep 1000
-      ExecWait '"$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" remove GoDataAPI confirm'
-      Sleep 1000
-      ExecWait '"$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" stop GoDataStorageEngine'
-      Sleep 1000
-      ExecWait '"$INSTDIR\resources\platforms\win\x86\default\nssm\nssm.exe" remove GoDataStorageEngine confirm'
-      Sleep 1000
-    ${endIf}
+    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataStorageEngine confirm' $4
+    DetailPrint "GoDataStorageEngine remove returned $4"
+    Sleep 1000
   no_services:
 !macroend
 

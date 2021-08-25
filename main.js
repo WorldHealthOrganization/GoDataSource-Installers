@@ -37,7 +37,7 @@ crashReporter.init();
 
 // Determines if another app instance is running and opens the existing one or launches a new instance
 const checkSingletonInstance = () => {
-    let shouldQuit = app.makeSingleInstance(() => {});
+    const shouldQuit = !app.requestSingleInstanceLock();
     if (shouldQuit) {
         logger.logger.info(`Detected previous ${productName} instance, will quit app...`);
         app.quit();
@@ -273,7 +273,7 @@ process.on('uncaughtException', (exc) => {
             title: `Error`,
             message: `A ${productName} process crashed.\nError: ${exc.message}.\nPlease relaunch ${productName}.`,
             buttons: ['Close']
-        }, () => {
+        }).then(() => {
             // Force quit the app
             process.exit(-1);
         });
