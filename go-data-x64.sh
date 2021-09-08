@@ -1,8 +1,7 @@
 #!/bin/bash
 
-MONGO_PORT=27017
+MONGO_PORT=27000
 GODATA_PORT=8000
-APP_TYPE=hub
 ARCH=x64
 DBPATH=db
 
@@ -15,9 +14,6 @@ case $i in
     ;;
     -port=*|--port=*)
     GODATA_PORT="${i#*=}"
-    ;;
-    -type=*|--type=*)
-    APP_TYPE="${i#*=}"
     ;;
     -dbpath=*|--dbpath=*)
     DBPATH="${i#*=}"
@@ -33,18 +29,26 @@ done
 #set application configuration
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set dbPort ${MONGO_PORT}
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set apiPort ${GODATA_PORT}
-platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set buildType ${APP_TYPE}
 platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config set buildPlatform ${ARCH}
 
 #perform cleanup
 echo "Stopping PM2 process..."
 platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 stop server
 
-echo "Stopping process on port ${MONGO_PORT}..."
-kill -9 $(lsof -t -i:${MONGO_PORT})
+#wait 1 second
+sleep 1
 
 echo "Stopping process on port ${GODATA_PORT}..."
 kill -9 $(lsof -t -i:${GODATA_PORT})
+
+#wait 1 second
+sleep 1
+
+echo "Stopping process on port ${MONGO_PORT}..."
+kill -9 $(lsof -t -i:${MONGO_PORT})
+
+#wait 1 second
+sleep 1
 
 #create path for Mongo
 mkdir -p ${DBPATH}/data
@@ -59,8 +63,8 @@ VERSION_PATH=${DBPATH}/.appVersion
 if [ ! -f ${VERSION_PATH} ]; then
     #perform database population
     echo "Populating database..."
-    platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
     platforms/linux/${ARCH}/default/node/bin/node go-data/build/server/install/install.js init-database
+    platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
 else
     #perform database migration if version is different
     settings_version=$(cat "$VERSION_PATH")
@@ -72,10 +76,27 @@ else
     else
         echo "Migrating database from version ${settings_version} to ${app_version}..."
         platforms/linux/${ARCH}/default/node/bin/node go-data/build/server/install/install.js migrate-database from ${settings_version} to ${app_version}
+        platforms/linux/${ARCH}/default/node/bin/node go-data/build/installer/common/config get version > ${DBPATH}/.appVersion
     fi
 fi
 
 #start Go.Data
 platforms/linux/${ARCH}/default/node/bin/node app-management/bin/pm2 start go-data/build/server/server.js --interpreter=platforms/linux/${ARCH}/default/node/bin/node
+
+#wait for both services to start
+#api & mongo
+echo ""
+printf "Starting Go.Data server ( might take a while )"
+while :
+do
+    if [[ `lsof -t -i:${GODATA_PORT}` ]]
+    then
+        break
+    fi
+    printf "."
+    sleep 0.5
+done
+echo ""
+echo "Go.Data server is running"
 
 exit 0

@@ -1,11 +1,11 @@
 'use strict';
 
-const {Menu, shell, clipboard, systemPreferences} = require('electron')
+const {Menu, shell, clipboard, systemPreferences} = require('electron');
 
 if (typeof systemPreferences.setUserDefault === 'function') {
     // disable dictation and symbols on Mac OS
-    systemPreferences.setUserDefault('NSDisabledDictationMenuItem', 'boolean', true)
-    systemPreferences.setUserDefault('NSDisabledCharacterPaletteMenuItem', 'boolean', true)
+    systemPreferences.setUserDefault('NSDisabledDictationMenuItem', 'boolean', true);
+    systemPreferences.setUserDefault('NSDisabledCharacterPaletteMenuItem', 'boolean', true);
 }
 
 /**
@@ -56,6 +56,6 @@ function getMenuTemplate(url) {
 
 module.exports = {
     getMenu: function (url) {
-        return Menu.buildFromTemplate(getMenuTemplate(url))
+        return Menu.buildFromTemplate(getMenuTemplate(url));
     }
-}
+};
