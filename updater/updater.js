@@ -18,8 +18,11 @@ const setState = (newState) => {
 
 // Auto-updater tasks
 const configureUpdater = (events, callback) => {
+    // configure
     autoUpdater.logger = logger.logger;
     autoUpdater.autoDownload = false;
+
+    // configure update check location
     if (process.env.NODE_ENV === 'development') {
         autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml');
     } else {
@@ -29,11 +32,13 @@ const configureUpdater = (events, callback) => {
                 break;
         }
     }
-    autoUpdater.on('update-available', () => {
+
+    // update-available
+    autoUpdater.on('update-available', (info) => {
         dialog.showMessageBox({
             type: 'info',
             title: 'Go.Data Updater',
-            message: 'A new Go.Data version is available, do you want to update now?',
+            message: `A new Go.Data version is available (version: ${info.version}, release date: ${info.releaseDate}), do you want to update now?`,
             buttons: ['Yes', 'No']
         }).then((data) => {
             if (data.response === 0) {
@@ -46,8 +51,10 @@ const configureUpdater = (events, callback) => {
             }
         })
     });
-    autoUpdater.on('update-not-available', () => {
-        logger.logger.info('Current version up to date!');
+
+    // update not available
+    autoUpdater.on('update-not-available', (info) => {
+        logger.logger.info(`Current version up to date (version: ${info.version}, release date: ${info.releaseDate}) !`);
         if (state === UPDATER_STATE_AUTO) {
             callback(null, false);
         } else {
@@ -57,6 +64,8 @@ const configureUpdater = (events, callback) => {
             });
         }
     });
+
+    // error while checking / downloading update...something went wrong
     autoUpdater.on('error', (error) => {
         logger.logger.error(`Updater error: ${error.message}`);
         if (state === UPDATER_STATE_AUTO) {
@@ -68,9 +77,13 @@ const configureUpdater = (events, callback) => {
             });
         }
     });
+
+    // downloading update
     autoUpdater.on('download-progress', (ev, progressObj) => {
         events && events(ev);
     });
+
+    // finished downloading update
     autoUpdater.on('update-downloaded', () => {
         app.removeAllListeners('window-all-closed');
         let browserWindows = BrowserWindow.getAllWindows();
@@ -79,6 +92,8 @@ const configureUpdater = (events, callback) => {
         });
         setImmediate(() => autoUpdater.quitAndInstall());
     });
+
+    // check for updates
     checkForUpdates();
 };
 
