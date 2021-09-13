@@ -42,7 +42,8 @@ const openSettings = (settingType) => {
         show: false,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            backgroundThrottling: false
         }
     });
     settingsWindow.setMenu(null);

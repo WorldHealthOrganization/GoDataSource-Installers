@@ -26,7 +26,8 @@ const openSplashScreen = () => {
         show: false,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            backgroundThrottling: false
         }
     });
     splashScreen.loadFile(path.join(AppPaths.windowsDirectory, 'loading', 'index.html'));
