@@ -7,12 +7,42 @@ const constants = require('./../../utils/constants');
 
 let platform = null;
 
-ipcRenderer.send('getState-message', '');
-ipcRenderer.send('getDbPort-message', '');
-ipcRenderer.send('getGoDataPort-message', '');
-ipcRenderer.send('getProductVersion-message', '');
-ipcRenderer.send('getBuildNumber-message', '');
-ipcRenderer.send('getEncryptionCapabilities-message', '');
+function setButtonFunctionality() {
+    document.getElementById('settingsButton').onclick = () => {
+        document.getElementById('settingsButton').disabled = true;
+        ipcRenderer.send(
+            'buttonClick-message', {
+                mongoPort: document.getElementById('mongoPort').value,
+                goDataPort: document.getElementById('goDataPort').value,
+                encryption: document.getElementById('encryptionSwitch').checked
+            }
+        )
+    }
+}
+
+function bindEncryption() {
+    let encryptionToggle = document.getElementById('encryptionSwitch');
+    encryptionToggle.onclick = () => {
+        ipcRenderer.send('toggleEncryption-message', document.getElementById('encryptionSwitch').checked);
+    }
+}
+
+function loadView(state) {
+    switch (state) {
+        case constants.SETTINGS_WINDOW_LAUNCH:
+            document.getElementById('settingsButton').innerHTML = 'Launch Go.Data';
+            document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?';
+            document.getElementById('settingDetails').style.display = 'inline-block';
+
+            break;
+        case constants.SETTINGS_WINDOW_SETTING:
+            document.getElementById('settingsButton').innerHTML = 'Save';
+            document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings';
+            document.getElementById('settingDetails').style.display = 'none';
+            break
+    }
+    document.getElementById('settingsButton').disabled = true;
+}
 
 ipcRenderer.on('getState-reply', (event, arg) => {
     loadView(arg);
@@ -50,39 +80,9 @@ ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, statu
     }
 });
 
-function setButtonFunctionality() {
-    document.getElementById('settingsButton').onclick = () => {
-        document.getElementById('settingsButton').disabled = true;
-        ipcRenderer.send(
-            'buttonClick-message', {
-                mongoPort: document.getElementById('mongoPort').value,
-                goDataPort: document.getElementById('goDataPort').value,
-                encryption: document.getElementById('encryptionSwitch').checked
-            }
-        )
-    }
-}
-
-function bindEncryption() {
-    let encryptionToggle = document.getElementById('encryptionSwitch');
-    encryptionToggle.onclick = () => {
-        ipcRenderer.send('toggleEncryption-message', document.getElementById('encryptionSwitch').checked);
-    }
-}
-
-function loadView(state) {
-    switch (state) {
-        case constants.SETTINGS_WINDOW_LAUNCH:
-            document.getElementById('settingsButton').innerHTML = 'Launch Go.Data';
-            document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?';
-            document.getElementById('settingDetails').style.display = 'inline-block';
-
-            break;
-        case constants.SETTINGS_WINDOW_SETTING:
-            document.getElementById('settingsButton').innerHTML = 'Save';
-            document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings';
-            document.getElementById('settingDetails').style.display = 'none';
-            break
-    }
-    document.getElementById('settingsButton').disabled = true;
-}
+ipcRenderer.send('getState-message', '');
+ipcRenderer.send('getDbPort-message', '');
+ipcRenderer.send('getGoDataPort-message', '');
+ipcRenderer.send('getProductVersion-message', '');
+ipcRenderer.send('getBuildNumber-message', '');
+ipcRenderer.send('getEncryptionCapabilities-message', '');
