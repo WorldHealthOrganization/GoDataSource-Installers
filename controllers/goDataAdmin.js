@@ -9,8 +9,8 @@ const goData = require('./goData');
 const constants = require('./../utils/constants');
 
 /**
- * Launches the restore back-up script
- * @param filePath - The path of the file containing the back-up
+ * Launches the restore backup script
+ * @param filePath - The path of the file containing the backup
  * @param callback - Invoked with (errors). Errors is an array of errors.
  */
 const restoreBackup = (filePath, callback) => {
@@ -21,8 +21,8 @@ const restoreBackup = (filePath, callback) => {
             return callback([{type: constants.GO_DATA_KILL_ERROR}]);
         }
 
-        let infoMessage = 'Restoring back-up...';
-        let errorMessage = 'Error restoring back-up';
+        let infoMessage = 'Restoring backup...';
+        let errorMessage = 'Error restoring backup';
         logger.info(infoMessage);
 
         // run node backupScript.js --file={filePath}
@@ -47,12 +47,12 @@ const restoreBackup = (filePath, callback) => {
 
             // handle case for script error
             if (code) {
-                logger.error(`Back-up restore exit with code ${code}`);
+                logger.error(`Backup restore exit with code ${code}`);
 
                 // add error that will be sent in callback
                 errors.push({type: constants.GO_DATA_BACKUP_ERROR});
             } else {
-                logger.info(`Completed back-up restore!`);
+                logger.info(`Completed backup restore!`);
             }
 
             //Relaunch Go.Data web app

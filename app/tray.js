@@ -188,8 +188,8 @@ const updateTrayMenu = (disableMenu) => {
                         type: 'info',
                         title: 'Sign out users on api server restart',
                         message: apiSettings.signoutUsersOnRestart ?
-                            'Users will be signed out on api restart from now one' :
-                            'Users won\'t be signed out on api restart from now one',
+                            'Users will be signed out on api restart from now on' :
+                            'Users won\'t be signed out on api restart from now on',
                         buttons: ['Ok']
                     });
                 } else {
@@ -272,14 +272,14 @@ const resetAdminPassword = () => {
 };
 
 /**
- * Starts the process to restore back-up from file
+ * Starts the process to restore backup from file
  */
 const restoreBackup = () => {
     // show file selection dialog
     dialog.showOpenDialog({
-        title: 'Select file to restore back-up',
+        title: 'Select file to restore backup',
         properties: ['openFile'],
-        message: 'Select file to restore back-up'
+        message: 'Select file to restore backup'
     }).then((pathsData) => {
         if (
             pathsData &&
@@ -289,8 +289,8 @@ const restoreBackup = () => {
             // Ask user to confirm backup restore
             dialog.showMessageBox({
                 type: 'warning',
-                title: `${productName} Restore Back-up`,
-                message: `${productName} will be unavailable while restoring back-up. Are you sure you want to proceed?`,
+                title: `${productName} Restore Backup`,
+                message: `${productName} will be unavailable while restoring backup. Are you sure you want to proceed?`,
                 buttons: ['Yes', 'No']
             }).then((data) => {
 
@@ -304,7 +304,7 @@ const restoreBackup = () => {
 
                         // set default results to success
                         let type = 'info';
-                        let message = 'Back-up was successfully restored.';
+                        let message = 'Backup was successfully restored.';
 
                         if (errors.length > 0) {
                             type = 'error';
@@ -315,7 +315,7 @@ const restoreBackup = () => {
                                         message += `An error occurred while closing ${productName} app. Please try again. `;
                                         break;
                                     case constants.GO_DATA_BACKUP_ERROR:
-                                        message += 'An error occurred while restoring back-up. ';
+                                        message += 'An error occurred while restoring backup. ';
                                         break;
                                     case constants.GO_DATA_LAUNCH_ERROR:
                                         message += `An error occurred while starting ${productName}. `;
@@ -329,7 +329,7 @@ const restoreBackup = () => {
                         // Show result dialog
                         dialog.showMessageBox({
                             type: type,
-                            title: `${productName} Restore Back-up`,
+                            title: `${productName} Restore Backup`,
                             message: message
                         })
                     })
