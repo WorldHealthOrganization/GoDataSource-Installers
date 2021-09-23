@@ -124,11 +124,11 @@ function startMongo(events, callback) {
                 }
             });
         } else {
-            // Start Mongo as integrated process
-            startMongoProcess(port);
-
             // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
             watchMongoStart(events, callback);
+
+            // Start Mongo as integrated process
+            startMongoProcess(port);
         }
     });
 }
@@ -443,11 +443,11 @@ function watchMongoStart(events, callback) {
     // In this case, we will have a fallback callback that will be called after 1 minute
     setTimeout(() => {
         if (!called) {
-            logger.info(`Mongo start event callback not called, fallback to call callback after 60 seconds`);
+            logger.info(`Mongo start event callback not called, fallback to call callback after 180 seconds`);
             called = true;
             callback();
         } else {
-            logger.info(`Mongo started, no need for 60 seconds fallback`);
+            logger.info(`Mongo started, no need for 180 seconds fallback`);
         }
     }, 180000);
 
@@ -511,7 +511,11 @@ function watchMongoStart(events, callback) {
         stopWatchingLogFile();
         if (!called) {
             called = true;
-            callback();
+            // wait a bit before actually starting the API so DB has time to catch up
+            // - not perfect, but would require an entire rewrite otherwise
+            setTimeout(() => {
+                callback();
+            }, 7000);
         }
     }
 }
