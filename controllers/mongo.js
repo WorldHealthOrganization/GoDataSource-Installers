@@ -467,7 +467,7 @@ function watchMongoStart(events, callback) {
     function readMongoLog() {
         logger.info(`Reading Mongo log ${DatabaseLogFile}...`);
         fs.readFile(DatabaseLogFile, 'utf8', (err, contents) => {
-            if (contents.indexOf('waiting for connections') > -1 && !called) {
+            if (contents.toLowerCase().indexOf('waiting for connections') > -1 && !called) {
                 logger.info(`Mongo ready for connections detected while reading ${DatabaseLogFile}`);
                 readyForConnections();
             }
@@ -484,7 +484,7 @@ function watchMongoStart(events, callback) {
             tail.on('line', (data) => {
                 const log = data.toString();
                 logger.log(log);
-                if (log.indexOf('waiting for connections') > -1 && !called) {
+                if (log.toLowerCase().indexOf('waiting for connections') > -1 && !called) {
                     logger.info(`Mongo ready for connections detected while reading line from ${DatabaseLogFile}`);
                     readyForConnections();
                 }

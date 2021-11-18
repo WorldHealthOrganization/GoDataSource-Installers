@@ -200,7 +200,7 @@ function detectAppStartFromLog(options, events, callback) {
     options.tail.on('line', (data) => {
         const log = data.toString();
         events({text: `Configuring ${productName} web app...`, details: log});
-        if (log.indexOf('Web server listening at:') > -1) {
+        if (log.toLowerCase().indexOf('web server listening at:') > -1) {
 
             stopWatchingLogFile(options);
 
