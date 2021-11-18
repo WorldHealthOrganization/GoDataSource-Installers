@@ -20,8 +20,6 @@ const windowsDirectory = path.join(__dirname, './../windows');
 let webAppDirectory = undefined;
 let webAppLogDirectory = undefined;
 let mongodPath = undefined;
-let mongoPath = undefined;
-let mongoDirectory = undefined;
 let nodePath = undefined;
 let nssmPath = undefined;
 let pm2Module = undefined;
@@ -37,8 +35,6 @@ if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
-    mongoPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongo${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
-    mongoDirectory = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin`);
     nodePath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/node${process.env.NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`);
     nssmPath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/nssm/nssm.exe`);
     pm2Module = process.platform === 'win32' ? path.join(__dirname, './../app-management/node_modules/pm2') : path.join(__dirname, './../app-management/lib/node_modules/pm2');
@@ -54,8 +50,6 @@ if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
-    mongoPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongo${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
-    mongoDirectory = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin`);
     nodePath = path.join(process.resourcesPath, `./platforms/${NODE_PLATFORM}/${ARCH}/default/node${NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`);
     nssmPath = path.join(process.resourcesPath, `./platforms/${NODE_PLATFORM}/${ARCH}/default/nssm/nssm.exe`);
     pm2Module = process.platform === 'win32' ?  path.join(process.resourcesPath, './app-management/node_modules/pm2') : path.join(process.resourcesPath, './app-management/lib/node_modules/pm2');
@@ -69,7 +63,6 @@ if (process.env.NODE_ENV === 'development') {
     winOldNewDatasourceCfgPath = path.join(process.resourcesPath, './../../datasources.json.backup_new');
 }
 
-const pm2File = path.join(pm2Module, 'bin/pm2');
 const webAppLaunchScript = path.join(webAppDirectory, 'server/server.js');
 const webAppPackage = path.join(webAppDirectory, 'package');
 const webAppVersion = require(webAppPackage).version;
@@ -103,11 +96,8 @@ module.exports = {
     appLogFile: appLogPath,                         // Location of the Go.Data log
     nodeFile: nodePath,                             // Location of the node executable used for Go.Data web app
     nssmFile: nssmPath,                             // Location of the nssm executable used on Windows to create a service from an executable
-    mongoDirectory: mongoDirectory,                 // Location of the Mongo and Mongod path
     mongodFile: mongodPath,                         // Location of the Mongod executable
-    mongoFile: mongoPath,
     pm2Module: pm2Module,                           // Location of the PM2 module (to be used programatically)
-    pm2File: pm2File,                               // Location of the PM2 javascript file (to be used with child process)
     resourcesDirectory: resourceDirectory,
     windowsDirectory: windowsDirectory,
     testEncryptionDirectory: testEnctryptionDirectory,
