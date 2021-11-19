@@ -7,15 +7,12 @@
 
 const {Transform} = require('stream');
 const fs = require('fs');
-
 const argv = require('minimist')(process.argv.slice(2));
 const AWS = require('aws-sdk');
-
 const path = require('path');
 const mkdirp = require('mkdirp');
-const zip = require('compressing');
+const AdmZip = require('adm-zip');
 const rimraf = require('rimraf');
-
 const async = require('async');
 const _ = require('lodash');
 
@@ -108,8 +105,21 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                     let fileIndex = file.lastIndexOf('/');
                     let dirPath = file.substring(0, fileIndex);
                     console.log(`Unzipping file ${file} to ${dirPath}...`);
-                    zip.zip.uncompress(file, dirPath)
-                        .then(() => {
+                    const zip = new AdmZip(file);
+                    zip.extractAllToAsync(
+                        dirPath,
+                        true,
+                        false,
+                        (err) => {
+                            // an error occurred ?
+                            if (err) {
+                                // send output
+                                output(`Error unzipping file ${file} to ${dirPath}: ${err.message}`, true);
+
+                                // finished
+                                return;
+                            }
+
                             console.log(`Unzipping file ${file} complete!`);
                             // Remove __MACOSX folder (if existing)
                             let macosPath = path.join(dirPath, '__MACOSX');
@@ -120,11 +130,9 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
                                 }
                                 console.log(`Deleted __MACOSX folder at path ${macosPath}`);
                                 return callback(null, file);
-                            })
-                        })
-                        .catch((err) => {
-                            output(`Error unzipping file ${file} to ${dirPath}: ${err.message}`, true);
-                        });
+                            });
+                        }
+                    );
                 };
 
                 const afterUnzip = (err, file) => {

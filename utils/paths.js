@@ -20,6 +20,9 @@ const windowsDirectory = path.join(__dirname, './../windows');
 let webAppDirectory = undefined;
 let webAppLogDirectory = undefined;
 let mongodPath = undefined;
+let mongodRestore = undefined;
+let mongod3Path = undefined;
+let mongod3Dump = undefined;
 let nodePath = undefined;
 let nssmPath = undefined;
 let pm2Module = undefined;
@@ -35,6 +38,9 @@ if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(__dirname, './../go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongodRestore = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin/mongorestore${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongod3Path = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin3/mongod${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongod3Dump = path.join(__dirname, `./../platforms/${process.env.MONGO_PLATFORM}/${process.env.ARCH}/${process.env.OSVERSION}/mongodb/bin3/mongodump${ process.env.MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     nodePath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/node${process.env.NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`);
     nssmPath = path.join(__dirname, `./../platforms/${process.env.NODE_PLATFORM}/${process.env.ARCH}/default/nssm/nssm.exe`);
     pm2Module = process.platform === 'win32' ? path.join(__dirname, './../app-management/node_modules/pm2') : path.join(__dirname, './../app-management/lib/node_modules/pm2');
@@ -50,6 +56,9 @@ if (process.env.NODE_ENV === 'development') {
     webAppDirectory = path.join(process.resourcesPath, 'go-data/build');
     webAppLogDirectory = path.join(webAppDirectory, 'logs');
     mongodPath = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongodRestore = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin/mongorestore${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongod3Path = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin3/mongod${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
+    mongod3Dump = path.join(process.resourcesPath, `./platforms/${MONGO_PLATFORM}/${ARCH}/${OSVERSION}/mongodb/bin3/mongodump${ MONGO_PLATFORM === 'win' ? '.exe' : '' }`);
     nodePath = path.join(process.resourcesPath, `./platforms/${NODE_PLATFORM}/${ARCH}/default/node${NODE_PLATFORM !== 'win' ? '/bin' : ''}/node`);
     nssmPath = path.join(process.resourcesPath, `./platforms/${NODE_PLATFORM}/${ARCH}/default/nssm/nssm.exe`);
     pm2Module = process.platform === 'win32' ?  path.join(process.resourcesPath, './app-management/node_modules/pm2') : path.join(process.resourcesPath, './app-management/lib/node_modules/pm2');
@@ -96,7 +105,10 @@ module.exports = {
     appLogFile: appLogPath,                         // Location of the Go.Data log
     nodeFile: nodePath,                             // Location of the node executable used for Go.Data web app
     nssmFile: nssmPath,                             // Location of the nssm executable used on Windows to create a service from an executable
-    mongodFile: mongodPath,                         // Location of the Mongod executable
+    mongodFile: mongodPath,                         // Location of the Mongod 5.x executable
+    mongodRestore: mongodRestore,                   // Location of the Mongod 5.x restore database
+    mongod3File: mongod3Path,                       // Location of the Mongod 3.x executable
+    mongod3Dump: mongod3Dump,                       // Location of the Mongod 3.x dump database
     pm2Module: pm2Module,                           // Location of the PM2 module (to be used programatically)
     resourcesDirectory: resourceDirectory,
     windowsDirectory: windowsDirectory,

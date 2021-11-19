@@ -1,32 +1,26 @@
 'use strict';
 
-/**
- * Sets up mongo configuration (database path and logs path), launches Mongo service, performs database population or migration.
- */
-
 const {spawn} = require('child_process');
-
 const async = require('async');
 const mkdirp = require('mkdirp');
 const kill = require('kill-port');
 const Tail = require('tail').Tail;
 const chokidar = require('chokidar');
 const fs = require('fs');
-
+const path = require('path');
 const logger = require('./../logger/app').logger;
 const processUtil = require('./../utils/process');
 const appVersion = require('./../utils/appVersion');
 const settings = require('./settings');
 const goDataAPI = require('./goDataAPI');
 const { nssmValidStatuses, nssmRecoverableStatuses, mongoServiceName, runNssmShell } = require('./nssm');
-
 const AppPaths = require('./../utils/paths');
-
 const databaseDirectory = AppPaths.databaseDirectory;
 const logDirectory = AppPaths.databaseLogDirectory;
 const DatabaseLogFile = AppPaths.databaseLogFile;
-
-const {ARCH, MONGO_PLATFORM} = require('./../package');
+const { MONGO_PLATFORM } = require('./../package');
+const archiver = require('archiver');
+const { app } = require('electron');
 
 /**
  * Configures Mongo (set database path, log path, storage engine, journaling etc)
@@ -44,6 +38,7 @@ const init = (events, callback) => {
 };
 
 let shouldThrowExceptionOnMongoFailure = true;
+let startMongoProcessIgnoreOutput = false;
 
 /**
  * Specifies whether the app should throw an exception when Mongo crashes. The only time it shouldn't throw an exception is when the Mongo process is forcefully closed in the clean-up operation.
@@ -115,48 +110,408 @@ function startMongo(events, callback) {
             throw new Error(`Error retrieving Mongo port: ${err.message}`)
         }
 
-        if (settings.runMongoAsAService) {
-            // Start Mongo as a service - does not need to check the log file because nssm.exe will return the status of the service
-            startMongoService(port, (err, status) => {
-                // When the service is already running, it will no longer write in the log file, therefore call the callback here
-                if (status === nssmValidStatuses.ServiceStarted || status === nssmValidStatuses.ServiceRunning) {
-                    callback();
-                }
-            });
-        } else {
-            // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
-            watchMongoStart(events, callback);
+        // start mongo
+        const startMongoServer = () => {
+            // start mongo
+            if (settings.runMongoAsAService) {
+                // Start Mongo as a service - does not need to check the log file because nssm.exe will return the status of the service
+                startMongoService(port, (err, status) => {
+                    // When the service is already running, it will no longer write in the log file, therefore call the callback here
+                    if (status === nssmValidStatuses.ServiceStarted || status === nssmValidStatuses.ServiceRunning) {
+                        callback();
+                    }
+                });
+            } else {
+                // Mongo does not write to stdout. We will watch the Mongo log file for 'waiting for connections' to determine that the mongo service has started.
+                watchMongoStart(events, callback);
 
-            // Start Mongo as integrated process
-            startMongoProcess(port);
-        }
+                // Start Mongo as integrated process
+                startMongoProcess(
+                    AppPaths.mongodFile,
+                    port
+                );
+            }
+        };
+
+        // do we need to upgrade mongo version ?
+        // - if clean install then there is no need to check, just start mongod v5.x
+        appVersion.getVersion((err, version) => {
+            if (err) {
+                if (err.code === 'ENOENT') {
+                    // fresh install, no need to migrate to new mongo
+                    startMongoServer();
+
+                    // finished
+                    return;
+                } else {
+                    throw new Error(`Error reading app version! ${err.message}`);
+                }
+            }
+
+            // check if version is older which means that we would need to do an upgrade
+            // - version < 2.40.0
+            const versionDetails  = version.split('.');
+            if (versionDetails.length !== 3) {
+                throw new Error(`Invalid app version '${version}'`);
+            }
+
+            // determine version
+            const majorVersion = parseInt(versionDetails[1]);
+            let mongodProcess;
+            if (majorVersion < 40) {
+                // display message
+                events({
+                    text: 'Must upgrade Mongo DB server from 3.x to 5.x...',
+                    detail: ''
+                });
+
+                // folder where dump will be performed
+                const dumpDirectory = path.join(
+                    AppPaths.appDirectory,
+                    '../',
+                    'dump3'
+                );
+
+                // must update mongo version
+                const continueWithUpdatingMongoData = () => {
+                    // something went wrong ?
+                    if (!startMongoProcessIgnoreOutput) {
+                        return;
+                    }
+
+                    // no need to ignore output anymore
+                    startMongoProcessIgnoreOutput = false;
+
+                    // unlock app
+                    app.releaseSingleInstanceLock();
+
+                    // display message
+                    events({
+                        text: 'Create backup of current mongo 3.x database...'
+                    });
+
+                    // backup & remove mongod 3.x data folder
+                    const output = fs.createWriteStream(path.join(
+                        AppPaths.appDirectory,
+                        '../',
+                        `data-backup-${(new Date()).toISOString().slice(0,19).replace(/:/g, '-')}.zip`
+                    ));
+
+                    // initialize archived
+                    let errorOccurred = false;
+                    const archive = archiver('zip');
+
+                    // listen for all archive data to be written
+                    // 'close' event is fired only when a file descriptor is involved
+                    output.on('close', function () {
+                        // nothing to do ?
+                        if (errorOccurred) {
+                            return;
+                        }
+
+                        // display message
+                        events({
+                            text: 'Cleaning up mongo 3.x database folder...'
+                        });
+
+                        // clean folder
+                        const shouldDelete = (pathUrl) => {
+                            if (
+                                pathUrl.toLowerCase().endsWith('gpucache') ||
+                                pathUrl.toLowerCase().endsWith('local storage') ||
+                                pathUrl.toLowerCase().endsWith('session storage') ||
+                                pathUrl.toLowerCase().endsWith('.settings') ||
+                                pathUrl.toLowerCase().endsWith('.appversion') ||
+                                pathUrl.toLowerCase().endsWith('.updaterid') ||
+                                pathUrl.toLowerCase().endsWith('data/logs') ||
+                                pathUrl.toLowerCase().endsWith('data\\logs')
+                            ){
+                                return false;
+                            }
+
+                            // finished
+                            return true;
+                        };
+                        const deleteFolderRecursive = (removePath) => {
+                            if (
+                                fs.existsSync(removePath) &&
+                                shouldDelete(removePath)
+                            ) {
+                                fs.readdirSync(removePath).forEach((file) => {
+                                    const curPath = path.join(removePath, file);
+                                    if (fs.lstatSync(curPath).isDirectory()) {
+                                        deleteFolderRecursive(curPath);
+                                    } else { // delete file
+                                        if (shouldDelete(curPath)) {
+                                            fs.unlinkSync(curPath);  // if you want also files to not be deleted
+                                        }
+                                    }
+                                });
+
+                                // remove main folder only if not our main path
+                                if (removePath.toLowerCase() !== AppPaths.appDirectory.toLowerCase()) {
+                                    fs.rmdirSync(removePath);
+                                }
+                            }
+                        };
+
+                        // remove mongod 3.x data folder content
+                        deleteFolderRecursive(AppPaths.appDirectory);
+
+                        // request back single instance lock
+                        app.requestSingleInstanceLock();
+
+                        // create database dir
+                        fs.mkdirSync(AppPaths.databaseDirectory);
+
+                        // continue with the rest of the processes (start api, migrate..)
+                        const continueWithStartingAppProperly = () => {
+                            // something went wrong ?
+                            if (!startMongoProcessIgnoreOutput) {
+                                return;
+                            }
+
+                            // no need to ignore output anymore
+                            startMongoProcessIgnoreOutput = false;
+
+                            // create directory where data will be dumped
+                            fs.rmSync(
+                                dumpDirectory, {
+                                    recursive: true
+                                }
+                            );
+
+                            // display message
+                            events({
+                                text: 'Finished with success, starting GoData...'
+                            });
+
+                            // start app
+                            startMongoServer();
+                        };
+
+                        // start mongod 5.x database
+                        // - and restore database from dump created with mongo 3.x
+                        watchMongoStart(
+                            () => {},
+                            (err) => {
+                                // an error occurred ?
+                                if (err) {
+                                    return callback(err);
+                                }
+
+                                // restore data using mongo 5.x
+                                const startDbProcess = spawn(
+                                    AppPaths.mongodRestore, [
+                                        `--port=${port}`,
+                                        `${dumpDirectory}`
+                                    ]
+                                );
+
+                                // finished restore ?
+                                let errorThrown = false;
+                                startDbProcess.stdout.on('close', () => {
+                                    // didn't finish with success ?
+                                    if (errorThrown) {
+                                        return;
+                                    }
+
+                                    // stop mongo3
+                                    startMongoProcessIgnoreOutput = true;
+                                    mongodProcess.kill('SIGINT');
+                                });
+
+                                // an error occurred ?
+                                startDbProcess.stderr.on('data', (data) => {
+                                    // not okay, but we need this hack
+                                    const dataString = data.toString();
+                                    if (dataString.toLowerCase().indexOf('error') < 0) {
+                                        return;
+                                    }
+
+                                    // stop anything else
+                                    errorThrown = true;
+
+                                    // log error
+                                    logger.error(dataString);
+                                    throw new Error(dataString);
+                                });
+                            }
+                        );
+
+                        // display message
+                        events({
+                            text: 'Preparing to restore database on Mongo DB 5.x server...'
+                        });
+
+                        // start mongod 3.x so we can dump data
+                        mongodProcess = startMongoProcess(
+                            AppPaths.mongodFile,
+                            port,
+                            continueWithStartingAppProperly
+                        );
+                    });
+
+                    // good practice to catch this error explicitly
+                    archive.on('error', function(err) {
+                        // an error occurred
+                        errorOccurred = true;
+
+                        // send error
+                        callback(err);
+                    });
+
+                    // pipe archive data to the file
+                    archive.pipe(output);
+
+                    // append files from a glob pattern
+                    archive.glob(
+                        '**/*', {
+                            cwd: AppPaths.appDirectory,
+                            ignore: [
+                                'GPUCache/**',
+                                'Local Storage/**',
+                                'Session Storage/**'
+                            ]
+                        }
+                    );
+
+                    // wait for streams to complete
+                    archive.finalize();
+                };
+
+                // wait for mongod 3.x to start
+                watchMongoStart(
+                    () => {},
+                    (err) => {
+                        // an error occurred ?
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        // prepare directory where we will dump mongodb data
+                        if (fs.existsSync(dumpDirectory)) {
+                            fs.rmdirSync(
+                                dumpDirectory, {
+                                    recursive: true
+                                }
+                            );
+                        }
+
+                        // create directory where data will be dumped
+                        fs.mkdirSync(dumpDirectory);
+
+                        // display message
+                        events({
+                            text: 'Dump database...'
+                        });
+
+                        // dump data using mongod 3.x
+                        const startDbProcess = spawn(
+                            AppPaths.mongod3Dump, [
+                                `--port=${port}`,
+                                `--out=${dumpDirectory}`
+                            ]
+                        );
+
+                        // finished dump ?
+                        let errorThrown = false;
+                        startDbProcess.stdout.on('close', () => {
+                            // didn't finish with success ?
+                            if (errorThrown) {
+                                return;
+                            }
+
+                            // stop mongo3
+                            startMongoProcessIgnoreOutput = true;
+                            mongodProcess.kill('SIGINT');
+                        });
+
+                        // an error occurred ?
+                        startDbProcess.stderr.on('data', (data) => {
+                            // not okay, but we need this hack
+                            const dataString = data.toString();
+                            if (dataString.toLowerCase().indexOf('error') < 0) {
+                                return;
+                            }
+
+                            // stop anything else
+                            errorThrown = true;
+
+                            // log error
+                            logger.error(dataString);
+                            throw new Error(dataString);
+                        });
+                    }
+                );
+
+                // start mongod 3.x so we can dump data
+                mongodProcess = startMongoProcess(
+                    AppPaths.mongod3File,
+                    port,
+                    continueWithUpdatingMongoData
+                );
+            } else {
+                // already updated mongo version
+                startMongoServer();
+            }
+        });
     });
 }
 
 /**
  * Starts Mongo on Max & Linux systems using spawn. Results are logged to the Mongo logpath.
  */
-function startMongoProcess(port) {
+function startMongoProcess(
+    mongodFile,
+    port,
+    closeCallback
+) {
     let args = [`--dbpath=${databaseDirectory}`, `--logpath=${DatabaseLogFile}`, `--port=${port}`, `--bind_ip=127.0.0.1`];
-    logger.info(`Starting Mongo service from path ${AppPaths.mongodFile} with args ${JSON.stringify(args)}`);
+    logger.info(`Starting Mongo service from path ${mongodFile} with args ${JSON.stringify(args)}`);
     const startDbProcess = spawn(
-        AppPaths.mongodFile,
+        mongodFile,
         args
     );
 
     startDbProcess.stdout.on('close', (code) => {
+        // finished
+        if (closeCallback) {
+            setTimeout(() => {
+                closeCallback();
+            });
+        }
+
+        // ignore output ?
+        if (startMongoProcessIgnoreOutput) {
+            return;
+        }
+
         if (shouldThrowExceptionOnMongoFailure) {
             throw new Error(`Error: Mongo process exited with code ${code}`);
         }
     });
 
     startDbProcess.stderr.on('data', (data) => {
+        // ignore output ?
+        if (startMongoProcessIgnoreOutput) {
+            return;
+        }
+
         logger.error(data.toString());
     });
 
     startDbProcess.stdout.on('data', (data) => {
+        // ignore output ?
+        if (startMongoProcessIgnoreOutput) {
+            return;
+        }
+
         logger.info(data.toString());
     });
+
+    // return process in case we want to do something with it
+    return startDbProcess;
 }
 
 /**

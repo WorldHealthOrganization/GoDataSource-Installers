@@ -62,20 +62,18 @@
       }
     ]
   },
-  "reporter": {
-    "url": "http://54.164.207.48:1127/post"
-  },
   "author": "Clarisoft",
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.975.0",
-    "compressing": "1.5.1",
     "electron": "13.2.2",
     "electron-builder": "22.11.7",
     "eslint": "7.32.0",
     "lodash": "4.17.21"
   },
   "dependencies": {
+    "archiver": "5.3.0",
+    "adm-zip": "0.5.9",
     "async": "2.6.3",
     "chokidar": "3.5.2",
     "codepage": "1.15.0",
