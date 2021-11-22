@@ -223,8 +223,8 @@ function startMongo(events, callback) {
                                 pathUrl.toLowerCase().endsWith('.settings') ||
                                 pathUrl.toLowerCase().endsWith('.appversion') ||
                                 pathUrl.toLowerCase().endsWith('.updaterid') ||
-                                pathUrl.toLowerCase().endsWith('data/logs') ||
-                                pathUrl.toLowerCase().endsWith('data\\logs')
+                                pathUrl.toLowerCase().endsWith('/data/logs') ||
+                                pathUrl.toLowerCase().endsWith('\\data\\logs')
                             ){
                                 return false;
                             }
