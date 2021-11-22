@@ -187,7 +187,7 @@ function startMongo(events, callback) {
 
                     // display message
                     events({
-                        text: 'Create backup of current mongo 3.x database...'
+                        text: 'Creating backup of current mongo 3.x database...'
                     });
 
                     // backup & remove mongod 3.x data folder
@@ -283,7 +283,8 @@ function startMongo(events, callback) {
 
                             // display message
                             events({
-                                text: 'Finished with success, starting GoData...'
+                                text: 'Finished with success, starting GoData...',
+                                detail: ''
                             });
 
                             // start app
@@ -341,7 +342,8 @@ function startMongo(events, callback) {
 
                         // display message
                         events({
-                            text: 'Preparing to restore database on Mongo DB 5.x server...'
+                            text: 'Restoring database on Mongo DB 5.x server...',
+                            detail: 'Depending of database size it might take some time to finish, please be patient'
                         });
 
                         // start mongod 3.x so we can dump data
@@ -403,7 +405,8 @@ function startMongo(events, callback) {
 
                         // display message
                         events({
-                            text: 'Dump database...'
+                            text: 'Dumping 3.x database...',
+                            detail: 'Depending of database size it might take some time to finish, please be patient'
                         });
 
                         // dump data using mongod 3.x
