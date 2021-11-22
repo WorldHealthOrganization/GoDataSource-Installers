@@ -243,14 +243,22 @@ function startMongo(events, callback) {
                                         deleteFolderRecursive(curPath);
                                     } else { // delete file
                                         if (shouldDelete(curPath)) {
-                                            fs.unlinkSync(curPath);  // if you want also files to not be deleted
+                                            try {
+                                                fs.unlinkSync(curPath);
+                                            } catch (e) {
+                                                // IGNORE
+                                            }
                                         }
                                     }
                                 });
 
                                 // remove main folder only if not our main path
                                 if (removePath.toLowerCase() !== AppPaths.appDirectory.toLowerCase()) {
-                                    fs.rmdirSync(removePath);
+                                    try {
+                                        fs.rmdirSync(removePath);
+                                    } catch (e) {
+                                        // IGNORE
+                                    }
                                 }
                             }
                         };
