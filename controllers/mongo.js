@@ -19,9 +19,9 @@ const databaseDirectory = AppPaths.databaseDirectory;
 const logDirectory = AppPaths.databaseLogDirectory;
 const DatabaseLogFile = AppPaths.databaseLogFile;
 const { MONGO_PLATFORM } = require('./../package');
-const archiver = require('archiver');
-const { app } = require('electron');
+const { app, BrowserWindow, dialog, clipboard } = require('electron');
 const uuid = require('uuid').v4;
+const getFolderSize = require('get-folder-size');
 
 /**
  * Configures Mongo (set database path, log path, storage engine, journaling etc)
@@ -166,307 +166,322 @@ function startMongo(events, callback) {
                     detail: ''
                 });
 
-                // folder where dump will be performed
-                const dumpDirectory = path.join(
-                    AppPaths.appDirectory,
-                    '../',
-                    `dump-${uuid()}`
-                );
+                // determine folder size
+                getFolderSize(AppPaths.databaseDirectory, (err, size) => {
+                    // stop
+                    if (err) { throw err; }
 
-                // must update mongo version
-                const continueWithUpdatingMongoData = () => {
-                    // something went wrong ?
-                    if (!startMongoProcessIgnoreOutput) {
-                        return;
-                    }
+                    // folder size
+                    const dbFolderSize = (size / 1024 / 1024).toFixed(2) + ' MB';
 
-                    // no need to ignore output anymore
-                    startMongoProcessIgnoreOutput = false;
+                    // backup db folder
+                    const backupDbFolder = `${AppPaths.databaseDirectory}_backup_${(new Date()).toISOString().slice(0,19).replace(/:/g, '-')}`;
 
-                    // unlock app
-                    app.releaseSingleInstanceLock();
-
-                    // display message
-                    events({
-                        text: 'Creating backup of current mongo 3.x database...'
-                    });
-
-                    // backup & remove mongod 3.x data folder
-                    const output = fs.createWriteStream(path.join(
-                        AppPaths.appDirectory,
-                        '../',
-                        `data-backup-${(new Date()).toISOString().slice(0,19).replace(/:/g, '-')}.zip`
-                    ));
-
-                    // initialize archived
-                    let errorOccurred = false;
-                    const archive = archiver('zip');
-
-                    // listen for all archive data to be written
-                    // 'close' event is fired only when a file descriptor is involved
-                    output.on('close', function () {
-                        // nothing to do ?
-                        if (errorOccurred) {
-                            return;
-                        }
-
-                        // display message
-                        events({
-                            text: 'Cleaning up mongo 3.x database folder...'
-                        });
-
-                        // clean folder
-                        const shouldDelete = (pathUrl) => {
-                            if (
-                                pathUrl.toLowerCase().endsWith('gpucache') ||
-                                pathUrl.toLowerCase().endsWith('local storage') ||
-                                pathUrl.toLowerCase().endsWith('session storage') ||
-                                pathUrl.toLowerCase().endsWith('.settings') ||
-                                pathUrl.toLowerCase().endsWith('.appversion') ||
-                                pathUrl.toLowerCase().endsWith('.updaterid') ||
-                                pathUrl.toLowerCase().endsWith('logs/db') ||
-                                pathUrl.toLowerCase().endsWith('logs\\db') ||
-                                pathUrl.toLowerCase().endsWith('logs/app') ||
-                                pathUrl.toLowerCase().endsWith('logs\\app')
-                            ){
-                                return false;
-                            }
-
-                            // finished
-                            return true;
-                        };
-                        const deleteFolderRecursive = (removePath) => {
-                            if (
-                                fs.existsSync(removePath) &&
-                                shouldDelete(removePath)
-                            ) {
-                                fs.readdirSync(removePath).forEach((file) => {
-                                    const curPath = path.join(removePath, file);
-                                    if (fs.lstatSync(curPath).isDirectory()) {
-                                        deleteFolderRecursive(curPath);
-                                    } else { // delete file
-                                        if (shouldDelete(curPath)) {
-                                            try {
-                                                fs.unlinkSync(curPath);
-                                            } catch (e) {
-                                                // log
-                                                logger.error(e.message);
-                                            }
-                                        }
-                                    }
-                                });
-
-                                // remove main folder only if not our main path
-                                if (removePath.toLowerCase() !== AppPaths.appDirectory.toLowerCase()) {
-                                    try {
-                                        fs.rmdirSync(removePath);
-                                    } catch (e) {
-                                        // log
-                                        logger.error(e.message);
-                                    }
-                                }
-                            }
-                        };
-
-                        // remove mongod 3.x data folder content
-                        deleteFolderRecursive(AppPaths.appDirectory);
-
-                        // request back single instance lock
-                        app.requestSingleInstanceLock();
-
-                        // create database dir
-                        fs.mkdirSync(AppPaths.databaseDirectory);
-
-                        // continue with the rest of the processes (start api, migrate..)
-                        const continueWithStartingAppProperly = () => {
-                            // something went wrong ?
-                            if (!startMongoProcessIgnoreOutput) {
-                                return;
-                            }
-
-                            // no need to ignore output anymore
-                            startMongoProcessIgnoreOutput = false;
-
-                            // create directory where data will be dumped
-                            fs.rmSync(
-                                dumpDirectory, {
-                                    recursive: true
-                                }
-                            );
-
-                            // display message
-                            events({
-                                text: 'Finished with success, starting GoData...',
-                                detail: ''
-                            });
-
-                            // start app
-                            startMongoServer();
-                        };
-
-                        // start mongod 5.x database
-                        // - and restore database from dump created with mongo 3.x
-                        watchMongoStart(
-                            () => {},
-                            (err) => {
-                                // an error occurred ?
-                                if (err) {
-                                    return callback(err);
-                                }
-
-                                // restore data using mongo 5.x
-                                const startDbProcess = spawn(
-                                    AppPaths.mongodRestore, [
-                                        `--port=${port}`,
-                                        `${dumpDirectory}`
+                    // requires confirmation to continue
+                    const dialogMsg = `Please copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${dbFolderSize} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${backupDbFolder}'. \n\nIf this backup exists and in case the upgrade fails please replace '${AppPaths.databaseDirectory}' folder with '${backupDbFolder}'. \nOtherwise, after confirming that everything works properly you can remove '${backupDbFolder}'.`;
+                    const showMigrationDialog = () => {
+                        dialog
+                            .showMessageBox(
+                                new BrowserWindow({
+                                    show: false,
+                                    alwaysOnTop: true
+                                }), {
+                                    message: dialogMsg,
+                                    type: 'warning',
+                                    buttons: [
+                                        'Copy information to clipboard',
+                                        'Continue',
+                                        'Cancel / Close App'
                                     ]
+                                }
+                            )
+                            .then((res) => {
+                                // copy information to clipboard ?
+                                if (res.response === 0) {
+                                    // copy message to clipboard
+                                    clipboard.writeText(dialogMsg);
+
+                                    // show confirmation
+                                    dialog.showMessageBox(
+                                        new BrowserWindow({
+                                            show: false,
+                                            alwaysOnTop: true
+                                        }), {
+                                            message: 'Message copied to clipboard',
+                                            type: 'info'
+                                        }
+                                    ).then(() => {
+                                        // display dialog
+                                        showMigrationDialog();
+                                    });
+
+                                    // finished
+                                    return;
+                                }
+
+                                // close app ?
+                                if (res.response === 2) {
+                                    // quit app
+                                    app.quit();
+
+                                    // finished
+                                    return;
+                                }
+
+                                // folder where dump will be performed
+                                const dumpDirectory = path.join(
+                                    AppPaths.appDirectory,
+                                    '../',
+                                    `dump-${uuid()}`
                                 );
 
-                                // finished restore ?
-                                let errorThrown = false;
-                                startDbProcess.stdout.on('close', () => {
-                                    // didn't finish with success ?
-                                    if (errorThrown) {
+                                // must update mongo version
+                                const continueWithUpdatingMongoData = () => {
+                                    // something went wrong ?
+                                    if (!startMongoProcessIgnoreOutput) {
+                                        // prepare directory where we will dump mongodb data
+                                        if (fs.existsSync(dumpDirectory)) {
+                                            fs.rmdirSync(
+                                                dumpDirectory, {
+                                                    recursive: true
+                                                }
+                                            );
+                                        }
+
+                                        // finished
                                         return;
                                     }
 
-                                    // stop mongo3
-                                    startMongoProcessIgnoreOutput = true;
-                                    mongodProcess.kill('SIGINT');
-                                });
+                                    // no need to ignore output anymore
+                                    startMongoProcessIgnoreOutput = false;
 
-                                // an error occurred ?
-                                startDbProcess.stderr.on('data', (data) => {
-                                    // not okay, but we need this hack
-                                    const dataString = data.toString();
-                                    if (dataString.toLowerCase().indexOf('error') < 0) {
-                                        return;
+                                    // display message
+                                    events({
+                                        text: 'Creating backup of current mongo 3.x database...'
+                                    });
+
+                                    // backup & remove mongod 3.x data folder
+                                    fs.rename(
+                                        AppPaths.databaseDirectory,
+                                        backupDbFolder,
+                                        (err) => {
+                                            // an error occurred ?
+                                            if (err) {
+                                                // prepare directory where we will dump mongodb data
+                                                if (fs.existsSync(dumpDirectory)) {
+                                                    fs.rmdirSync(
+                                                        dumpDirectory, {
+                                                            recursive: true
+                                                        }
+                                                    );
+                                                }
+
+                                                // an error occurred ?
+                                                throw err;
+                                            }
+
+                                            // create database dir
+                                            fs.mkdirSync(AppPaths.databaseDirectory);
+
+                                            // continue with the rest of the processes (start api, migrate..)
+                                            const continueWithStartingAppProperly = () => {
+                                                // something went wrong ?
+                                                if (!startMongoProcessIgnoreOutput) {
+                                                    return;
+                                                }
+
+                                                // no need to ignore output anymore
+                                                startMongoProcessIgnoreOutput = false;
+
+                                                // create directory where data will be dumped
+                                                if (fs.existsSync(dumpDirectory)) {
+                                                    fs.rmSync(
+                                                        dumpDirectory, {
+                                                            recursive: true
+                                                        }
+                                                    );
+                                                }
+
+                                                // display message
+                                                events({
+                                                    text: 'Finished with success, starting GoData...',
+                                                    detail: ''
+                                                });
+
+                                                // start app
+                                                startMongoServer();
+                                            };
+
+                                            // start mongod 5.x database
+                                            // - and restore database from dump created with mongo 3.x
+                                            watchMongoStart(
+                                                () => {
+                                                },
+                                                (err) => {
+                                                    // an error occurred ?
+                                                    if (err) {
+                                                        // prepare directory where we will dump mongodb data
+                                                        if (fs.existsSync(dumpDirectory)) {
+                                                            fs.rmdirSync(
+                                                                dumpDirectory, {
+                                                                    recursive: true
+                                                                }
+                                                            );
+                                                        }
+
+                                                        // finished
+                                                        throw err;
+                                                    }
+
+                                                    // restore data using mongo 5.x
+                                                    const startDbProcess = spawn(
+                                                        AppPaths.mongodRestore, [
+                                                            `--port=${port}`,
+                                                            `${dumpDirectory}`
+                                                        ]
+                                                    );
+
+                                                    // finished restore ?
+                                                    let errorThrown = false;
+                                                    startDbProcess.stdout.on('close', () => {
+                                                        // didn't finish with success ?
+                                                        if (errorThrown) {
+                                                            return;
+                                                        }
+
+                                                        // stop mongo3
+                                                        startMongoProcessIgnoreOutput = true;
+                                                        mongodProcess.kill('SIGINT');
+                                                    });
+
+                                                    // an error occurred ?
+                                                    startDbProcess.stderr.on('data', (data) => {
+                                                        // not okay, but we need this hack
+                                                        const dataString = data.toString();
+                                                        if (dataString.toLowerCase().indexOf('error') < 0) {
+                                                            return;
+                                                        }
+
+                                                        // stop anything else
+                                                        errorThrown = true;
+
+                                                        // log error
+                                                        logger.error(dataString);
+                                                        throw new Error(dataString);
+                                                    });
+                                                }
+                                            );
+
+                                            // display message
+                                            events({
+                                                text: 'Restoring database on Mongo DB 5.x server...',
+                                                detail: 'Depending of database size it might take some time to finish, please be patient'
+                                            });
+
+                                            // start mongod 3.x so we can dump data
+                                            mongodProcess = startMongoProcess(
+                                                AppPaths.mongodFile,
+                                                port,
+                                                continueWithStartingAppProperly
+                                            );
+
+                                        }
+                                    );
+                                };
+
+                                // wait for mongod 3.x to start
+                                watchMongoStart(
+                                    () => {
+                                    },
+                                    (err) => {
+                                        // an error occurred ?
+                                        if (err) {
+                                            return callback(err);
+                                        }
+
+                                        // prepare directory where we will dump mongodb data
+                                        if (fs.existsSync(dumpDirectory)) {
+                                            fs.rmdirSync(
+                                                dumpDirectory, {
+                                                    recursive: true
+                                                }
+                                            );
+                                        }
+
+                                        // create directory where data will be dumped
+                                        fs.mkdirSync(dumpDirectory);
+
+                                        // display message
+                                        events({
+                                            text: 'Dumping 3.x database...',
+                                            detail: 'Depending of database size it might take some time to finish, please be patient'
+                                        });
+
+                                        // dump data using mongod 3.x
+                                        const startDbProcess = spawn(
+                                            AppPaths.mongod3Dump, [
+                                                `--port=${port}`,
+                                                `--out=${dumpDirectory}`
+                                            ]
+                                        );
+
+                                        // finished dump ?
+                                        let errorThrown = false;
+                                        startDbProcess.stdout.on('close', () => {
+                                            // didn't finish with success ?
+                                            if (errorThrown) {
+                                                // prepare directory where we will dump mongodb data
+                                                if (fs.existsSync(dumpDirectory)) {
+                                                    fs.rmdirSync(
+                                                        dumpDirectory, {
+                                                            recursive: true
+                                                        }
+                                                    );
+                                                }
+
+                                                // finished
+                                                return;
+                                            }
+
+                                            // stop mongo3
+                                            startMongoProcessIgnoreOutput = true;
+                                            mongodProcess.kill('SIGINT');
+                                        });
+
+                                        // an error occurred ?
+                                        startDbProcess.stderr.on('data', (data) => {
+                                            // not okay, but we need this hack
+                                            const dataString = data.toString();
+                                            if (dataString.toLowerCase().indexOf('error') < 0) {
+                                                return;
+                                            }
+
+                                            // stop anything else
+                                            errorThrown = true;
+
+                                            // log error
+                                            logger.error(dataString);
+                                            throw new Error(dataString);
+                                        });
                                     }
+                                );
 
-                                    // stop anything else
-                                    errorThrown = true;
+                                // start mongod 3.x so we can dump data
+                                mongodProcess = startMongoProcess(
+                                    AppPaths.mongod3File,
+                                    port,
+                                    continueWithUpdatingMongoData
+                                );
+                            })
+                            .catch((err) => {
+                                // send error further
+                                throw err;
+                            });
+                    };
 
-                                    // log error
-                                    logger.error(dataString);
-                                    throw new Error(dataString);
-                                });
-                            }
-                        );
-
-                        // display message
-                        events({
-                            text: 'Restoring database on Mongo DB 5.x server...',
-                            detail: 'Depending of database size it might take some time to finish, please be patient'
-                        });
-
-                        // start mongod 3.x so we can dump data
-                        mongodProcess = startMongoProcess(
-                            AppPaths.mongodFile,
-                            port,
-                            continueWithStartingAppProperly
-                        );
-                    });
-
-                    // good practice to catch this error explicitly
-                    archive.on('error', function(err) {
-                        // an error occurred
-                        errorOccurred = true;
-
-                        // send error
-                        callback(err);
-                    });
-
-                    // pipe archive data to the file
-                    archive.pipe(output);
-
-                    // append files from a glob pattern
-                    archive.glob(
-                        '**/*', {
-                            cwd: AppPaths.appDirectory,
-                            ignore: [
-                                'GPUCache/**',
-                                'Local Storage/**',
-                                'Session Storage/**'
-                            ]
-                        }
-                    );
-
-                    // wait for streams to complete
-                    archive.finalize();
-                };
-
-                // wait for mongod 3.x to start
-                watchMongoStart(
-                    () => {},
-                    (err) => {
-                        // an error occurred ?
-                        if (err) {
-                            return callback(err);
-                        }
-
-                        // prepare directory where we will dump mongodb data
-                        if (fs.existsSync(dumpDirectory)) {
-                            fs.rmdirSync(
-                                dumpDirectory, {
-                                    recursive: true
-                                }
-                            );
-                        }
-
-                        // create directory where data will be dumped
-                        fs.mkdirSync(dumpDirectory);
-
-                        // display message
-                        events({
-                            text: 'Dumping 3.x database...',
-                            detail: 'Depending of database size it might take some time to finish, please be patient'
-                        });
-
-                        // dump data using mongod 3.x
-                        const startDbProcess = spawn(
-                            AppPaths.mongod3Dump, [
-                                `--port=${port}`,
-                                `--out=${dumpDirectory}`
-                            ]
-                        );
-
-                        // finished dump ?
-                        let errorThrown = false;
-                        startDbProcess.stdout.on('close', () => {
-                            // didn't finish with success ?
-                            if (errorThrown) {
-                                return;
-                            }
-
-                            // stop mongo3
-                            startMongoProcessIgnoreOutput = true;
-                            mongodProcess.kill('SIGINT');
-                        });
-
-                        // an error occurred ?
-                        startDbProcess.stderr.on('data', (data) => {
-                            // not okay, but we need this hack
-                            const dataString = data.toString();
-                            if (dataString.toLowerCase().indexOf('error') < 0) {
-                                return;
-                            }
-
-                            // stop anything else
-                            errorThrown = true;
-
-                            // log error
-                            logger.error(dataString);
-                            throw new Error(dataString);
-                        });
-                    }
-                );
-
-                // start mongod 3.x so we can dump data
-                mongodProcess = startMongoProcess(
-                    AppPaths.mongod3File,
-                    port,
-                    continueWithUpdatingMongoData
-                );
+                    // display dialog
+                    showMigrationDialog();
+                });
             } else {
                 // already updated mongo version
                 startMongoServer();
