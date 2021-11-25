@@ -21,6 +21,7 @@ const DatabaseLogFile = AppPaths.databaseLogFile;
 const { MONGO_PLATFORM } = require('./../package');
 const archiver = require('archiver');
 const { app } = require('electron');
+const uuid = require('uuid').v4;
 
 /**
  * Configures Mongo (set database path, log path, storage engine, journaling etc)
@@ -169,7 +170,7 @@ function startMongo(events, callback) {
                 const dumpDirectory = path.join(
                     AppPaths.appDirectory,
                     '../',
-                    'dump3'
+                    `dump-${uuid()}`
                 );
 
                 // must update mongo version
@@ -223,8 +224,10 @@ function startMongo(events, callback) {
                                 pathUrl.toLowerCase().endsWith('.settings') ||
                                 pathUrl.toLowerCase().endsWith('.appversion') ||
                                 pathUrl.toLowerCase().endsWith('.updaterid') ||
-                                pathUrl.toLowerCase().endsWith('/data/logs') ||
-                                pathUrl.toLowerCase().endsWith('\\data\\logs')
+                                pathUrl.toLowerCase().endsWith('logs/db') ||
+                                pathUrl.toLowerCase().endsWith('logs\\db') ||
+                                pathUrl.toLowerCase().endsWith('logs/app') ||
+                                pathUrl.toLowerCase().endsWith('logs\\app')
                             ){
                                 return false;
                             }
@@ -246,7 +249,8 @@ function startMongo(events, callback) {
                                             try {
                                                 fs.unlinkSync(curPath);
                                             } catch (e) {
-                                                // IGNORE
+                                                // log
+                                                logger.error(e.message);
                                             }
                                         }
                                     }
@@ -257,7 +261,8 @@ function startMongo(events, callback) {
                                     try {
                                         fs.rmdirSync(removePath);
                                     } catch (e) {
-                                        // IGNORE
+                                        // log
+                                        logger.error(e.message);
                                     }
                                 }
                             }
@@ -486,15 +491,16 @@ function startMongoProcess(
     );
 
     startDbProcess.stdout.on('close', (code) => {
-        // finished
-        if (closeCallback) {
-            setTimeout(() => {
-                closeCallback();
-            });
-        }
-
         // ignore output ?
         if (startMongoProcessIgnoreOutput) {
+            // finished
+            if (closeCallback) {
+                setTimeout(() => {
+                    closeCallback();
+                });
+            }
+
+            // finished
             return;
         }
 
