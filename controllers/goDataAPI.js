@@ -164,8 +164,9 @@ function setGoDataParam(param, value, callback) {
             logger.info(`${productName} 'set ${param} ${value}' exited with code ${code}`);
         });
     goDataConfigProcess.stdout.on('data', (data) => {
-        log && logger.info(`${productName} 'set ${param} ${value}' data: ${data.toString()}`);
-        callback(null, data.toString());
+        const dataString = data.toString();
+        log && logger.info(`${productName} 'set ${param} ${value}' data: ${dataString}`);
+        callback(null, dataString);
     });
     goDataConfigProcess.stderr.on('data', (data) => {
         let error;

@@ -14,16 +14,12 @@ if ((process.env.NODE_PLATFORM === 'win' || NODE_PLATFORM === 'win') &&
 }
 
 const rl = require('readline');
-
 const appVersion = require('./utils/appVersion');
 const AppPaths = require('./utils/paths');
 const Migrate = require('./utils/migrate');
 const productName = AppPaths.desktopApp.package.name;
-
 const logger = require('./logger/app');
 const constants = require('./utils/constants');
-const crashReporter = require('./utils/reporter');
-
 const appLoading = require('./app/loading');
 const appUpdate = require('./app/update');
 const appSplash = require('./app/splash');
@@ -31,9 +27,6 @@ const appSettings = require('./app/settings');
 const appWebApp = require('./app/web-app');
 const fs = require('fs');
 const _ = require('lodash');
-
-// set up crash reporter
-crashReporter.init();
 
 // Determines if another app instance is running and opens the existing one or launches a new instance
 const checkSingletonInstance = () => {
