@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# ---------------------------------------------------
+# IMPORTANT:
+# If you get the following error:
+#   platforms/linux/x64/default/mongodb/bin/mongod: error while loading shared libraries: libcurl.so.4: cannot open shared object file: No such file or directory
+# You need to install "libcurl4"
+#   depending of Linux distribution you might need to run something like:
+#     sudo apt-get install curl libcurl4
+# ---------------------------------------------------
+
 MONGO_PORT=27000
 GODATA_PORT=8000
 ARCH=x64
@@ -54,6 +63,9 @@ sleep 1
 mkdir -p ${DBPATH}/data
 mkdir -p ${DBPATH}/logs
 
+set -e
+# Any subsequent(*) commands which fail will cause the shell script to exit immediately
+
 #must upgrade from mongo 3.2 to mongo 5.x ?
 VERSION_PATH=${DBPATH}/.appVersion
 if [[ -f "$VERSION_PATH" ]]; then
@@ -69,6 +81,23 @@ if [[ -f "$VERSION_PATH" ]]; then
 
   # check if we need to upgrade db
   if [ 40 -gt ${version[1]} ]; then
+    # ask for confirmation before
+    timestamp=$(date +%s)
+    mongo_move_path="data_backup_$timestamp"
+    blue=$(tput setaf 4)
+    normal=$(tput sgr0)
+    db_size=$(du -sh ${DBPATH}/data | cut -f1)
+    printf "${blue}Mongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${db_size} empty space, please make sure you have the required empty space before continuing. \nA backup will be created at the following location '${DBPATH}/${mongo_move_path}'. If this backup exists and in case the upgrade fails please replace '${DBPATH}/data' folder with '${DBPATH}/${mongo_move_path}'. Otherwise after confirming that everything works properly you can remove '${DBPATH}/${mongo_move_path}'.\nIf you get a missing lib error then please read the 'IMPORTANT' section from 'go-data-x64.sh' file.\n${normal}"
+    read -p "Write 'y' to continue, or anything else to stop " -n 1 -r
+    printf "\n"
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      # stopped upgrade process
+      echo "Upgrade process stopped..."
+
+      # close process
+      exit 0
+    fi
+
     # it seems we need to migrate from 3.2 to 5.x
     echo "Must upgrade Mongo DB server from 3.x to 5.x..."
 
@@ -77,8 +106,7 @@ if [[ -f "$VERSION_PATH" ]]; then
     platforms/linux/${ARCH}/default/mongodb/bin3/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
 
     # dump database
-    timestamp=$(date +%s)
-    mongo_dump_path="db_backup_$timestamp"
+    mongo_dump_path="db_dump_$timestamp"
     echo "Dump Mongo 3.x db to ${mongo_dump_path}..."
     platforms/linux/${ARCH}/default/mongodb/bin3/mongodump --port=${MONGO_PORT} --out=${mongo_dump_path}
 
@@ -90,8 +118,8 @@ if [[ -f "$VERSION_PATH" ]]; then
     sleep 2
 
     # cleanup - remove db folder
-    echo "Removing Mongo 3.x db data..."
-    rm -r ${DBPATH}/data
+    echo "Renaming Mongo 3.x db data..."
+    mv ${DBPATH}/data ${DBPATH}/${mongo_move_path}
 
     # create path for Mongo
     mkdir -p ${DBPATH}/data
@@ -110,6 +138,10 @@ if [[ -f "$VERSION_PATH" ]]; then
 
     # wait
     sleep 2
+
+    # remove dump
+    echo "Removing Mongo 3.x db dump from ${mongo_dump_path}..."
+    rm -rf ${mongo_dump_path}
   fi
 fi
 
