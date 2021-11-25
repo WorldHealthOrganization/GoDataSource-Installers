@@ -54,6 +54,65 @@ sleep 1
 mkdir -p ${DBPATH}/data
 mkdir -p ${DBPATH}/logs
 
+#must upgrade from mongo 3.2 to mongo 5.x ?
+VERSION_PATH=${DBPATH}/.appVersion
+if [[ -f "$VERSION_PATH" ]]; then
+  # get app version
+  settings_version=$(cat "$VERSION_PATH")
+  settings_version_parts=$(echo $settings_version | tr "." "\n")
+  settings_version_part_index=0;
+  for settings_version_part in $settings_version_parts
+  do
+    version[$settings_version_part_index]=$settings_version_part
+    settings_version_part_index=$(($settings_version_part_index+1))
+  done
+
+  # check if we need to upgrade db
+  if [ 40 -gt ${version[1]} ]; then
+    # it seems we need to migrate from 3.2 to 5.x
+    echo "Must upgrade Mongo DB server from 3.x to 5.x..."
+
+    # start Mongo 3.2
+    echo "Starting Mongo 3.x process on port ${MONGO_PORT}..."
+    platforms/linux/${ARCH}/default/mongodb/bin3/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
+
+    # dump database
+    timestamp=$(date +%s)
+    mongo_dump_path="db_backup_$timestamp"
+    echo "Dump Mongo 3.x db to ${mongo_dump_path}..."
+    platforms/linux/${ARCH}/default/mongodb/bin3/mongodump --port=${MONGO_PORT} --out=${mongo_dump_path}
+
+    # stop mongo 3.2
+    echo "Stopping Mongo 3.x..."
+    kill -9 $(lsof -t -i:${MONGO_PORT})
+
+    # wait
+    sleep 2
+
+    # cleanup - remove db folder
+    echo "Removing Mongo 3.x db data..."
+    rm -r ${DBPATH}/data
+
+    # create path for Mongo
+    mkdir -p ${DBPATH}/data
+
+    # start mongo 5.x
+    echo "Starting Mongo 5.x process on port ${MONGO_PORT}..."
+    platforms/linux/${ARCH}/default/mongodb/bin/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
+
+    # restore database
+    echo "Restore Mongo 3.x db to Mongo 5.x from ${mongo_dump_path}..."
+    platforms/linux/${ARCH}/default/mongodb/bin/mongorestore --port=${MONGO_PORT} ${mongo_dump_path}
+
+    # stop mongo 5.x
+    echo "Stopping Mongo 5.x..."
+    kill -9 $(lsof -t -i:${MONGO_PORT})
+
+    # wait
+    sleep 2
+  fi
+fi
+
 #start Mongo
 echo "Starting Mongo process on port ${MONGO_PORT}..."
 platforms/linux/${ARCH}/default/mongodb/bin/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
