@@ -84,10 +84,11 @@ if [[ -f "$VERSION_PATH" ]]; then
     # ask for confirmation before
     timestamp=$(date +%s)
     mongo_move_path="data_backup_$timestamp"
+    mongo_dump_path="db_dump_$timestamp"
     blue=$(tput setaf 4)
     normal=$(tput sgr0)
     db_size=$(du -sh ${DBPATH}/data | cut -f1)
-    printf "${blue}Mongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${db_size} empty space, please make sure you have the required empty space before continuing. \nA backup will be created at the following location '${DBPATH}/${mongo_move_path}'. If this backup exists and in case the upgrade fails please replace '${DBPATH}/data' folder with '${DBPATH}/${mongo_move_path}'. Otherwise after confirming that everything works properly you can remove '${DBPATH}/${mongo_move_path}'.\nIf you get a missing lib error then please read the 'IMPORTANT' section from 'go-data-x64.sh' file.\n${normal}"
+    printf "${blue}---------------------------------------\nPlease copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${db_size} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${DBPATH}/${mongo_move_path}'. \n\nIf this backup exists and in case the upgrade fails please replace '${DBPATH}/data' folder with '${DBPATH}/${mongo_move_path}' and remove '${mongo_dump_path}' if it wasn't removed by the system. \n\nOtherwise after confirming that everything works properly you can remove '${DBPATH}/${mongo_move_path}'.\n\nIf you get a missing lib error then please read the 'IMPORTANT' section from 'go-data-x64.sh' file.\n\n${normal}"
     read -p "Write 'y' to continue, or anything else to stop " -n 1 -r
     printf "\n"
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -106,7 +107,6 @@ if [[ -f "$VERSION_PATH" ]]; then
     platforms/linux/${ARCH}/default/mongodb/bin3/mongod --dbpath ${DBPATH}/data --port=${MONGO_PORT} --fork --logpath=${DBPATH}/logs/db.log
 
     # dump database
-    mongo_dump_path="db_dump_$timestamp"
     echo "Dump Mongo 3.x db to ${mongo_dump_path}..."
     platforms/linux/${ARCH}/default/mongodb/bin3/mongodump --port=${MONGO_PORT} --out=${mongo_dump_path}
 
