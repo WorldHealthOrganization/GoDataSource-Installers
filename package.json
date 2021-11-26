@@ -88,8 +88,7 @@
     "request": "2.88.2",
     "rimraf": "3.0.2",
     "sudo-prompt": "9.2.1",
-    "tail": "2.2.3",
-    "uuid": "8.3.2"
+    "tail": "2.2.3"
   },
   "postinstall": "electron-builder install-app-deps"
 }

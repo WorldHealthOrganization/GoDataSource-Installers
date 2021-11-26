@@ -20,7 +20,6 @@ const logDirectory = AppPaths.databaseLogDirectory;
 const DatabaseLogFile = AppPaths.databaseLogFile;
 const { MONGO_PLATFORM } = require('./../package');
 const { app, BrowserWindow, dialog, clipboard } = require('electron');
-const uuid = require('uuid').v4;
 const getFolderSize = require('get-folder-size');
 
 /**
@@ -175,10 +174,18 @@ function startMongo(events, callback) {
                     const dbFolderSize = (size / 1024 / 1024).toFixed(2) + ' MB';
 
                     // backup db folder
-                    const backupDbFolder = `${AppPaths.databaseDirectory}_backup_${(new Date()).toISOString().slice(0,19).replace(/:/g, '-')}`;
+                    const timestamp = (new Date()).toISOString().slice(0,19).replace(/:/g, '-');
+                    const backupDbFolder = `${AppPaths.databaseDirectory}_backup_${timestamp}`;
+
+                    // folder where dump will be performed
+                    const dumpDirectory = path.join(
+                        AppPaths.appDirectory,
+                        '../',
+                        `dump-${timestamp}`
+                    );
 
                     // requires confirmation to continue
-                    const dialogMsg = `Please copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${dbFolderSize} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${backupDbFolder}'. \n\nIf this backup exists and in case the upgrade fails please replace '${AppPaths.databaseDirectory}' folder with '${backupDbFolder}'. \nOtherwise, after confirming that everything works properly you can remove '${backupDbFolder}'.`;
+                    const dialogMsg = `Please copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${dbFolderSize} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${backupDbFolder}'. \n\nIf this backup exists and in case the upgrade fails please replace '${AppPaths.databaseDirectory}' folder with '${backupDbFolder}' and remove '${dumpDirectory}' if it wasn't removed by the system. \nOtherwise, after confirming that everything works properly you can remove '${backupDbFolder}'.`;
                     const showMigrationDialog = () => {
                         dialog
                             .showMessageBox(
@@ -227,13 +234,6 @@ function startMongo(events, callback) {
                                     // finished
                                     return;
                                 }
-
-                                // folder where dump will be performed
-                                const dumpDirectory = path.join(
-                                    AppPaths.appDirectory,
-                                    '../',
-                                    `dump-${uuid()}`
-                                );
 
                                 // must update mongo version
                                 const continueWithUpdatingMongoData = () => {
