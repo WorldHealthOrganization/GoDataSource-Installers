@@ -185,7 +185,7 @@ function startMongo(events, callback) {
                     );
 
                     // requires confirmation to continue
-                    const dialogMsg = `Please copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${dbFolderSize} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${backupDbFolder}'. \n\nIf this backup exists and in case the upgrade fails please replace '${AppPaths.databaseDirectory}' folder with '${backupDbFolder}' and remove '${dumpDirectory}' if it wasn't removed by the system. \nOtherwise, after confirming that everything works properly you can remove '${backupDbFolder}'.`;
+                    const dialogMsg = `Please copy this information to a file since you will need it later to finish the upgrade process.\n\nMongo upgrade from 3.2 to 5.x is necessary, for this you need ~ 3 x ${dbFolderSize} empty space, please make sure you have the required empty space before continuing. \n\nA backup will be created at the following location '${backupDbFolder}'. \n\nIf this backup exists and in case the upgrade fails please replace '${AppPaths.databaseDirectory}' folder with '${backupDbFolder}' and remove '${dumpDirectory}' if it wasn't removed by the system. \n\nOtherwise, after confirming that everything works properly you can remove '${backupDbFolder}'.`;
                     const showMigrationDialog = () => {
                         dialog
                             .showMessageBox(
