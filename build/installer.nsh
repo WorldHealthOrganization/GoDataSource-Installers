@@ -354,8 +354,27 @@
 ;------------------------
 
 !macro preInit
- ; Set default install location
+  ; Make sure we install app with admin privileges
+  ${ifNot} ${Silent}
+    UserInfo::GetAccountType
+    pop $0
+    ${If} $0 != "admin" ; Require admin rights on NT4+
+      MessageBox mb_iconstop "Administrator rights required!"
+      SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
+      Quit
+    ${EndIf}
+  ${endIf}
+
+  ; Set default install location
   ${ifNot} ${isUpdated}
+    ; Force services to stop once more
+    ; - needed to handle older version, starting with upgrades from 40.0 to newer versions this isn't really required
+    ExecWait 'sc stop GoDataAPI' $1
+    ExecWait 'sc delete GoDataAPI' $2
+    ExecWait 'sc stop GoDataStorageEngine' $1
+    ExecWait 'sc delete GoDataStorageEngine' $2
+
+    ; set default location
     SetRegView 64
     WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\Go.Data\bin"
     SetRegView 32
@@ -450,22 +469,11 @@
       goto used_services
     ${endIf}
   used_services:
-    ;Remove services
-    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataAPI' $1
-    DetailPrint "GoDataAPI remove returned $1"
-    Sleep 1000
-
-    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataAPI confirm' $2
-    DetailPrint "GoDataAPI remove returned $2"
-    Sleep 1000
-
-    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" stop GoDataStorageEngine' $3
-    DetailPrint "GoDataStorageEngine stop returned $3"
-    Sleep 1000
-
-    ExecWait '"$INSTDIR\resources\platforms\win\x64\default\nssm\nssm.exe" remove GoDataStorageEngine confirm' $4
-    DetailPrint "GoDataStorageEngine remove returned $4"
-    Sleep 1000
+    ; Force services to stop once more
+    ExecWait 'sc stop GoDataAPI' $1
+    ExecWait 'sc delete GoDataAPI' $2
+    ExecWait 'sc stop GoDataStorageEngine' $1
+    ExecWait 'sc delete GoDataStorageEngine' $2
   no_services:
 !macroend
 
@@ -571,6 +579,17 @@
     Finish:
 !macroend
 
+!macro customUnInit
+  ; Make sure we install app with admin privileges
+  UserInfo::GetAccountType
+  pop $0
+  ${If} $0 != "admin" ; Require admin rights on NT4+
+    MessageBox mb_iconstop "Administrator rights required!"
+    SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
+    Quit
+  ${EndIf}
+!macroend
+
 !macro customUnInstall
   ClearErrors
   # remove app data on uninstall
@@ -584,7 +603,5 @@
     ${else}
       RMDir /r "$APPDATA\${APP_FILENAME}"
     ${endIf}
-    MessageBox MB_YESNO|MB_ICONQUESTION "Go.Data requires a system reboot to finish the uninstall. Do you want to reboot now?" IDNO +2
-    Reboot
   ${endif}
 !macroend
