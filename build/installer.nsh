@@ -358,11 +358,15 @@
   ${ifNot} ${Silent}
     UserInfo::GetAccountType
     pop $0
-    ${If} $0 != "admin" ; Require admin rights on NT4+
-      MessageBox mb_iconstop "Administrator rights required!"
+    ${if} $0 != "admin" ; Require admin rights on NT4+
+      ${ifNot} ${isUpdated}
+        MessageBox mb_iconstop "Administrator rights required to install 'Go.Data' application. Right click on the installer 'Go.Data Setup ${version}.exe' and choose 'Run as administrator'!"
+      ${else}
+        MessageBox mb_iconstop "Administrator rights required to perform update. Right click on the shortcut icon of 'Go.Data' and choose 'Run as administrator'!"
+      ${endIf}
       SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
       Quit
-    ${EndIf}
+    ${endIf}
   ${endIf}
 
   ; Set default install location
@@ -583,11 +587,11 @@
   ; Make sure we install app with admin privileges
   UserInfo::GetAccountType
   pop $0
-  ${If} $0 != "admin" ; Require admin rights on NT4+
-    MessageBox mb_iconstop "Administrator rights required!"
+  ${if} $0 != "admin" ; Require admin rights on NT4+
+    MessageBox mb_iconstop "Administrator rights required to perform uninstall. Right click on the shortcut icon of 'Uninstall Go.Data.exe' and choose 'Run as administrator'!"
     SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
     Quit
-  ${EndIf}
+  ${endif}
 !macroend
 
 !macro customUnInstall
