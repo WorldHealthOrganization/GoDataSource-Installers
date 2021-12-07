@@ -360,9 +360,9 @@
     pop $0
     ${if} $0 != "admin" ; Require admin rights on NT4+
       ${ifNot} ${isUpdated}
-        MessageBox mb_iconstop "Administrator rights required to install 'Go.Data' application. Right click on the installer 'Go.Data Setup ${version}.exe' and choose 'Run as administrator'!"
+        MessageBox mb_iconstop "Administrator rights are required to install 'Go.Data' application. Right click on the installer 'Go.Data Setup ${version}.exe' and choose 'Run as administrator'."
       ${else}
-        MessageBox mb_iconstop "Administrator rights required to perform update. Right click on the shortcut icon of 'Go.Data' and choose 'Run as administrator'!"
+        MessageBox mb_iconstop "Administrator rights are required to perform update. Right click on the shortcut icon of 'Go.Data' and choose 'Run as administrator'."
       ${endIf}
       SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
       Quit
@@ -588,7 +588,7 @@
   UserInfo::GetAccountType
   pop $0
   ${if} $0 != "admin" ; Require admin rights on NT4+
-    MessageBox mb_iconstop "Administrator rights required to perform uninstall. Right click on the shortcut icon of 'Uninstall Go.Data.exe' and choose 'Run as administrator'!"
+    MessageBox mb_iconstop "Administrator rights are required to perform uninstall. Right click on 'Uninstall Go.Data.exe' (from 'Go.Data' folder) and choose 'Run as administrator'."
     SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
     Quit
   ${endif}
