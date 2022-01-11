@@ -387,6 +387,9 @@
 !macroend
 
 !macro customInstall
+  ;Install VC++ redistributable files necessary for MongoDB 5
+  ExecWait '"$INSTDIR\resources\platforms\win\x64\default\extras\vcredist_x64.exe" /passive /norestart'
+
   ;Write app config
   FileOpen $0 "$INSTDIR\winCfg.cfg" w
   IfErrors file_error
