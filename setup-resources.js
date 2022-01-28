@@ -91,7 +91,20 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
     let downloaded = 0;
     let unzipped = 0;
     let folders = 0;
-    let total = data.Contents.map(el => el.Size).reduce((accumulator, currentValue) => accumulator + currentValue);
+    let total = data.Contents
+        .map((el) => {
+            // filter out what we don't need ?
+            if (
+                platFormToDownload &&
+                el.Key.indexOf(`/${platFormToDownload}`) < 0
+            ) {
+                return 0;
+            }
+
+            // finished
+            return el.Size;
+        })
+        .reduce((accumulator, currentValue) => accumulator + currentValue);
 
     async.eachOf(
         data.Contents,
