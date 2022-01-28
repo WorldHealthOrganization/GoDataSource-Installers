@@ -64,6 +64,28 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
         return;
     }
 
+    // try determining os
+    let platFormToDownload;
+    if (
+        process &&
+        process.platform
+    ) {
+        // get platform
+        const platform = process.platform.toLowerCase();
+
+        // windows
+        if (platform.indexOf('win') > -1) {
+            platFormToDownload = 'win';
+        } else if (platform.indexOf('darwin') > -1) {
+            platFormToDownload = 'darwin';
+        } else if (platform.indexOf('linux') > -1) {
+            platFormToDownload = 'linux';
+        }
+    }
+
+    // log
+    console.log(`Platform detected: ${platFormToDownload}`);
+
     console.log(data.Contents.length + " files found in '" + argv.bucket + "' bucket");
 
     let downloaded = 0;
@@ -74,6 +96,14 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
     async.eachOf(
         data.Contents,
         (currentValue, index, callback) => {
+            // filter out what we don't need ?
+            if (
+                platFormToDownload &&
+                currentValue.Key.indexOf(`/${platFormToDownload}`) < 0
+            ) {
+                return callback();
+            }
+
             //check if object is folder
             if (currentValue.Key.endsWith('/')) {
                 folders++;
