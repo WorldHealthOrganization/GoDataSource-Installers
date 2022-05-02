@@ -74,6 +74,7 @@
       ${NSD_OnClick} $DontUseServices InstallationTypeChanged
 
       ; check if we don't already have app installed at this location and configured installation type
+      ClearErrors
       IfFileExists "$INSTDIR\winCfg.cfg" file_found file_not_found
       IfErrors file_not_found
       file_found:
@@ -145,6 +146,7 @@
 
     ; START OF Load settings from api config file
     ; check if we don't already have app installed at this location - to retrieve the current API settings
+    ClearErrors
     IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found2 file_not_found2
     IfErrors file_not_found2
     file_found2:
@@ -216,6 +218,7 @@
     file_finish2:
 
     ; check if we don't already have app installed at this location - to retrieve the current datasource settings - e.g.  db, SMTP
+    ClearErrors
     IfFileExists "$INSTDIR\resources\go-data\build\server\datasources.json" file_datasource_found file_datasource_not_found
     IfErrors file_datasource_not_found
     file_datasource_found:
@@ -391,21 +394,24 @@
   ExecWait '"$INSTDIR\resources\platforms\win\x64\default\extras\vcredist_x64.exe" /passive /norestart'
 
   ;Write app config
+  ClearErrors
   FileOpen $0 "$INSTDIR\winCfg.cfg" w
   IfErrors file_error
   FileWrite $0 "installationTypeUseServices=$installationTypeUseServices"
   FileClose $0
   goto file_finish
   file_error:
-    MessageBox MB_OK "Error opening app config file"
+    MessageBox MB_OK "Error opening app config file => code: $0"
   file_finish:
 
   ; START OF - write to api config file & enable / disable CORS
+  ClearErrors
   IfFileExists "$INSTDIR\resources\go-data\build\server\config.json" file_found3 file_finish3
   IfErrors file_finish3
   file_found3:
     ; backup new file and copy back old one
     ; new properties from new file will be merged once app is started ( by windows application )
+    ClearErrors
     IfFileExists "$INSTDIR\..\config.json.backup" file_old_config_found file_old_config_not_found
     IfErrors file_old_config_not_found
     file_old_config_found:
@@ -445,9 +451,11 @@
   ; DATASOURCE.JSON
   ; backup new file and copy back old one
   ; new properties from new file will be merged once app is started ( by windows application )
+  ClearErrors
   IfFileExists "$INSTDIR\resources\go-data\build\server\datasources.json" file_datasource_found2 file_datasource_not_found2
   IfErrors file_datasource_not_found2
   file_datasource_found2:
+    ClearErrors
     IfFileExists "$INSTDIR\..\datasources.json.backup" file_old_datasource_found file_old_datasource_not_found
     IfErrors file_old_datasource_not_found
     file_old_datasource_found:
