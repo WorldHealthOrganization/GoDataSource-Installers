@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.40.0",
+  "version": "2.41.0",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -46,7 +46,6 @@
       "category": "public.app-category.healthcare-fitness"
     },
     "win": {
-      "requestedExecutionLevel": "requireAdministrator",
       "target": "nsis"
     },
     "nsis": {
