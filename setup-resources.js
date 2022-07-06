@@ -74,10 +74,10 @@ s3.listObjects({Bucket: argv.bucket}, function (err, data) {
         const platform = process.platform.toLowerCase();
 
         // windows
-        if (platform.indexOf('win') > -1) {
-            platFormToDownload = 'win';
-        } else if (platform.indexOf('darwin') > -1) {
+        if (platform.indexOf('darwin') > -1) {
             platFormToDownload = 'darwin';
+        } else if (platform.indexOf('win') > -1) {
+            platFormToDownload = 'win';
         } else if (platform.indexOf('linux') > -1) {
             platFormToDownload = 'linux';
         }
