@@ -82,12 +82,14 @@
         FileRead $1 $2
         FileClose $1
         ${WordFind} $2 "installationTypeUseServices=" "+1" $3
-        ${if} $3 = 0
+        ${if} $3 == '0'
           ;Without services
           ${NSD_Check} $DontUseServices
         ${else}
-          ;With services
-          ${NSD_Check} $UseServices
+          ${if} $3 == '1'
+            ;With services
+            ${NSD_Check} $UseServices
+          ${endIf}
         ${endIf}
         goto file_finish
       file_not_found:
@@ -476,11 +478,16 @@
     FileRead $1 $2
     FileClose $1
     ${WordFind} $2 "installationTypeUseServices=" "+1" $3
-    ${if} $3 = 0
+    ${if} $3 == '0'
       ;Without services
       goto no_services
     ${else}
-      ;With services
+      ${if} $3 == '1'
+        ;With services
+        goto used_services
+      ${endIf}
+
+      ;No info...take a guess
       goto used_services
     ${endIf}
   used_services:
