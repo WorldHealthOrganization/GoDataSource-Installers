@@ -245,18 +245,24 @@ const retrieveWinSettings = () => {
         // check if win config file exists and
         if (fs.existsSync(winCfgPath)) {
             // read win settings
-            const winCfgData = fs.readFileSync(winCfgPath, 'utf8');
+            let winCfgData = fs.readFileSync(winCfgPath, 'utf8');
 
-            // determine if we should use services or not
-            const reg = /^\s*([a-z0-9]+)\s*=\s*([a-z0-9])\s*$/igm;
-            const regCheck = winCfgData || '';
-            let m;
-            do {
-                m = reg.exec(regCheck);
-                if (m) {
-                    cachedWinSettings[m[1]] = m[2];
-                }
-            } while (m);
+            // nothing ?
+            winCfgData = winCfgData ? winCfgData.trim() : winCfgData;
+            if (!winCfgData) {
+                cachedWinSettings.installationTypeUseServices = '1';
+            } else {
+                // determine if we should use services or not
+                const reg = /^\s*([a-z0-9]+)\s*=\s*([a-z0-9])\s*$/igm;
+                const regCheck = winCfgData || '';
+                let m;
+                do {
+                    m = reg.exec(regCheck);
+                    if (m) {
+                        cachedWinSettings[m[1]] = m[2];
+                    }
+                } while (m);
+            }
         }
     } catch (e) {
         // NOTHING
