@@ -1,12 +1,12 @@
-'use strict'
+'use strict';
 
-const {spawn} = require('child_process')
-const async = require('async')
+const {spawn} = require('child_process');
+const async = require('async');
 
-const logger = require('./../logger/app').logger
+const logger = require('./../logger/app').logger;
 
-const AppPaths = require('./../utils/paths')
-const productName = AppPaths.desktopApp.package.name
+const AppPaths = require('./../utils/paths');
+const productName = AppPaths.desktopApp.package.name;
 
 
 /**
@@ -14,7 +14,7 @@ const productName = AppPaths.desktopApp.package.name
  * @param callback Invoked with (err, port)
  */
 function getAppPort(callback) {
-    getGoDataParam('apiPort', callback)
+    getGoDataParam('apiPort', callback);
 }
 
 /**
@@ -23,7 +23,7 @@ function getAppPort(callback) {
  * @param callback - Invoked with (err, port)
  */
 function setAppPort(port, callback) {
-    setGoDataParam('apiPort', port, callback)
+    setGoDataParam('apiPort', port, callback);
 }
 
 /**
@@ -31,7 +31,7 @@ function setAppPort(port, callback) {
  * @param callback Invoked with (err, port)
  */
 function getDbPort(callback) {
-    getGoDataParam('dbPort', callback)
+    getGoDataParam('dbPort', callback);
 }
 
 /**
@@ -40,7 +40,7 @@ function getDbPort(callback) {
  * @param callback - Invoked with (err, port)
  */
 function setDbPort(port, callback) {
-    setGoDataParam('dbPort', port, callback)
+    setGoDataParam('dbPort', port, callback);
 }
 
 /**
@@ -48,7 +48,7 @@ function setDbPort(port, callback) {
  * @param callback Invoked with (err, buildNumber)
  */
 function getBuildNumber(callback) {
-    getGoDataParam('buildNumber', callback)
+    getGoDataParam('buildNumber', callback);
 }
 
 /**
@@ -56,7 +56,7 @@ function getBuildNumber(callback) {
  * @param callback Invoked with (err, buildArch)
  */
 function getBuildArch(callback) {
-    getGoDataParam('buildArch', callback)
+    getGoDataParam('buildArch', callback);
 }
 
 /**
@@ -64,7 +64,7 @@ function getBuildArch(callback) {
  * @param callback Invoked with (err, protocol)
  */
 function getProtocol(callback) {
-    getGoDataParam('publicProtocol', callback)
+    getGoDataParam('publicProtocol', callback);
 }
 
 /**
@@ -72,7 +72,7 @@ function getProtocol(callback) {
  * @param callback Invoked with (err, host)
  */
 function getPublicHost(callback) {
-    getGoDataParam('publicHost', callback)
+    getGoDataParam('publicHost', callback);
 }
 
 /**
@@ -80,7 +80,7 @@ function getPublicHost(callback) {
  * @param callback Invoked with (err, port)
  */
 function getPublicPort(callback) {
-    getGoDataParam('publicPort', callback)
+    getGoDataParam('publicPort', callback);
 }
 
 /**
@@ -90,11 +90,10 @@ function getPublicPort(callback) {
  */
 function setBuildConfiguration(configuration, callback) {
     async.series([
-        (callback) => { setGoDataParam('buildType', configuration.type, callback) },
-        (callback) => { setGoDataParam('buildPlatform', configuration.platform, callback) },
-        (callback) => { setGoDataParam('buildArch', configuration.arch, callback) }
+        (callback) => { setGoDataParam('buildPlatform', configuration.platform, callback); },
+        (callback) => { setGoDataParam('buildArch', configuration.arch, callback); }
     ],
-        callback)
+        callback);
 }
 
 /**
@@ -103,28 +102,47 @@ function setBuildConfiguration(configuration, callback) {
  * @param callback Invoked with (err, value)
  */
 function getGoDataParam(param, callback) {
-    let log = true // used to stop logging after script exits
-    logger.info(`Retrieving ${productName} ${param} from ${productName} API...`)
-    let value = null, error = null
-    const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'get', param])
+    let log = true; // used to stop logging after script exits
+    logger.info(`Retrieving ${productName} ${param} from ${productName} API...`);
+    let value = null, error = null;
+    const goDataConfigProcess = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.webApp.configScript, 'get', param]
+    )
         .on('exit', (code) => {
-            log = false
-            logger.info(`${productName} Web 'get ${param}' exited with code ${code}`)
-            callback(error, value)
-        })
+            log = false;
+            logger.info(`${productName} Web 'get ${param}' exited with code ${code}`);
+            callback(error, value);
+        });
     goDataConfigProcess.stdout.on('data', (data) => {
         if (data) {
-            let normalizedValue = data.toString().replace(/[\n\t\r]/g, "")
-            log && logger.info(`${productName} 'get ${param}' data: ${normalizedValue}`)
-            value = normalizedValue
+            let normalizedValue = data.toString().replace(/[\n\t\r]/g, "");
+            log && logger.info(`${productName} 'get ${param}' data: ${normalizedValue}`);
+            value = normalizedValue;
         }
-    })
+    });
     goDataConfigProcess.stderr.on('data', (data) => {
         if (data) {
-            log && logger.error(`${productName} 'get ${param}' error: ${data.toString()}`)
-            error = data.toString()
+            // set error
+            error = data.toString();
+
+            // if dev & debug ignore debugger errors
+            // this way we can test using debugger too
+            if (
+                process.env &&
+                process.env.NODE_ENV === 'development' &&
+                error && (
+                    error.toLowerCase().indexOf('debugger listening') > -1 ||
+                    error.toLowerCase().indexOf('debugger attached') > -1 ||
+                    error.toLowerCase().indexOf('waiting for the debugger to disconnect') > -1
+                )
+            ) {
+                error = null;
+            } else {
+                log && logger.error(`${productName} 'get ${param}' error: ${error}`);
+            }
         }
-    })
+    });
 }
 
 /**
@@ -135,22 +153,46 @@ function getGoDataParam(param, callback) {
  * @param callback - Invoked with (err)
  */
 function setGoDataParam(param, value, callback) {
-    let log = true // used to stop logging after script exits
-    logger.info(`Setting ${productName} ${param} ${value} using ${productName} API...`)
-    const goDataConfigProcess = spawn(AppPaths.nodeFile, [AppPaths.webApp.configScript, 'set', param, value])
+    let log = true; // used to stop logging after script exits
+    logger.info(`Setting ${productName} ${param} ${value} using ${productName} API...`);
+    const goDataConfigProcess = spawn(
+        AppPaths.nodeFile,
+        [AppPaths.webApp.configScript, 'set', param, value]
+    )
         .on('exit', (code) => {
-            log = false
-            logger.info(`${productName} 'set ${param} ${value}' exited with code ${code}`)
-        })
+            log = false;
+            logger.info(`${productName} 'set ${param} ${value}' exited with code ${code}`);
+        });
     goDataConfigProcess.stdout.on('data', (data) => {
-        log && logger.info(`${productName} 'set ${param} ${value}' data: ${data.toString()}`)
-        callback(null, data.toString())
-    })
+        const dataString = data.toString();
+        log && logger.info(`${productName} 'set ${param} ${value}' data: ${dataString}`);
+        callback(null, dataString);
+    });
     goDataConfigProcess.stderr.on('data', (data) => {
-        log && logger.error(`${productName} 'set ${param} ${value}' error: ${data.toString()}`)
-        // callback(data.toString())
-        throw new Error(`Error setting ${productName} ${param}. Please run ${productName} as Administrator.`)
-    })
+        let error;
+        if (data) {
+            error = data.toString();
+        }
+
+        // if dev & debug ignore debugger errors
+        // this way we can test using debugger too
+        if (
+            process.env &&
+            process.env.NODE_ENV === 'development' &&
+            error && (
+                error.toLowerCase().indexOf('debugger listening') > -1 ||
+                error.toLowerCase().indexOf('debugger attached') > -1 ||
+                error.toLowerCase().indexOf('waiting for the debugger to disconnect') > -1
+            )
+        ) {
+            // nothing - just to be consistent with getter
+        } else {
+            log && logger.error(`${productName} 'set ${param} ${value}' error: ${error}`);
+
+            // callback(data.toString())
+            throw new Error(`Error setting ${productName} ${param}. Please run ${productName} as Administrator.`);
+        }
+    });
 }
 
 module.exports = {
@@ -164,4 +206,4 @@ module.exports = {
     getProtocol,
     getPublicHost,
     getPublicPort
-}
+};

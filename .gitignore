@@ -4,3 +4,4 @@ dist
 go-data/build
 node_modules
 platforms
+winCfg.cfg
