@@ -73,7 +73,7 @@
   },
   "dependencies": {
     "adm-zip": "0.5.9",
-    "async": "2.6.3",
+    "async": "2.6.4",
     "chokidar": "3.5.2",
     "codepage": "1.15.0",
     "electron-context-menu": "3.1.1",
