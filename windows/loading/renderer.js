@@ -7,7 +7,7 @@ const { ipcRenderer } = require('electron')
 ipcRenderer.on('event', (event, arg) => {
     switch (arg) {
         case 'wait':
-            document.getElementById('wait-area').textContent = 'It takes approximately 5 minutes for installation to complete. Thank you for your patience.'
+            document.getElementById('wait-area').textContent = 'It takes approximately 5 - 10 minutes for installation to complete. Thank you for your patience.'
             break
         default:
             document.getElementById('log-area').textContent = arg

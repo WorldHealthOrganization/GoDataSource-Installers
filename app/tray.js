@@ -92,6 +92,39 @@ const updateTrayMenu = (disableMenu) => {
         }, {
             label: 'Settings',
             click: openSettings
+        }, {
+            label: 'Configuration files',
+            submenu: [
+                {
+                    label: 'Database',
+                    click: () => {
+                        try {
+                            shell.showItemInFolder(AppPaths.apiDataSourcePath);
+                        } catch (e) {
+                            dialog.showMessageBox({
+                                type: 'warning',
+                                title: '',
+                                message: `Couldn't show datasource.json file ( "${AppPaths.apiDataSourcePath}" - "${e.message}" )`,
+                                buttons: ['Ok']
+                            });
+                        }
+                    }
+                }, {
+                    label: 'API',
+                    click: () => {
+                        try {
+                            shell.showItemInFolder(AppPaths.apiConfigPath);
+                        } catch (e) {
+                            dialog.showMessageBox({
+                                type: 'warning',
+                                title: '',
+                                message: `Couldn't show config.json file ( "${AppPaths.apiConfigPath}" - "${e.message}" )`,
+                                buttons: ['Ok']
+                            });
+                        }
+                    }
+                }
+            ]
         });
 
         // Option Stop Start Services
