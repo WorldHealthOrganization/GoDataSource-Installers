@@ -37,7 +37,15 @@ function setButtonFunctionality() {
             'buttonClick-message', {
                 mongoPort: document.getElementById('mongoPort').value,
                 goDataPort: document.getElementById('goDataPort').value,
-                encryption: document.getElementById('encryptionSwitch').checked
+                encryption: document.getElementById('encryptionSwitch').checked,
+                apiSettings: {
+                    enableConfigRewrite: document.getElementById('enableConfigRewriteSwitch').checked,
+                    public: {
+                        protocol: document.getElementById('publicProtocol').value,
+                        host: document.getElementById('publicHost').value,
+                        port: document.getElementById('publicPort').value
+                    }
+                }
             }
         )
     }

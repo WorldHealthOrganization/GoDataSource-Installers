@@ -61,7 +61,7 @@ const openSettings = (settingType) => {
  * Configures the IPC Main and handles the events received from IPC Main
  */
 const configureIPCMain = () => {
-    ipcMain.initSettingsEvents((mongoPort, goDataPort, encryption, state) => {
+    ipcMain.initSettingsEvents((mongoPort, goDataPort, encryption, state, apiSettings) => {
 
         // Handle encryption event
         let encryptionProcess = platform === 'win' ?
@@ -110,6 +110,28 @@ const configureIPCMain = () => {
                     },
                     (callback) => {
                         settingsController.setAppPort(goDataPort, callback);
+                    },
+                    (callback) => {
+                        // retrieve again api settings
+                        const currentApiSettings = settingsController.retrieveAPISettings();
+
+                        // enable config rewrite
+                        currentApiSettings.enableConfigRewrite = apiSettings.enableConfigRewrite;
+
+                        // update public info only if enabled config rewrite is disabled
+                        if (!currentApiSettings.enableConfigRewrite) {
+                            currentApiSettings.public.protocol = apiSettings.public.protocol;
+                            currentApiSettings.public.host = apiSettings.public.host;
+                            currentApiSettings.public.port = apiSettings.public.port;
+                        }
+
+                        // save settings
+                        if (!settingsController.updateAPISettings(currentApiSettings)) {
+                            return callback('Error updating api settings...');
+                        }
+
+                        // finished
+                        callback();
                     }
                 ],
                 callback);

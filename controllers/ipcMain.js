@@ -84,7 +84,13 @@ const initSettingsEvents = (events) => {
 
     ipcMain.on('buttonClick-message', (event, arg) => {
         logger.log('IPCMain received buttonClick-message');
-        events(arg.mongoPort, arg.goDataPort, arg.encryption, state);
+        events(
+            arg.mongoPort,
+            arg.goDataPort,
+            arg.encryption,
+            state,
+            arg.apiSettings
+        );
     });
 
     logger.info('Initialized IPCMain');
