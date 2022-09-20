@@ -104,7 +104,7 @@ const openWebApp = (appURL) => {
             goDataAPI.getPublicPort
         ], (err, results) => {
             if (!err) {
-                let url = `${results[0]}://${results[1]}:${results[2]}`;
+                let url = `${results[0]}://${results[1]}${results[2] ? ':' + results[2] : ''}`;
                 logger.logger.info(`3. Opening ${productName} at ${url}`);
                 openEmbeddedWindow(url);
             }
@@ -184,11 +184,10 @@ const openEmbeddedWindow = (url) => {
                     const apiSettings = settings.retrieveAPISettings();
                     if (
                         apiSettings &&
-                        apiSettings.public &&
-                        apiSettings.public.port
+                        apiSettings.port
                     ) {
                         // determine localhost url
-                        url = `http://localhost:${apiSettings.public.port}`;
+                        url = `http://localhost:${apiSettings.port}`;
                         openEmbeddedWindowCalledUrl = url;
 
                         // reset check localhost

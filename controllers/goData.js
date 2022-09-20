@@ -220,7 +220,7 @@ function detectAppStartFromLog(options, events, callback) {
                 called = true;
                 return callback(
                     null,
-                    `${apiSettings.public.protocol}://${apiSettings.public.host}:${apiSettings.public.port}`
+                    `${apiSettings.public.protocol}://${apiSettings.public.host}${apiSettings.public.port ? ':' + apiSettings.public.port : ''}`
                 );
             }
 
