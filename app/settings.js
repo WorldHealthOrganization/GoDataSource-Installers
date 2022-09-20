@@ -122,7 +122,9 @@ const configureIPCMain = () => {
                         if (!currentApiSettings.enableConfigRewrite) {
                             currentApiSettings.public.protocol = apiSettings.public.protocol;
                             currentApiSettings.public.host = apiSettings.public.host;
-                            currentApiSettings.public.port = apiSettings.public.port;
+                            currentApiSettings.public.port = apiSettings.public.port ?
+                                parseInt(apiSettings.public.port) :
+                                '';
                         }
 
                         // save settings
