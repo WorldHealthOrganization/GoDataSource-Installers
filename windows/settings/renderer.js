@@ -9,7 +9,30 @@ let platform = null;
 
 function setButtonFunctionality() {
     document.getElementById('settingsButton').onclick = () => {
+        // disable button
         document.getElementById('settingsButton').disabled = true;
+
+        // validate
+        if (
+            !document.getElementById('mongoPort').value ||
+            !document.getElementById('goDataPort').value || (
+                !document.getElementById('enableConfigRewriteSwitch').checked && (
+                    !document.getElementById('publicProtocol').value ||
+                    !document.getElementById('publicHost').value
+                )
+            )
+        ) {
+            // show error
+            alert('You have invalid setup. Please review your settings');
+
+            // enable back save button
+            document.getElementById('settingsButton').disabled = false;
+
+            // finished
+            return;
+        }
+
+        // save data
         ipcRenderer.send(
             'buttonClick-message', {
                 mongoPort: document.getElementById('mongoPort').value,
@@ -66,14 +89,15 @@ ipcRenderer.on('getBuildNumber-reply', (event, version) => {
 ipcRenderer.on('getPublicInfo-reply', (event, apiSettings) => {
     document.getElementById('enableConfigRewriteSwitch').checked = apiSettings.enableConfigRewrite;
     document.getElementById('enableConfigRewriteSwitch').style.display = 'block';
-    document.getElementById('publicProtocol').value = apiSettings.public && apiSettings.public.protocol ?
-        apiSettings.public.protocol :
+    apiPublicSettings = apiSettings.public || {};
+    document.getElementById('publicProtocol').value = apiPublicSettings.protocol ?
+        apiPublicSettings.protocol :
         'http';
-    document.getElementById('publicHost').value = apiSettings.public && apiSettings.public.host ?
-        apiSettings.public.host :
+    document.getElementById('publicHost').value = apiPublicSettings.host ?
+        apiPublicSettings.host :
         '';
-    document.getElementById('publicPort').value = apiSettings.public && apiSettings.public.port ?
-        apiSettings.public.port :
+    document.getElementById('publicPort').value = apiPublicSettings.port ?
+        apiPublicSettings.port :
         '';
     configRewriteSwitchChanged();
 });

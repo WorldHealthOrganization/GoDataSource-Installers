@@ -5,11 +5,25 @@
     <title>Go.Data Settings</title>
     <link rel="stylesheet" type="text/css" href="settings.css">
     <script>
+        var apiPublicSettings = {};
         function configRewriteSwitchChanged() {
             const enableConfigRewriteSwitch = document.getElementById('enableConfigRewriteSwitch').checked;
             document.getElementById('publicProtocol').disabled = enableConfigRewriteSwitch;
             document.getElementById('publicHost').disabled = enableConfigRewriteSwitch;
             document.getElementById('publicPort').disabled = enableConfigRewriteSwitch;
+
+            // reset values back to what they were ?
+            if (enableConfigRewriteSwitch) {
+                document.getElementById('publicProtocol').value = apiPublicSettings.protocol ?
+                    apiPublicSettings.protocol :
+                    'http';
+                document.getElementById('publicHost').value = apiPublicSettings.host ?
+                    apiPublicSettings.host :
+                    '';
+                document.getElementById('publicPort').value = apiPublicSettings.port ?
+                    apiPublicSettings.port :
+                    '';
+            }
         }
     </script>
 </head>
@@ -23,14 +37,14 @@
         <!-- Mongo -->
         <div
             class="setting-mongo">
-            <label>Mongo Port</label>
+            <label>Mongo Port*</label>
             <input type="number" id="mongoPort">
         </div>
 
         <!-- API -->
         <div
             class="setting-api">
-            <label>Go.Data Port</label>
+            <label>Go.Data Port*</label>
             <input type="number" id="goDataPort">
         </div>
     </div>
@@ -60,7 +74,7 @@
         style="padding-left: 20px; margin-bottom: 10px;">
         <!-- Public - Protocol -->
         <div>
-            <label>Protocol</label>
+            <label>Protocol*</label>
             <select id="publicProtocol">
                 <option value="http">http</option>
                 <option value="https">https</option>
@@ -68,7 +82,7 @@
         </div>
         <!-- Public - Host -->
         <div>
-            <label>Host</label>
+            <label>Host*</label>
             <input id="publicHost">
         </div>
         <!-- Public - Port -->
