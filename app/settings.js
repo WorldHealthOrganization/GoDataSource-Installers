@@ -35,7 +35,7 @@ const openSettings = (settingType) => {
     }
     settingsWindow = new BrowserWindow({
         width: 450,
-        height: 620,
+        height: 600,
         resizable: false,
         center: true,
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,

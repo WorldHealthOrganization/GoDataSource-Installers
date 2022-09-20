@@ -319,10 +319,9 @@ const retrieveAPIPort = () => {
     let apiSettings = retrieveAPISettings();
     if (
         apiSettings &&
-        apiSettings.public &&
-        apiSettings.public.port
+        apiSettings.port
     ) {
-        return parseInt(apiSettings.public.port);
+        return parseInt(apiSettings.port);
     }
 
     // default port
