@@ -26,30 +26,12 @@ const getSettings = (callback) => {
 
         // retrieve settings
         let settings = JSON.parse(data.toString());
-
-        // determine if api port is the same as the one from app setting
-        const apiPort = retrieveAPIPort();
-        if (
-            !settings ||
-            apiPort !== settings.appPort
-        ) {
-            // initialize settings if we need to
-            if (!settings) {
-                settings = {};
-            }
-
-            // set the new port
-            settings.appPort = apiPort;
-
-            // update settings
-            setSettings(settings, () => {
-                // finished
-                callback(null, settings);
-            });
-        } else {
-            // finished
-            callback(null, settings);
+        if (!settings) {
+            settings = {};
         }
+
+        // finished
+        callback(null, settings);
     });
 };
 

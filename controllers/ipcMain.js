@@ -50,6 +50,15 @@ const initSettingsEvents = (events) => {
         });
     });
 
+    ipcMain.on('getPublicInfo-message', (event) => {
+        logger.log('IPCMain received getPublicInfo-message');
+        const apiSettings = settings.retrieveAPISettings() || {};
+        event.sender.send('getPublicInfo-reply', {
+            enableConfigRewrite: apiSettings.enableConfigRewrite,
+            public: apiSettings.public
+        });
+    });
+
     ipcMain.on('getEncryptionCapabilities-message', (event) => {
         logger.log('IPCMain received getEncryptionCapabilities-message');
         settings.getEncryptionCapability((err, encryptionCapability) => {

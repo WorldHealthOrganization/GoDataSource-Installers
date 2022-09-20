@@ -31,14 +31,10 @@ function loadView(state) {
     switch (state) {
         case constants.SETTINGS_WINDOW_LAUNCH:
             document.getElementById('settingsButton').innerHTML = 'Launch Go.Data';
-            document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?';
-            document.getElementById('settingDetails').style.display = 'inline-block';
 
             break;
         case constants.SETTINGS_WINDOW_SETTING:
             document.getElementById('settingsButton').innerHTML = 'Save';
-            document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings';
-            document.getElementById('settingDetails').style.display = 'none';
             break
     }
     document.getElementById('settingsButton').disabled = true;
@@ -67,6 +63,21 @@ ipcRenderer.on('getBuildNumber-reply', (event, version) => {
     document.getElementById('productBuildNumber').innerHTML = `Build ${version}`;
 });
 
+ipcRenderer.on('getPublicInfo-reply', (event, apiSettings) => {
+    document.getElementById('enableConfigRewriteSwitch').checked = apiSettings.enableConfigRewrite;
+    document.getElementById('enableConfigRewriteSwitch').style.display = 'block';
+    document.getElementById('publicProtocol').value = apiSettings.public && apiSettings.public.protocol ?
+        apiSettings.public.protocol :
+        'http';
+    document.getElementById('publicHost').value = apiSettings.public && apiSettings.public.host ?
+        apiSettings.public.host :
+        '';
+    document.getElementById('publicPort').value = apiSettings.public && apiSettings.public.port ?
+        apiSettings.public.port :
+        '';
+    configRewriteSwitchChanged();
+});
+
 ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, status) => {
     document.getElementById('settingsButton').disabled = false;
     if (err) {
@@ -85,4 +96,5 @@ ipcRenderer.send('getDbPort-message', '');
 ipcRenderer.send('getGoDataPort-message', '');
 ipcRenderer.send('getProductVersion-message', '');
 ipcRenderer.send('getBuildNumber-message', '');
+ipcRenderer.send('getPublicInfo-message', '');
 ipcRenderer.send('getEncryptionCapabilities-message', '');
