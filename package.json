@@ -67,7 +67,7 @@
   "devDependencies": {
     "aws-sdk": "2.975.0",
     "electron": "13.2.2",
-    "electron-builder": "23.3.3",
+    "electron-builder": "22.14.13",
     "eslint": "7.32.0",
     "lodash": "4.17.21"
   },
