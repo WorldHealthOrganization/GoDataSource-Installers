@@ -1,0 +1,131 @@
+name: Build Linux Installer
+
+on:
+  workflow_call:
+    inputs:
+      api-branch-name:
+        required: true
+        type: string
+      frontend-branch-name:
+        required: true
+        type: string
+      output-path:
+        required: true
+        type: string
+      internal-build:
+        required: false
+        type: boolean
+      version-number:
+        required: true
+        type: string
+
+jobs: 
+
+  build-api:
+    name: Building API
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14.17.5'
+      - name: Node Version
+        run: node -v 
+      - name: NPM Version
+        run: npm -v 
+      - name: Run Build
+        run: |
+          cd go-data/api
+          git checkout ${{ inputs.api-branch-name }}
+          npm install
+          npm run build
+          cd ../../
+  
+  build-web: 
+    name: Building Web
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.18.1'
+      - name: Node Version
+        run: node -v 
+      - name: NPM Version
+        run: npm -v 
+      - name: Run Build
+        run: |
+          cd go-data/frontend
+          git checkout ${{ inputs.frontend-branch-name }}
+          npm install
+          npm run build
+          cd ../../
+
+  move-build: 
+    name: Moving build for both API and WEB
+    runs-on: ubuntu-18.04
+    needs: [build-web, build-api]
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14.17.5'
+      - name: Moving API
+        run: |
+          cd go-data 
+          mv api/build .
+      - name: Moving Web
+        run: |
+          mv frontend/dist build/client/ 
+          cd ..
+      - name: Writing internal build 
+        run: node build-scripts/internal-build.js ${{ inputs.internal-build }}
+      - name: Preparing GoData node, mongo and nssm
+        run: |
+          npm run setup:resources
+          npm run setup:forever
+          chmod -R 755 platforms/
+          chmod 755 build-linux.sh
+      - name: Set installer version
+        run: |
+          npm version --no-git-tag-version --allow-same-version ${{ inputs.version-number }}
+          npm run dist:linux:cli:64
+  
+  post-build:
+    name: Transfer installer to remote server
+    runs-on: ubuntu-18.04
+    needs: [move-build]
+    steps: 
+      - uses: actions/checkout@v3
+      - name: Buckup existing installer
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd ~/${{ inputs.output-path }}/x64
+            mkdir -p PRE_${{ inputs.version-number }}
+            [ -f *.tar.gz ] && mv *.tar.gz PRE_${{ inputs.version-number }}
+            exit 0
+
+      - name: Copy file via ssh
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+        source: "*.tar.gz"
+        target: "${{ inputs.output-path }}/x64"
+      
+      - name: Set new build version
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd ~/${{ inputs.output-path }/x64
+            mv go-data-linux-x64.tar.gz go-data-linux-x64\ ${{ inputs.version-number }}.tar.gz      
+            exit 0
+        
+        
