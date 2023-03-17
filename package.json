@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.44.0",
+  "version": "2.45.0",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -39,7 +39,12 @@
       "go-data/build/**/*",
       "platforms/${env.PLATFORM}/${env.ARCH}/${env.VERSION}"
     ],
+    "afterSign": "electron-builder-notarize",
     "mac": {
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false,
       "extendInfo": {
         "LSUIElement": 1
       },
@@ -67,7 +72,8 @@
   "devDependencies": {
     "aws-sdk": "2.975.0",
     "electron": "13.2.2",
-    "electron-builder": "22.14.13",
+    "electron-builder": "23.6.0",
+    "electron-builder-notarize": "1.5.1",
     "eslint": "7.32.0",
     "lodash": "4.17.21"
   },
@@ -90,5 +96,6 @@
     "sudo-prompt": "9.2.1",
     "tail": "2.2.3"
   },
-  "postinstall": "electron-builder install-app-deps"
+  "postinstall": "electron-builder install-app-deps",
+  "internalBuild": true
 }
