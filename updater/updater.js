@@ -136,6 +136,34 @@ const configureUpdater = (events, callback) => {
                     });
                 })
                 .then(() => {
+                    // config.json
+                    return fs.copy(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'config.json'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'config.json'
+                        )
+                    );
+                })
+                .then(() => {
+                    // datasources.json
+                    return fs.copy(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'datasources.json'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'datasources.json'
+                        )
+                    );
+                })
+                .then(() => {
                     // backup backups :)
                     return fs.move(
                         path.join(

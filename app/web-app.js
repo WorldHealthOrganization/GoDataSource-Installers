@@ -149,6 +149,56 @@ const launchGoData = (callback) => {
                         }
                     );
                 }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'config.json'
+                    ));
+                }).then((cExists) => {
+                    // nothing to do ?
+                    if (!cExists) {
+                        return;
+                    }
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'config.json'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'config.json'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'datasources.json'
+                    ));
+                }).then((dExists) => {
+                    // nothing to do ?
+                    if (!dExists) {
+                        return;
+                    }
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'datasources.json'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'datasources.json'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
                     return fs.rmdir(
                         updateBackupPath, {
                             recursive: true
