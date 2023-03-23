@@ -19,6 +19,8 @@ const productName = AppPaths.desktopApp.package.name;
 
 const logger = require('./../logger/app');
 
+const fs = require('fs-extra');
+
 const menu = require('./menu');
 
 const contextMenu = require('electron-context-menu');
@@ -43,42 +45,133 @@ const launchGoData = (callback) => {
     appSplash.openSplashScreen();
     appSplash.sendSplashEvent('event', 'Cleaning up...');
 
-    prelaunch.cleanUp(
-        () => {
-        },
-        () => {
-            let loadingIndicator = ['⦾', '⦿'];
-            let index = 0;
-            mongo.init(
-                (event) => {
-                    if (event.wait) {
-                        appSplash.sendSplashEvent('event', 'wait');
+    const launch = () => {
+        prelaunch.cleanUp(
+            () => {
+            },
+            () => {
+                let loadingIndicator = ['⦾', '⦿'];
+                let index = 0;
+                mongo.init(
+                    (event) => {
+                        if (event.wait) {
+                            appSplash.sendSplashEvent('event', 'wait');
+                        }
+                        if (event.text) {
+                            appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+                        }
+                    },
+                    () => {
+                        goData.init(
+                            (event) => {
+                                if (event.text) {
+                                    appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+                                }
+                            },
+                            (err, appURL) => {
+                                if (err) {
+                                    appSplash.sendSplashEvent('error', err.message);
+                                    return callback(err);
+                                }
+                                logger.logger.info(`Open web app from launchGoData (${appURL})`);
+                                openWebApp(appURL);
+                                appSplash.closeSplashScreen();
+                                const tray = require('./tray');
+                                tray.createTray();
+                                callback();
+                            });
+                    });
+            });
+    };
+
+    // if macOS we need to restore backups and files if there was an upgrade
+    if (process.platform.toLowerCase() === 'darwin') {
+        // update backup path
+        const updateBackupPath = path.join(
+            AppPaths.appDirectory,
+            'update_backup'
+        );
+
+        // check if we have anything to restore
+        fs.exists(updateBackupPath)
+            .then((exists) => {
+                // nothing to do ?
+                if (!exists) {
+                    return;
+                }
+
+                // restore backups
+                return fs.exists(path.join(
+                    updateBackupPath,
+                    'backups'
+                )).then((bExists) => {
+                    // nothing to do ?
+                    if (!bExists) {
+                        return;
                     }
-                    if (event.text) {
-                        appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'backups'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'backups'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'storage'
+                    ));
+                }).then((sExists) => {
+                    // nothing to do ?
+                    if (!sExists) {
+                        return;
                     }
-                },
-                () => {
-                    goData.init(
-                        (event) => {
-                            if (event.text) {
-                                appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
-                            }
-                        },
-                        (err, appURL) => {
-                            if (err) {
-                                appSplash.sendSplashEvent('error', err.message);
-                                return callback(err);
-                            }
-                            logger.logger.info(`Open web app from launchGoData (${appURL})`);
-                            openWebApp(appURL);
-                            appSplash.closeSplashScreen();
-                            const tray = require('./tray');
-                            tray.createTray();
-                            callback();
-                        });
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'storage'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'storage'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.rmdir(
+                        updateBackupPath, {
+                            recursive: true
+                        }
+                    );
                 });
-        })
+            })
+            .then(() => {
+                launch();
+            })
+            .catch((error) => {
+                // log
+                logger.logger.error(`Critical error during update restore backup: ${error.message}`);
+
+                // this is bad, update interrupted
+                dialog.showMessageBox({
+                    title: 'Go.Data Updater',
+                    message: `Critical error during update restore backup: ${error.message}`
+                });
+            });
+    } else {
+        launch();
+    }
 };
 
 
