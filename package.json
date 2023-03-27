@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.45.0",
+  "version": "2.46.1",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -50,9 +50,6 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "gatekeeperAssess": false,
-      "extendInfo": {
-        "LSUIElement": 1
-      },
       "category": "public.app-category.healthcare-fitness",
       "identity": "World Health Organization (YJDF2LWD3T)",
       "type": "distribution"
