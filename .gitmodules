@@ -1,8 +1,0 @@
-[submodule "go-data/frontend"]
-	path = go-data/frontend
-	url = git@github.com:ClarisoftTechnologies/Go.Data-Front-End.git
-	ignore = dirty
-[submodule "go-data/api"]
-	path = go-data/api
-	url = git@github.com:ClarisoftTechnologies/Go.Data-API.git
-	ignore = dirty
