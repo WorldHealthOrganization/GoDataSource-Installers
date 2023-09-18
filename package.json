@@ -39,7 +39,7 @@
       "go-data/build/**/*",
       "platforms/${env.PLATFORM}/${env.ARCH}/${env.VERSION}"
     ],
-    "afterSign": "electron-builder-notarize",
+    "afterSign": "build/notarize.js",
     "compression": "maximum",
     "mac": {
       "target": [
@@ -52,7 +52,8 @@
       "gatekeeperAssess": false,
       "category": "public.app-category.healthcare-fitness",
       "identity": "World Health Organization (YJDF2LWD3T)",
-      "type": "distribution"
+      "type": "distribution",
+      "notarize": false
     },
     "win": {
       "target": "nsis"
@@ -75,9 +76,8 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.975.0",
-    "electron": "25.1.1",
-    "electron-builder": "24.4.0",
-    "electron-builder-notarize": "1.5.1",
+    "electron": "26.2.1",
+    "electron-builder": "24.6.4",
     "eslint": "7.32.0",
     "lodash": "4.17.21"
   },
@@ -87,8 +87,8 @@
     "chokidar": "3.5.3",
     "codepage": "1.15.0",
     "electron-context-menu": "3.6.1",
-    "electron-log": "4.4.1",
-    "electron-updater": "6.1.1",
+    "electron-log": "4.4.8",
+    "electron-updater": "6.1.4",
     "find-process": "1.4.4",
     "fs-extra": "11.1.1",
     "get-folder-size": "2.0.1",
