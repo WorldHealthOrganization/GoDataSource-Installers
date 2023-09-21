@@ -6,8 +6,8 @@ There are a few ways you can contribute to this project:
 
 ### Submitting a New Issue
 
-- go to [Issues](https://github.com/WorldHealthOrganization/GoDataSource-MobileApp/issues) 
-- select [New issue](https://github.com/WorldHealthOrganization/GoDataSource-MobileApp/issues/new)
+- go to [Issues](https://github.com/WorldHealthOrganization/GoDataSource-Installers/issues)
+- select [New issue](https://github.com/WorldHealthOrganization/GoDataSource-Installers/issues/new)
 - add a descriptive title and provide more details in the comment section
 - add relevant labels if applicable
 - submit the issue
