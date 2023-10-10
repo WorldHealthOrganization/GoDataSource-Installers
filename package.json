@@ -76,7 +76,6 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.1472.0",
-    "electron": "27.0.0",
     "electron-builder": "24.6.4"
   },
   "dependencies": {
@@ -84,6 +83,7 @@
     "async": "2.6.4",
     "chokidar": "3.5.3",
     "codepage": "1.15.0",
+    "electron": "27.0.0",
     "electron-context-menu": "3.6.1",
     "electron-log": "4.4.8",
     "electron-updater": "6.1.4",
@@ -95,7 +95,6 @@
     "mkdirp": "0.5.6",
     "pm2": "5.3.0",
     "ps-node": "0.1.6",
-    "request": "2.88.2",
     "rimraf": "3.0.2",
     "sudo-prompt": "9.2.1",
     "tail": "2.2.6"
