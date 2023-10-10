@@ -13,7 +13,6 @@ const chokidar = require('chokidar');
 const kill = require('kill-port');
 const fs = require('fs');
 const sudo = require('sudo-prompt');
-const request = require('request');
 
 const logger = require('./../logger/app').logger;
 const processUtil = require('./../utils/process');
@@ -371,23 +370,24 @@ function compareServiceAPIWithAppAPI(callback) {
             if (err) {
                 return callback(err);
             }
-            let url = `http://localhost:${port}/api/system-settings/version`;
-            request(url, (err, response, body) => {
-                if (err) {
-                    return callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`));
-                }
-                // parse body to determine build number and architecture
-                try {
-                    let result = JSON.parse(body);
-                    callback(null, {
-                        build: result.build,
-                        arch: result.arch
-                    });
-                }
-                catch (e) {
-                    callback(new Error(`Error retrieving Service API info: ${e.message || JSON.stringify(e)}`));
-                }
-            })
+            fetch(`http://localhost:${port}/api/system-settings/version`)
+                .then((res) => res.text())
+                .then((body) => {
+                    // parse body to determine build number and architecture
+                    try {
+                        let result = JSON.parse(body);
+                        callback(null, {
+                            build: result.build,
+                            arch: result.arch
+                        });
+                    }
+                    catch (e) {
+                        callback(new Error(`Error retrieving Service API info: ${e.message || JSON.stringify(e)}`));
+                    }
+                })
+                .catch((err) => {
+                    callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`));
+                });
         })
     }
 

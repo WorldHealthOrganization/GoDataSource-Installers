@@ -2,7 +2,6 @@
 
 const {app, BrowserWindow, dialog, Menu} = require('electron');
 const path = require('path');
-const request = require('request');
 const async = require('async');
 
 const goData = require('./../controllers/goData');
@@ -293,10 +292,6 @@ const openEmbeddedWindow = (url) => {
         return;
     }
 
-    // determine if we use a secure connection
-    // this is the easiest way to check this, since otherwise we would have to change in multiple places and not only where we use openEmbeddedWindow
-    const usesSSL = (url || '').toLowerCase().startsWith('https:');
-
     // method sued to validate and open electron browser window
     let checkLocalHost = true;
     const checkLocalHostHistory = checkLocalHost;
@@ -407,59 +402,56 @@ const openEmbeddedWindow = (url) => {
                     return callback();
                 }
 
-                // determine request data accordingly to protocol
-                const requestData = usesSSL ?
-                    {
-                        url,
-                        port: 443,
-                        rejectUnauthorized: false,
-                        requestCert: true,
-                        agent: false
-                    } : url;
+                // tell what url will be tested
+                logger.logger.info(`Testing API: '${url}'`);
 
                 // execute request to our url
-                request(
-                    requestData,
-                    (error, response) => {
-                        // tell what url will be tested
-                        logger.logger.info(`Testing API: '${url}'`);
-
+                fetch(url)
+                    .then((res) => res.json())
+                    .then((response) => {
                         // no response from our api ?
                         if (
-                            error ||
-                            (response && response.statusCode !== 200)
+                            response &&
+                            response.statusCode !== 200
                         ) {
                             // construct error message
                             let errMsg = `'${url}' unreachable`;
 
                             // attach status code
-                            if (
-                                response &&
-                                response.statusCode !== undefined
-                            ) {
+                            if (response.statusCode !== undefined) {
                                 errMsg += ` - status: ${response.statusCode}`;
-                            }
-
-                            // attach error details
-                            if (
-                                error &&
-                                error.toString
-                            ) {
-                                errMsg += ` - ${error.toString()}`;
                             }
 
                             // log error message
                             logger.logger.error(errMsg);
 
                             // return error
-                            return callback(new Error(errMsg));
+                            callback(new Error(errMsg));
+                            return;
                         }
 
                         // api connection established
                         logger.logger.info(`Got response from '${url}'`);
                         callback();
-                    }
-                );
+                    })
+                    .catch((err) => {
+                        // construct error message
+                        let errMsg = `'${url}' unreachable`;
+
+                        // attach error details
+                        if (
+                            err &&
+                            err.toString
+                        ) {
+                            errMsg += ` - ${err.toString()}`;
+                        }
+
+                        // log error message
+                        logger.logger.error(errMsg);
+
+                        // return error
+                        callback(new Error(errMsg));
+                    });
             },
             callback
         );
