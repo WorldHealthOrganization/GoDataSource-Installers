@@ -370,11 +370,13 @@ function compareServiceAPIWithAppAPI(callback) {
             if (err) {
                 return callback(err);
             }
+            logger.info(`getServiceInfo: http://localhost:${port}/api/system-settings/version`);
             fetch(`http://localhost:${port}/api/system-settings/version`)
                 .then((res) => res.text())
                 .then((body) => {
                     // parse body to determine build number and architecture
                     try {
+                        logger.info(`getServiceInfo: build: ${result.build}, arch: ${result.arch}`);
                         let result = JSON.parse(body);
                         callback(null, {
                             build: result.build,

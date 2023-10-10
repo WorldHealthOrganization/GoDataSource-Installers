@@ -76,6 +76,7 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.1472.0",
+    "electron": "27.0.0",
     "electron-builder": "24.6.4"
   },
   "dependencies": {
@@ -83,7 +84,6 @@
     "async": "2.6.4",
     "chokidar": "3.5.3",
     "codepage": "1.15.0",
-    "electron": "27.0.0",
     "electron-context-menu": "3.6.1",
     "electron-log": "4.4.8",
     "electron-updater": "6.1.4",
