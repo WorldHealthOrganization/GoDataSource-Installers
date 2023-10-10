@@ -407,19 +407,18 @@ const openEmbeddedWindow = (url) => {
 
                 // execute request to our url
                 fetch(url)
-                    .then((res) => res.json())
                     .then((response) => {
                         // no response from our api ?
                         if (
                             response &&
-                            response.statusCode !== 200
+                            response.status !== 200
                         ) {
                             // construct error message
-                            let errMsg = `'${url}' unreachable`;
+                            let errMsg = `then: '${url}' unreachable`;
 
                             // attach status code
-                            if (response.statusCode !== undefined) {
-                                errMsg += ` - status: ${response.statusCode}`;
+                            if (response.status !== undefined) {
+                                errMsg += ` - status: ${response.status}`;
                             }
 
                             // log error message
@@ -436,7 +435,7 @@ const openEmbeddedWindow = (url) => {
                     })
                     .catch((err) => {
                         // construct error message
-                        let errMsg = `'${url}' unreachable`;
+                        let errMsg = `catch: '${url}' unreachable`;
 
                         // attach error details
                         if (
