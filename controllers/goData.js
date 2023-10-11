@@ -362,7 +362,9 @@ function compareServiceAPIWithAppAPI(callback) {
             return callback(err);
         }
         // compare app API results with Service API results
-        callback(null, results[0].build === results[1].build && results[0].arch === results[1].arch);
+        const identical = results[0].build === results[1].build && results[0].arch === results[1].arch;
+        logger.info(`compareServiceAPIWithAppAPI: ${identical ? 'identical' : 'different'}`);
+        callback(null, identical);
     });
 
     function getServiceInfo(callback) {
