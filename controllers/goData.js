@@ -370,22 +370,25 @@ function compareServiceAPIWithAppAPI(callback) {
             if (err) {
                 return callback(err);
             }
-            logger.info(`getServiceInfo: http://localhost:${port}/api/system-settings/version`);
-            fetch(`http://localhost:${port}/api/system-settings/version`)
-                .then((res) => res.text())
-                .then((body) => {
-                    // parse body to determine build number and architecture
-                    try {
-                        logger.info(`getServiceInfo: build: ${result.build}, arch: ${result.arch}`);
-                        let result = JSON.parse(body);
-                        callback(null, {
-                            build: result.build,
-                            arch: result.arch
-                        });
-                    }
-                    catch (e) {
-                        callback(new Error(`Error retrieving Service API info: ${e.message || JSON.stringify(e)}`));
-                    }
+            // this should be accessible for both http and https since ssl is handled from outside, but GoData always starts without SSL
+            const versionUrl = `http://localhost:${port}/api/system-settings/version`;
+            logger.info(`getServiceInfo: ${versionUrl}`);
+            fetch(
+                versionUrl, {
+                    method: 'get'
+                }
+            )
+                .then((res) => res.json())
+                .then((result) => {
+                    logger.info(`getServiceInfo: build: ${result.build}, arch: ${result.arch}`);
+                    callback(null, {
+                        build: result.build ?
+                            result.build.toString() :
+                            result.build,
+                        arch: result.arch ?
+                            result.arch.toString() :
+                            result.arch
+                    });
                 })
                 .catch((err) => {
                     callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`));
@@ -402,8 +405,12 @@ function compareServiceAPIWithAppAPI(callback) {
                 return callback(new Error(`Error retrieving app API info: ${err.message || JSON.stringify(err)}`));
             }
             callback(null, {
-                build: appResults[0],
-                arch: appResults[1]
+                build: appResults[0] ?
+                    appResults[0].toString() :
+                    appResults[0],
+                arch: appResults[1] ?
+                    appResults[1].toString() :
+                    appResults[1]
             });
         })
     }

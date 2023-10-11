@@ -406,7 +406,11 @@ const openEmbeddedWindow = (url) => {
                 logger.logger.info(`Testing API: '${url}'`);
 
                 // execute request to our url
-                fetch(url)
+                fetch(
+                    url, {
+                        method: 'get'
+                    }
+                )
                     .then((response) => {
                         // no response from our api ?
                         if (
