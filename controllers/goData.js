@@ -26,6 +26,7 @@ const productName = AppPaths.desktopApp.package.name;
 const pm2 = require(AppPaths.pm2Module);
 
 const {MONGO_PLATFORM, NODE_PLATFORM} = require('./../package');
+const nodeFetch = require('node-fetch');
 
 const init = (events, callback) => {
     startGoData(events, callback);
@@ -375,7 +376,7 @@ function compareServiceAPIWithAppAPI(callback) {
             // this should be accessible for both http and https since ssl is handled from outside, but GoData always starts without SSL
             const versionUrl = `http://localhost:${port}/api/system-settings/version`;
             logger.info(`getServiceInfo: ${versionUrl}`);
-            fetch(
+            nodeFetch(
                 versionUrl, {
                     method: 'get'
                 }

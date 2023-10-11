@@ -21,6 +21,8 @@ const logger = require('./../logger/app');
 const fs = require('fs-extra');
 
 const menu = require('./menu');
+const nodeFetch = require('node-fetch');
+const https = require('https');
 
 const contextMenu = require('electron-context-menu');
 contextMenu({
@@ -405,12 +407,25 @@ const openEmbeddedWindow = (url) => {
                 // tell what url will be tested
                 logger.logger.info(`Testing API: '${url}'`);
 
+                // ssl ?
+                const usesSSL = (url || '').toLowerCase().startsWith('https:');
+                let urlOptions = {
+                    method: 'get'
+                };
+                if (usesSSL) {
+                    urlOptions = {
+                        method: 'get',
+                        agent: new https.Agent({
+                            rejectUnauthorized: false
+                        })
+                    };
+                }
+
                 // execute request to our url
                 // here url can be both http and https
-                fetch(
-                    url, {
-                        method: 'get'
-                    }
+                nodeFetch(
+                    url,
+                    urlOptions
                 )
                     .then((response) => {
                         // no response from our api ?
