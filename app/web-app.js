@@ -406,6 +406,7 @@ const openEmbeddedWindow = (url) => {
                 logger.logger.info(`Testing API: '${url}'`);
 
                 // execute request to our url
+                // here url can be both http and https
                 fetch(
                     url, {
                         method: 'get'
