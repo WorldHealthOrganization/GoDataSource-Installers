@@ -378,7 +378,7 @@ function compareServiceAPIWithAppAPI(callback) {
                 return callback(err);
             }
             // this should be accessible for both http and https since ssl is handled from outside, but GoData always starts without SSL
-            const versionUrl = `http://localhost:${port}/api/system-settings/version`;
+            const versionUrl = `http://127.0.0.1:${port}/api/system-settings/version`;
             logger.info(`getServiceInfo: ${versionUrl}`);
             fetch(
                 versionUrl, {
