@@ -149,6 +149,10 @@ function startGoDataAsService(events, callback) {
                 // If the versions are different, it means that an update updated the API and the service hasn't been restarted
                 // Restarting the service should be enough because it is linked to the API path
                 compareServiceAPIWithAppAPI((err, identical) => {
+                    if (err) {
+                        logger.error(typeof err === 'string' ? err : err.message);
+                    }
+
                     if (identical) {
                         return callback();
                     }
