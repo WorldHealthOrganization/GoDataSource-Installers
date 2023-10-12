@@ -21,7 +21,7 @@ const logger = require('./../logger/app');
 const fs = require('fs-extra');
 
 const menu = require('./menu');
-const nodeFetch = require('node-fetch');
+const fetch = require('node-fetch');
 const https = require('https');
 
 const contextMenu = require('electron-context-menu');
@@ -423,7 +423,7 @@ const openEmbeddedWindow = (url) => {
 
                 // execute request to our url
                 // here url can be both http and https
-                nodeFetch(
+                fetch(
                     url,
                     urlOptions
                 )
