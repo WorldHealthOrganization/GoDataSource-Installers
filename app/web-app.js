@@ -413,6 +413,10 @@ const openEmbeddedWindow = (url) => {
                     method: 'get'
                 };
                 if (usesSSL) {
+                    // log
+                    logger.logger.info('Update agent to take in account self-signed and expired certs');
+
+                    // allow self-signed and expired certs
                     urlOptions = {
                         method: 'get',
                         agent: new https.Agent({
