@@ -2,7 +2,6 @@
 
 const {app, BrowserWindow, dialog, Menu} = require('electron');
 const path = require('path');
-const request = require('request');
 const async = require('async');
 
 const goData = require('./../controllers/goData');
@@ -19,7 +18,11 @@ const productName = AppPaths.desktopApp.package.name;
 
 const logger = require('./../logger/app');
 
+const fs = require('fs-extra');
+
 const menu = require('./menu');
+const fetch = require('node-fetch');
+const https = require('https');
 
 const contextMenu = require('electron-context-menu');
 contextMenu({
@@ -43,42 +46,183 @@ const launchGoData = (callback) => {
     appSplash.openSplashScreen();
     appSplash.sendSplashEvent('event', 'Cleaning up...');
 
-    prelaunch.cleanUp(
-        () => {
-        },
-        () => {
-            let loadingIndicator = ['⦾', '⦿'];
-            let index = 0;
-            mongo.init(
-                (event) => {
-                    if (event.wait) {
-                        appSplash.sendSplashEvent('event', 'wait');
+    const launch = () => {
+        prelaunch.cleanUp(
+            () => {
+            },
+            () => {
+                let loadingIndicator = ['⦾', '⦿'];
+                let index = 0;
+                mongo.init(
+                    (event) => {
+                        if (event.wait) {
+                            appSplash.sendSplashEvent('event', 'wait');
+                        }
+                        if (event.text) {
+                            appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+                        }
+                    },
+                    () => {
+                        goData.init(
+                            (event) => {
+                                if (event.text) {
+                                    appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+                                }
+                            },
+                            (err, appURL) => {
+                                if (err) {
+                                    appSplash.sendSplashEvent('error', err.message);
+                                    return callback(err);
+                                }
+                                logger.logger.info(`Open web app from launchGoData (${appURL})`);
+                                openWebApp(appURL);
+                                appSplash.closeSplashScreen();
+                                const tray = require('./tray');
+                                tray.createTray();
+                                callback();
+                            });
+                    });
+            });
+    };
+
+    // if macOS we need to restore backups and files if there was an upgrade
+    if (process.platform.toLowerCase() === 'darwin') {
+        // update backup path
+        const updateBackupPath = path.join(
+            AppPaths.appDirectory,
+            'update_backup'
+        );
+
+        // check if we have anything to restore
+        fs.exists(updateBackupPath)
+            .then((exists) => {
+                // nothing to do ?
+                if (!exists) {
+                    return;
+                }
+
+                // restore backups
+                return fs.exists(path.join(
+                    updateBackupPath,
+                    'backups'
+                )).then((bExists) => {
+                    // nothing to do ?
+                    if (!bExists) {
+                        return;
                     }
-                    if (event.text) {
-                        appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'backups'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'backups'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'storage'
+                    ));
+                }).then((sExists) => {
+                    // nothing to do ?
+                    if (!sExists) {
+                        return;
                     }
-                },
-                () => {
-                    goData.init(
-                        (event) => {
-                            if (event.text) {
-                                appSplash.sendSplashEvent('event', `${loadingIndicator[(++index) % 2]} ${event.text}`);
-                            }
-                        },
-                        (err, appURL) => {
-                            if (err) {
-                                appSplash.sendSplashEvent('error', err.message);
-                                return callback(err);
-                            }
-                            logger.logger.info(`Open web app from launchGoData (${appURL})`);
-                            openWebApp(appURL);
-                            appSplash.closeSplashScreen();
-                            const tray = require('./tray');
-                            tray.createTray();
-                            callback();
-                        });
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'storage'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'storage'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'config.json'
+                    ));
+                }).then((cExists) => {
+                    // nothing to do ?
+                    if (!cExists) {
+                        return;
+                    }
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'config.json'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'config.json'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.exists(path.join(
+                        updateBackupPath,
+                        'datasources.json'
+                    ));
+                }).then((dExists) => {
+                    // nothing to do ?
+                    if (!dExists) {
+                        return;
+                    }
+
+                    // restore
+                    return fs.move(
+                        path.join(
+                            updateBackupPath,
+                            'datasources.json'
+                        ),
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'datasources.json'
+                        ), {
+                            overwrite: true
+                        }
+                    );
+                }).then(() => {
+                    return fs.rmdir(
+                        updateBackupPath, {
+                            recursive: true
+                        }
+                    );
                 });
-        })
+            })
+            .then(() => {
+                launch();
+            })
+            .catch((error) => {
+                // log
+                logger.logger.error(`Critical error during update restore backup: ${error.message}`);
+
+                // this is bad, update interrupted
+                dialog.showMessageBox({
+                    title: 'Go.Data Updater',
+                    message: `Critical error during update restore backup: ${error.message}`
+                });
+            });
+    } else {
+        launch();
+    }
 };
 
 
@@ -149,10 +293,6 @@ const openEmbeddedWindow = (url) => {
         );
         return;
     }
-
-    // determine if we use a secure connection
-    // this is the easiest way to check this, since otherwise we would have to change in multiple places and not only where we use openEmbeddedWindow
-    const usesSSL = (url || '').toLowerCase().startsWith('https:');
 
     // method sued to validate and open electron browser window
     let checkLocalHost = true;
@@ -264,59 +404,77 @@ const openEmbeddedWindow = (url) => {
                     return callback();
                 }
 
-                // determine request data accordingly to protocol
-                const requestData = usesSSL ?
-                    {
-                        url,
-                        port: 443,
-                        rejectUnauthorized: false,
-                        requestCert: true,
-                        agent: false
-                    } : url;
+                // tell what url will be tested
+                logger.logger.info(`Testing API: '${url}'`);
+
+                // ssl ?
+                const usesSSL = (url || '').toLowerCase().startsWith('https:');
+                let urlOptions = {
+                    method: 'get'
+                };
+                if (usesSSL) {
+                    // log
+                    logger.logger.info('Update agent to take in account self-signed and expired certs');
+
+                    // allow self-signed and expired certs
+                    urlOptions = {
+                        method: 'get',
+                        agent: new https.Agent({
+                            rejectUnauthorized: false
+                        })
+                    };
+                }
 
                 // execute request to our url
-                request(
-                    requestData,
-                    (error, response) => {
-                        // tell what url will be tested
-                        logger.logger.info(`Testing API: '${url}'`);
-
+                // here url can be both http and https
+                fetch(
+                    url,
+                    urlOptions
+                )
+                    .then((response) => {
                         // no response from our api ?
                         if (
-                            error ||
-                            (response && response.statusCode !== 200)
+                            response &&
+                            response.status !== 200
                         ) {
                             // construct error message
-                            let errMsg = `'${url}' unreachable`;
+                            let errMsg = `then: '${url}' unreachable`;
 
                             // attach status code
-                            if (
-                                response &&
-                                response.statusCode !== undefined
-                            ) {
-                                errMsg += ` - status: ${response.statusCode}`;
-                            }
-
-                            // attach error details
-                            if (
-                                error &&
-                                error.toString
-                            ) {
-                                errMsg += ` - ${error.toString()}`;
+                            if (response.status !== undefined) {
+                                errMsg += ` - status: ${response.status}`;
                             }
 
                             // log error message
                             logger.logger.error(errMsg);
 
                             // return error
-                            return callback(new Error(errMsg));
+                            callback(new Error(errMsg));
+                            return;
                         }
 
                         // api connection established
                         logger.logger.info(`Got response from '${url}'`);
                         callback();
-                    }
-                );
+                    })
+                    .catch((err) => {
+                        // construct error message
+                        let errMsg = `catch: '${url}' unreachable`;
+
+                        // attach error details
+                        if (
+                            err &&
+                            err.toString
+                        ) {
+                            errMsg += ` - ${err.toString()}`;
+                        }
+
+                        // log error message
+                        logger.logger.error(errMsg);
+
+                        // return error
+                        callback(new Error(errMsg));
+                    });
             },
             callback
         );

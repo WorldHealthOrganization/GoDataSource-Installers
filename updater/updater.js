@@ -10,6 +10,10 @@ const logger = require('../logger/app');
 const {ARCH, internalBuild} = require('./../package');
 const { UPDATER_STATE_AUTO } = require('./../utils/constants');
 
+const AppPaths = require('./../utils/paths');
+const fs = require('fs-extra');
+const cleanup = require('./../controllers/clean-up');
+
 let state = UPDATER_STATE_AUTO;
 
 const setState = (newState) => {
@@ -85,12 +89,125 @@ const configureUpdater = (events, callback) => {
 
     // finished downloading update
     autoUpdater.on('update-downloaded', () => {
-        app.removeAllListeners('window-all-closed');
-        let browserWindows = BrowserWindow.getAllWindows();
-        browserWindows.forEach((browserWindow) => {
-            browserWindow.removeAllListeners('close');
-        });
-        setImmediate(() => autoUpdater.quitAndInstall());
+        const doTheDeed = () => {
+            app.removeAllListeners('window-all-closed');
+            let browserWindows = BrowserWindow.getAllWindows();
+            browserWindows.forEach((browserWindow) => {
+                browserWindow.removeAllListeners('close');
+            });
+            setImmediate(() => autoUpdater.quitAndInstall());
+        };
+
+        // if mac we need to do some backups before proceeding with the upgrade since app directory is immutable
+        // which means that files will be removed (backups & storage)
+        if (process.platform.toLowerCase() === 'darwin') {
+            // update backup path
+            const updateBackupPath = path.join(
+                AppPaths.appDirectory,
+                'update_backup'
+            );
+
+            // start the backup process
+            fs.exists(updateBackupPath)
+                .then((exists) => {
+                    // something went wrong with old backup, not perfect, but we need to call the cleanup crew
+                    if (exists) {
+                        return fs.rmdir(
+                            updateBackupPath, {
+                                recursive: true
+                            }
+                        );
+                    }
+                })
+                .then(() => {
+                    // create directory where we will do a backup before update
+                    return fs.mkdir(
+                        updateBackupPath, {
+                            mode: '0777'
+                        }
+                    );
+                })
+                .then(() => {
+                    // stop api & mongo so nothing is written to these folders which would lock the folders
+                    return new Promise((resolve) => {
+                        cleanup.cleanup(() => {
+                            resolve();
+                        });
+                    });
+                })
+                .then(() => {
+                    // config.json
+                    return fs.copy(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'config.json'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'config.json'
+                        )
+                    );
+                })
+                .then(() => {
+                    // datasources.json
+                    return fs.copy(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'datasources.json'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'datasources.json'
+                        )
+                    );
+                })
+                .then(() => {
+                    // backup backups :)
+                    return fs.move(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'backups'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'backups'
+                        )
+                    );
+                })
+                .then(() => {
+                    // backup uploaded files & icons
+                    return fs.move(
+                        path.join(
+                            AppPaths.webApp.directory,
+                            'server',
+                            'storage'
+                        ),
+                        path.join(
+                            updateBackupPath,
+                            'storage'
+                        )
+                    );
+                })
+                .then(() => {
+                    // close app and start upgrade
+                    doTheDeed();
+                })
+                .catch((error) => {
+                    // log
+                    logger.logger.error(`Critical error during update: ${error.message}`);
+
+                    // this is bad, update interrupted
+                    dialog.showMessageBox({
+                        title: 'Go.Data Updater',
+                        message: `Critical error during update: ${error.message}`
+                    });
+                });
+        } else {
+            // close app and start upgrade
+            doTheDeed();
+        }
     });
 
     // check for updates

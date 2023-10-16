@@ -35,8 +35,14 @@ function getMenuTemplate(url) {
                         }
                     ]
                 },
-                {role: 'undo'},
-                {role: 'redo'}
+                { type: "separator" },
+                { role: 'undo' },
+                { role: 'redo' },
+                { type: "separator" },
+                { role: 'cut' },
+                { role: 'copy' },
+                { role: 'paste' },
+                { role: 'selectAll' }
             ]
         },
         {
