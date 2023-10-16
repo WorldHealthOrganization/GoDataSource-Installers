@@ -13,7 +13,6 @@ const chokidar = require('chokidar');
 const kill = require('kill-port');
 const fs = require('fs');
 const sudo = require('sudo-prompt');
-const request = require('request');
 
 const logger = require('./../logger/app').logger;
 const processUtil = require('./../utils/process');
@@ -27,6 +26,7 @@ const productName = AppPaths.desktopApp.package.name;
 const pm2 = require(AppPaths.pm2Module);
 
 const {MONGO_PLATFORM, NODE_PLATFORM} = require('./../package');
+const fetch = require('node-fetch');
 
 const init = (events, callback) => {
     startGoData(events, callback);
@@ -149,6 +149,10 @@ function startGoDataAsService(events, callback) {
                 // If the versions are different, it means that an update updated the API and the service hasn't been restarted
                 // Restarting the service should be enough because it is linked to the API path
                 compareServiceAPIWithAppAPI((err, identical) => {
+                    if (err) {
+                        logger.error(typeof err === 'string' ? err : err.message);
+                    }
+
                     if (identical) {
                         return callback();
                     }
@@ -220,7 +224,7 @@ function detectAppStartFromLog(options, events, callback) {
                 called = true;
                 return callback(
                     null,
-                    `${apiSettings.public.protocol}://${apiSettings.public.host}:${apiSettings.public.port}`
+                    `${apiSettings.public.protocol}://${apiSettings.public.host}${apiSettings.public.port ? ':' + apiSettings.public.port : ''}`
                 );
             }
 
@@ -363,7 +367,9 @@ function compareServiceAPIWithAppAPI(callback) {
             return callback(err);
         }
         // compare app API results with Service API results
-        callback(null, results[0].build === results[1].build && results[0].arch === results[1].arch);
+        const identical = results[0].build === results[1].build && results[0].arch === results[1].arch;
+        logger.info(`compareServiceAPIWithAppAPI: ${identical ? 'identical' : 'different'}`);
+        callback(null, identical);
     });
 
     function getServiceInfo(callback) {
@@ -371,23 +377,29 @@ function compareServiceAPIWithAppAPI(callback) {
             if (err) {
                 return callback(err);
             }
-            let url = `http://localhost:${port}/api/system-settings/version`;
-            request(url, (err, response, body) => {
-                if (err) {
-                    return callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`));
+            // this should be accessible for both http and https since ssl is handled from outside, but GoData always starts without SSL
+            const versionUrl = `http://127.0.0.1:${port}/api/system-settings/version`;
+            logger.info(`getServiceInfo: ${versionUrl}`);
+            fetch(
+                versionUrl, {
+                    method: 'get'
                 }
-                // parse body to determine build number and architecture
-                try {
-                    let result = JSON.parse(body);
+            )
+                .then((res) => res.json())
+                .then((result) => {
+                    logger.info(`getServiceInfo: build: ${result.build}, arch: ${result.arch}`);
                     callback(null, {
-                        build: result.build,
-                        arch: result.arch
+                        build: result.build ?
+                            result.build.toString() :
+                            result.build,
+                        arch: result.arch ?
+                            result.arch.toString() :
+                            result.arch
                     });
-                }
-                catch (e) {
-                    callback(new Error(`Error retrieving Service API info: ${e.message || JSON.stringify(e)}`));
-                }
-            })
+                })
+                .catch((err) => {
+                    callback(new Error(`Error retrieving Service API info: ${err.message || JSON.stringify(err)}`));
+                });
         })
     }
 
@@ -400,8 +412,12 @@ function compareServiceAPIWithAppAPI(callback) {
                 return callback(new Error(`Error retrieving app API info: ${err.message || JSON.stringify(err)}`));
             }
             callback(null, {
-                build: appResults[0],
-                arch: appResults[1]
+                build: appResults[0] ?
+                    appResults[0].toString() :
+                    appResults[0],
+                arch: appResults[1] ?
+                    appResults[1].toString() :
+                    appResults[1]
             });
         })
     }

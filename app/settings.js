@@ -34,8 +34,8 @@ const openSettings = (settingType) => {
         return;
     }
     settingsWindow = new BrowserWindow({
-        width: 300,
-        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 440 : 430,
+        width: 450,
+        height: settingType === constants.SETTINGS_WINDOW_SETTING ? 620 : 600,
         resizable: false,
         center: true,
         frame: settingType === constants.SETTINGS_WINDOW_SETTING,
@@ -61,7 +61,7 @@ const openSettings = (settingType) => {
  * Configures the IPC Main and handles the events received from IPC Main
  */
 const configureIPCMain = () => {
-    ipcMain.initSettingsEvents((mongoPort, goDataPort, encryption, state) => {
+    ipcMain.initSettingsEvents((mongoPort, goDataPort, encryption, state, apiSettings) => {
 
         // Handle encryption event
         let encryptionProcess = platform === 'win' ?
@@ -110,6 +110,30 @@ const configureIPCMain = () => {
                     },
                     (callback) => {
                         settingsController.setAppPort(goDataPort, callback);
+                    },
+                    (callback) => {
+                        // retrieve again api settings
+                        const currentApiSettings = settingsController.retrieveAPISettings();
+
+                        // enable config rewrite
+                        currentApiSettings.enableConfigRewrite = apiSettings.enableConfigRewrite;
+
+                        // update public info only if enabled config rewrite is disabled
+                        if (!currentApiSettings.enableConfigRewrite) {
+                            currentApiSettings.public.protocol = apiSettings.public.protocol;
+                            currentApiSettings.public.host = apiSettings.public.host;
+                            currentApiSettings.public.port = apiSettings.public.port ?
+                                parseInt(apiSettings.public.port) :
+                                '';
+                        }
+
+                        // save settings
+                        if (!settingsController.updateAPISettings(currentApiSettings)) {
+                            return callback('Error updating api settings...');
+                        }
+
+                        // finished
+                        callback();
                     }
                 ],
                 callback);

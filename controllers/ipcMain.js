@@ -50,6 +50,15 @@ const initSettingsEvents = (events) => {
         });
     });
 
+    ipcMain.on('getPublicInfo-message', (event) => {
+        logger.log('IPCMain received getPublicInfo-message');
+        const apiSettings = settings.retrieveAPISettings() || {};
+        event.sender.send('getPublicInfo-reply', {
+            enableConfigRewrite: apiSettings.enableConfigRewrite,
+            public: apiSettings.public
+        });
+    });
+
     ipcMain.on('getEncryptionCapabilities-message', (event) => {
         logger.log('IPCMain received getEncryptionCapabilities-message');
         settings.getEncryptionCapability((err, encryptionCapability) => {
@@ -75,7 +84,13 @@ const initSettingsEvents = (events) => {
 
     ipcMain.on('buttonClick-message', (event, arg) => {
         logger.log('IPCMain received buttonClick-message');
-        events(arg.mongoPort, arg.goDataPort, arg.encryption, state);
+        events(
+            arg.mongoPort,
+            arg.goDataPort,
+            arg.encryption,
+            state,
+            arg.apiSettings
+        );
     });
 
     logger.info('Initialized IPCMain');

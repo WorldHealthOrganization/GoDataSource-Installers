@@ -9,12 +9,43 @@ let platform = null;
 
 function setButtonFunctionality() {
     document.getElementById('settingsButton').onclick = () => {
+        // disable button
         document.getElementById('settingsButton').disabled = true;
+
+        // validate
+        if (
+            !document.getElementById('mongoPort').value ||
+            !document.getElementById('goDataPort').value || (
+                !document.getElementById('enableConfigRewriteSwitch').checked && (
+                    !document.getElementById('publicProtocol').value ||
+                    !document.getElementById('publicHost').value
+                )
+            )
+        ) {
+            // show error
+            alert('You have invalid setup. Please review your settings');
+
+            // enable back save button
+            document.getElementById('settingsButton').disabled = false;
+
+            // finished
+            return;
+        }
+
+        // save data
         ipcRenderer.send(
             'buttonClick-message', {
                 mongoPort: document.getElementById('mongoPort').value,
                 goDataPort: document.getElementById('goDataPort').value,
-                encryption: document.getElementById('encryptionSwitch').checked
+                encryption: document.getElementById('encryptionSwitch').checked,
+                apiSettings: {
+                    enableConfigRewrite: document.getElementById('enableConfigRewriteSwitch').checked,
+                    public: {
+                        protocol: document.getElementById('publicProtocol').value,
+                        host: document.getElementById('publicHost').value,
+                        port: document.getElementById('publicPort').value
+                    }
+                }
             }
         )
     }
@@ -31,14 +62,10 @@ function loadView(state) {
     switch (state) {
         case constants.SETTINGS_WINDOW_LAUNCH:
             document.getElementById('settingsButton').innerHTML = 'Launch Go.Data';
-            document.getElementById('settingDetails').innerHTML = 'Do you want to change the default Go.Data configuration?';
-            document.getElementById('settingDetails').style.display = 'inline-block';
 
             break;
         case constants.SETTINGS_WINDOW_SETTING:
             document.getElementById('settingsButton').innerHTML = 'Save';
-            document.getElementById('settingsTitle').innerHTML = 'Go.Data Settings';
-            document.getElementById('settingDetails').style.display = 'none';
             break
     }
     document.getElementById('settingsButton').disabled = true;
@@ -67,6 +94,22 @@ ipcRenderer.on('getBuildNumber-reply', (event, version) => {
     document.getElementById('productBuildNumber').innerHTML = `Build ${version}`;
 });
 
+ipcRenderer.on('getPublicInfo-reply', (event, apiSettings) => {
+    document.getElementById('enableConfigRewriteSwitch').checked = apiSettings.enableConfigRewrite;
+    document.getElementById('enableConfigRewriteSwitch').style.display = 'block';
+    apiPublicSettings = apiSettings.public || {};
+    document.getElementById('publicProtocol').value = apiPublicSettings.protocol ?
+        apiPublicSettings.protocol :
+        'http';
+    document.getElementById('publicHost').value = apiPublicSettings.host ?
+        apiPublicSettings.host :
+        '';
+    document.getElementById('publicPort').value = apiPublicSettings.port ?
+        apiPublicSettings.port :
+        '';
+    configRewriteSwitchChanged();
+});
+
 ipcRenderer.on('getEncryptionCapabilities-reply', (event, err, capability, status) => {
     document.getElementById('settingsButton').disabled = false;
     if (err) {
@@ -85,4 +128,5 @@ ipcRenderer.send('getDbPort-message', '');
 ipcRenderer.send('getGoDataPort-message', '');
 ipcRenderer.send('getProductVersion-message', '');
 ipcRenderer.send('getBuildNumber-message', '');
+ipcRenderer.send('getPublicInfo-message', '');
 ipcRenderer.send('getEncryptionCapabilities-message', '');
