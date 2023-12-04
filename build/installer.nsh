@@ -365,7 +365,7 @@
     pop $0
     ${if} $0 != "admin" ; Require admin rights on NT4+
       ${ifNot} ${isUpdated}
-        MessageBox mb_iconstop "Administrator rights are required to install 'Go.Data' application. Right click on the installer 'Go.Data Setup ${version}.exe' and choose 'Run as administrator'."
+        MessageBox mb_iconstop "Administrator rights are required to install 'Go.Data' application. Right click on the installer 'Go.Data-Setup.exe' and choose 'Run as administrator'."
       ${else}
         MessageBox mb_iconstop "Administrator rights are required to perform update. Right click on the shortcut icon of 'Go.Data' and choose 'Run as administrator'."
       ${endIf}

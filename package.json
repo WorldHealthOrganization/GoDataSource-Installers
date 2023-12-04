@@ -53,7 +53,8 @@
       "category": "public.app-category.healthcare-fitness",
       "identity": "World Health Organization (YJDF2LWD3T)",
       "type": "distribution",
-      "notarize": false
+      "notarize": false,
+      "artifactName": "${name}-Setup.${ext}"
     },
     "win": {
       "target": "nsis"
@@ -63,16 +64,17 @@
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "license": "license_en.rtf",
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "artifactName": "${name}-Setup.${ext}"
     },
     "publish": [
       {
         "provider": "generic",
-        "url": "http://54.164.207.48:42000"
+        "url": "https://terrance.who.int"
       }
     ]
   },
-  "author": "Clarisoft",
+  "author": "World Health Organization",
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.1472.0",

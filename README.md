@@ -2,29 +2,19 @@
 
 The project creates installers for the following system configurations:
 
-    Windows 64-bit and 32-bit
+    Windows 64-bit
     MacOS 64-bit
-    Linux 64-bit and 32-bit
-        Debian 64-bit
-        Red Hat 7 64-bit
-        Red Hat 6 64-bit
-        Red Hat 5.5 64-bit
-        Ubuntu 16 64-bit
-        Ubuntu 14 64-bit
-
-For Linux distributions with versions not specified above, the universal Linux installer will be used.
-
-For instance, a user working on a system with Ubuntu 15 will install the 32-bit or 64-bit Linux installer.
+    Linux 64-bit
 
 ### 1. Prerequisites
 
-The project requires `node 8` and `@angular/cli` globally installed.
+The project requires `node 14.17.5` and `@angular/cli` globally installed.
 
 ### 2. Getting started
 
 ##### 2.1 Clone the installer project
 
-    git clone -b s12 git@github.com:ClarisoftTechnologies/Go.Data-Installers.git
+    git clone ...
 
 ##### 2.2 Install dependencies for the installer project
 
@@ -49,7 +39,7 @@ The Go.Data projects (frontend and backend) are included as git submodules. The 
 
 	git submodule init
 	git submodule update
-    git submodule foreach git pull origin s12
+    git submodule foreach git pull origin main
 
 This will create the `go-data` folder with the source for Go.Data API (`go-data/api`) and Go.Data frontend (`go-data/frontend`).
 
@@ -59,28 +49,26 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
 - Install the Go.Data dependencies for the Go.Data API and frontend projects:
 
     	cd go-data/api
+        nvm use 14.17.5
 		npm install
 		cd ../frontend
+        nvm use 16.18.1
 		npm install
 
 - Build Go.Data API & Frontend for production:
 
 		cd go-data/api
+        nvm use 14.17.5
         npm run build
         cd ../frontend
+        nvm use 16.18.1
         npm run build
 
     In case the api build fails, run the script with node:
 
     `"build": "node ./node_modules/gulp/bin/gulp.js build"`
 
-    In case the front-end build fails, create another script to increase node allocated memory:
-
-    `"build-prod": "node --max_old_space_size=8000 ./node_modules/@angular/cli/bin/ng build --prod --aot --build-optimizer"`
-
 	This will create the `build` folder for Go.Data API (`go-data/api/build`) and the `dist` folder for Go.Data frontend (`go-data/frontend/dist`).
-
-    **Warning:** The projects must be build with `node 8` (NODE_MODULE_VERSION 57). Make sure that the active version of `node` is 8 by running `node -v` in terminal.
 
 - Move the `dist` folder in the `build/client` folder:
 
@@ -155,8 +143,6 @@ Note: In any script, these variables should have the same value:
 
 Building for Windows x64 requires a 64-bit Windows machine.
 
-It is important to run `npm install` and `npm run build` commands on the 64-bit version because some npm libraries have versions of 32 and 64 bits and the 64 bit versions must be installed.
-
 `npm run dist:win:64`
 
 ##### 3.2. Build for Mac x64
@@ -167,7 +153,7 @@ Building for Mac OS x64 requires a 64-bit Mac.
 
 ##### 3.3. Build for Linux x64
 
-Building for Linux x64 requires a 64-bit Linux machine. We used Ubuntu 16 x64 to build for all x64 distributions in a virtual machine.
+Building for Linux x64 requires a 64-bit Linux machine.
 
 To build the GUI installer:
 
@@ -179,92 +165,80 @@ To build the CLI installer:
 
 ### 4. Deploy
 
-The files must be deployed on the same server that is used for auto-update (in this case, <http://54.164.207.48:42000/>).
+The files must be deployed on the same server that is used for auto-update.
 
 ##### 4.1. Windows deployment
 
 Go to the `x64` directory on the server.
 
-If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following files in the directory:
+If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
-- Go.Data Setup *version*.exe
-- Go.Data Setup *version*.exe.blockmap
+- Go.Data-Setup.exe
+- Go.Data-Setup.exe.blockmap
 - latest.yml
 
 Copy the new 64-bit version files on the server `x64` directory:
 
-- Go.Data Setup *new-version*.exe
-- Go.Data Setup *new-version*.exe.blockmap
+- Go.Data-Setup.exe
+- Go.Data-Setup.exe.blockmap
 - latest.yml
 
 ##### 4.2. Mac deployment
 
 Go to the `x64` directory on the server.
 
-If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following files in the directory:
+If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
-- Go.Data-*version*-mac.zip
-- Go.Data-*version*.dmg
+- Go.Data-Setup.zip
+- Go.Data-Setup.dmg
 - latest-mac.yml
 
 Copy the new version files on the server `x64` directory:
 
-- Go.Data-*new-version*-mac.zip
-- Go.Data-*new-version*.dmg
+- Go.Data-Setup.zip
+- Go.Data-Setup.dmg
 - latest-mac.yml
 
 ##### 4.3. Linux deployment
 
-TBD
-
-##### 4.4. Linux CLI deployment
-
 Go to the `x64` directory on the server.
 
-If there is any previous version on the server, create a directory named as the existing version (i.e. `11.1.0`) and move the following file in the directory:
+If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following file in the directory:
 
-- go-data-linux-x64.tar.gz
+- Go.Data-Setup.tar.gz
 
 Copy the new 64-bit version file on the server `x64` directory:
 
-- go-data-linux-x64.tar.gz
+- Go.Data-Setup.tar.gz
 
-##### 4.5. Overview
+##### 4.4. Overview
 
 The `x64` folder structure should be the following:
 
     .
-    ├── old-version-directory-1                                 # i.e. 11.0.0
-    ├── old-version-directory-2                                 # i.e. 11.1.0
-    ├── old-version-directory-3                                 # i.e. 11.2.0
-    ├── old-version-directory-4                                 # i.e. 11.2.1
-    ├── go-data-linux-x64.gz                                    # Linux 64-bit  CLI installer
-    ├── Go.Data Setup version.exe                               # Windows 64-bit installer
-    ├── Go.Data Setup version.exe.blockma                       # file used by Windows auto-updater
-    ├── Go.Data-version-mac.zip                                 # file used by Mac auto-updater
-    ├── Go.Data-version.dmg                                     # Mac installer
+    ├── old-version-directory-1                                 # i.e. 48.0.0
+    ├── old-version-directory-2                                 # i.e. 48.0.1
+    ├── old-version-directory-3                                 # i.e. 48.0.2
+    ├── old-version-directory-4                                 # i.e. 48.0.3
+    ├── Go.Data-Setup.tar.gz                                    # Linux 64-bit  CLI installer
+    ├── Go.Data-Setup.exe                                       # Windows 64-bit installer
+    ├── Go.Data-Setup.exe.blockmap                              # file used by Windows auto-updater
+    ├── Go.Data-Setup.zip                                       # file used by Mac auto-updater
+    ├── Go.Data-Setup.dmg                                       # Mac installer
     ├── latest-mac.yml                                          # file used by Mac auto-updater
-    ├── latest.yml                                              # file used by Windows auto-updater
-    └── TBD.yml                                                 # file used by Linux auto-updater
+    └── latest.yml                                              # file used by Windows auto-updater
 
 ### 5. Download installer
-
-The installers are available for 32-bit and 64-bit here: <http://54.164.207.48:42000/>
 
 ##### 5.1. Windows installer
 - Download the x64 installer and run.
 ##### 5.2. Mac installer
 - Download the x64 Mac installer and run.
 ##### 5.3. Linux installer
-- TBD
-##### 5.4. Linux CLI installer
-- Open Terminal and download the x64 installer
-
-- `wget http://54.164.207.48:42000/x64/go-data-linux-x64.tar.gz`
-
+- Download x64 Linux
 - Unzip the files
 
-    `tar -xvzf go-data-linux-x64.tar.gz`
+    `tar -xvzf Go.Data-Setup.tar.gz`
 
 - Run the launch script. Optionally, the following arguments can be passed:
 
@@ -291,8 +265,7 @@ The auto-updater is based on the `package.json`version number and the files `upd
 To publish a new update, increase the version number in `package.json` and in `go-data/build/package.json`, build the app for distribution and upload the following files on the update server:
 - for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
 - for Windows: `.exe` and `latest.yml` files
-- for Linux: TBD
-- for Linux CLI: Not available
+- for Linux: Not available
 
 ### 7. Uninstall
 
@@ -303,7 +276,5 @@ To publish a new update, increase the version number in `package.json` and in `g
 - Delete the Go.Data application from /Applications
 - Optionally, remove the data folder from `~/Library/Application Support/Go.Data`
 ##### 7.3. Linux uninstaller
-- TBD
-##### 7.4. Linux CLI uninstaller
 - Remove the folder where GoData was unarchived
 - Optionally, remove the folder set as `dbpath`
