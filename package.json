@@ -54,7 +54,7 @@
       "identity": "World Health Organization (YJDF2LWD3T)",
       "type": "distribution",
       "notarize": false,
-      "artifactName": "${name} Setup.${ext}"
+      "artifactName": "${name}-Setup.${ext}"
     },
     "win": {
       "target": "nsis"
@@ -64,7 +64,8 @@
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "license": "license_en.rtf",
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "artifactName": "${name}-Setup.${ext}"
     },
     "publish": [
       {

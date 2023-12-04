@@ -173,14 +173,14 @@ Go to the `x64` directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
-- Go.Data Setup.exe
-- Go.Data Setup.exe.blockmap
+- Go.Data-Setup.exe
+- Go.Data-Setup.exe.blockmap
 - latest.yml
 
 Copy the new 64-bit version files on the server `x64` directory:
 
-- Go.Data Setup.exe
-- Go.Data Setup.exe.blockmap
+- Go.Data-Setup.exe
+- Go.Data-Setup.exe.blockmap
 - latest.yml
 
 ##### 4.2. Mac deployment
@@ -189,14 +189,14 @@ Go to the `x64` directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
-- Go.Data Setup.zip
-- Go.Data Setup.dmg
+- Go.Data-Setup.zip
+- Go.Data-Setup.dmg
 - latest-mac.yml
 
 Copy the new version files on the server `x64` directory:
 
-- Go.Data Setup.zip
-- Go.Data Setup.dmg
+- Go.Data-Setup.zip
+- Go.Data-Setup.dmg
 - latest-mac.yml
 
 ##### 4.3. Linux deployment
@@ -205,11 +205,11 @@ Go to the `x64` directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following file in the directory:
 
-- Go.Data Setup.tar.gz
+- Go.Data-Setup.tar.gz
 
 Copy the new 64-bit version file on the server `x64` directory:
 
-- Go.Data Setup.tar.gz
+- Go.Data-Setup.tar.gz
 
 ##### 4.4. Overview
 
@@ -220,11 +220,11 @@ The `x64` folder structure should be the following:
     ├── old-version-directory-2                                 # i.e. 48.0.1
     ├── old-version-directory-3                                 # i.e. 48.0.2
     ├── old-version-directory-4                                 # i.e. 48.0.3
-    ├── Go.Data Setup.tar.gz                                    # Linux 64-bit  CLI installer
-    ├── Go.Data Setup.exe                                       # Windows 64-bit installer
-    ├── Go.Data Setup.exe.blockmap                              # file used by Windows auto-updater
-    ├── Go.Data Setup.zip                                       # file used by Mac auto-updater
-    ├── Go.Data Setup.dmg                                       # Mac installer
+    ├── Go.Data-Setup.tar.gz                                    # Linux 64-bit  CLI installer
+    ├── Go.Data-Setup.exe                                       # Windows 64-bit installer
+    ├── Go.Data-Setup.exe.blockmap                              # file used by Windows auto-updater
+    ├── Go.Data-Setup.zip                                       # file used by Mac auto-updater
+    ├── Go.Data-Setup.dmg                                       # Mac installer
     ├── latest-mac.yml                                          # file used by Mac auto-updater
     └── latest.yml                                              # file used by Windows auto-updater
 
@@ -238,7 +238,7 @@ The `x64` folder structure should be the following:
 - Download x64 Linux
 - Unzip the files
 
-    `tar -xvzf Go.Data Setup.tar.gz`
+    `tar -xvzf Go.Data-Setup.tar.gz`
 
 - Run the launch script. Optionally, the following arguments can be passed:
 
