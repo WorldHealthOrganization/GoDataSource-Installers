@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.49.0",
+  "version": "2.48.0",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -53,7 +53,8 @@
       "category": "public.app-category.healthcare-fitness",
       "identity": "World Health Organization (YJDF2LWD3T)",
       "type": "distribution",
-      "notarize": false
+      "notarize": false,
+      "artifactName": "${name} Setup.${ext}"
     },
     "win": {
       "target": "nsis"
@@ -68,11 +69,11 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "http://54.164.207.48:42000"
+        "url": "https://terrance.who.int"
       }
     ]
   },
-  "author": "Clarisoft",
+  "author": "World Health Organization",
   "license": "CC0-1.0",
   "devDependencies": {
     "aws-sdk": "2.1472.0",
