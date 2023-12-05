@@ -8,6 +8,7 @@ const rimraf = require('rimraf');
 const async = require('async');
 const fetch = require('node-fetch');
 const convert = require('xml-js');
+const { exec } = require('child_process');
 
 // Download resources
 Promise.resolve()
@@ -127,7 +128,7 @@ Promise.resolve()
                         path.dirname(item.path)
                     );
                     const fileName = path.basename(item.path);
-                    mkdirp(fileFolder, (err) => {
+                    mkdirp(fileFolder, { mode: '0777' }, (err) => {
                         // error occurred ?
                         if (err) {
                             callback(err);
@@ -190,6 +191,31 @@ Promise.resolve()
 
                             // remove
                             fs.unlinkSync(filePath);
+                        }).then(() => {
+                            // we need to do chmod only if MacOS
+                            if (data.platFormToDownload !== 'darwin') {
+                                return;
+                            }
+
+                            // log
+                            console.log('MacOS detected, changing file permissions');
+
+                            // change permissions
+                            return new Promise((resolve, reject) => {
+                                exec(
+                                    `chmod -R 0777 "${fileFolder}"`,
+                                    (err, stdout, stderr) => {
+                                        // error occurred ?
+                                        if (err || stderr.length > 0) {
+                                            reject(err || new Error(stderr));
+                                            return;
+                                        }
+
+                                        // finished
+                                        resolve();
+                                    }
+                                );
+                            });
                         }).then(() => {
                             // finished
                             callback();
