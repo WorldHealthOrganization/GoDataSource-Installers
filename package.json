@@ -7,7 +7,7 @@
     "start": "NODE_ENV=development PLATFORM=darwin ARCH=x64 VERSION=default electron --inspect .",
     "start:windows": "set NODE_ENV=development&&set PLATFORM=win&&set ARCH=x64&&set VERSION=default&&electron --inspect .",
     "setup": "npm run setup:resources && npm run setup:forever",
-    "setup:resources": "node setup-resources.js --bucket=com.clarisoft.mongo-node",
+    "setup:resources": "node setup-resources.js",
     "setup:forever": "npm install --prefix app-management -g pm2",
     "pack:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default --dir",
     "dist:win:64": "set PLATFORM=win&& set ARCH=x64&& set VERSION=default&& electron-builder -c.extraMetadata.MONGO_PLATFORM=win -c.extraMetadata.NODE_PLATFORM=win -c.extraMetadata.ARCH=x64 -c.extraMetadata.OSVERSION=default",
@@ -77,9 +77,9 @@
   "author": "World Health Organization",
   "license": "CC0-1.0",
   "devDependencies": {
-    "aws-sdk": "2.1472.0",
     "electron": "27.0.0",
-    "electron-builder": "24.6.4"
+    "electron-builder": "24.6.4",
+    "xml-js": "1.6.11"
   },
   "dependencies": {
     "adm-zip": "0.5.10",
