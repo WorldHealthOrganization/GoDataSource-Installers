@@ -21,7 +21,7 @@ The project requires `node 14.17.5` and `@angular/cli` globally installed.
     npm install
 
 ##### 2.3 Download Mongo & Node binaries
-Download the `platforms` directory from S3 with binaries for `mongo` and `node`. These are a few GBs of resources, so you can expect it to take a while.
+Download the `platforms` directory with binaries for `mongo` and `node`.
 
 	npm run setup:resources
 
