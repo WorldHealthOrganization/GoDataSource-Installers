@@ -181,13 +181,13 @@ Copy the new version files on the server directory:
 
 ##### 4.3. Linux deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following file in the directory:
 
 - Go.Data-Setup.tar.gz
 
-Copy the new 64-bit version file on the server `x64` directory:
+Copy the new 64-bit version file on the server directory:
 
 - Go.Data-Setup.tar.gz
 
