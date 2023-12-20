@@ -64,10 +64,6 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
         nvm use 16.18.1
         npm run build
 
-    In case the api build fails, run the script with node:
-
-    `"build": "node ./node_modules/gulp/bin/gulp.js build"`
-
 	This will create the `build` folder for Go.Data API (`go-data/api/build`) and the `dist` folder for Go.Data frontend (`go-data/frontend/dist`).
 
 - Move the `dist` folder in the `build/client` folder:
