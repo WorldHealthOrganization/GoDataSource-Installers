@@ -21,7 +21,7 @@ The project requires `node 14.17.5` and `@angular/cli` globally installed.
     npm install
 
 ##### 2.3 Download Mongo & Node binaries
-Download the `platforms` directory from S3 with binaries for `mongo` and `node`. These are a few GBs of resources, so you can expect it to take a while.
+Download the `platforms` directory with binaries for `mongo` and `node`.
 
 	npm run setup:resources
 
@@ -64,10 +64,6 @@ This will create the `go-data` folder with the source for Go.Data API (`go-data/
         nvm use 16.18.1
         npm run build
 
-    In case the api build fails, run the script with node:
-
-    `"build": "node ./node_modules/gulp/bin/gulp.js build"`
-
 	This will create the `build` folder for Go.Data API (`go-data/api/build`) and the `dist` folder for Go.Data frontend (`go-data/frontend/dist`).
 
 - Move the `dist` folder in the `build/client` folder:
@@ -105,20 +101,6 @@ At this point, the Go.Data installer project should have the following structure
 
 If any of the folders is missing from the project structure, you may have missed a step. It may be a good idea to take a look one more time at the steps above.
 
-Create a Webstorm NodeJS configuration with the following settings:
-
-    Node interpreter: ./node_modules/.bin/electron
-    Javascript file: main.js
-    Environment variables:
-        ARCH - x64 - will install 64-bit
-        MONGO_PLATFORM - win (for Windows), darwin (for Mac), deb (for Debian), linux (for Linux), rhel (for RHEL) or ubuntu (for Ubuntu)
-        NODE_PLATFORM - win (for Windows), darwin (for Mac), linux (for Linux, Debian, RHEL, Ubuntu)
-        OSVERSION - default (when no OS version is specified) or the OS version (5.5, 6 and 7 for Red Hat and 14 and 16 for Ubuntu)
-        NODE_ENV=development
-Note: the above configuration does not work as a `npm` script. For some reason, NODE_ENV is undefined when running the configuration from a `npm` script.
-
-Run the Webstorm configuration.
-
 ### 3. Build installers
 
 Check the `package.json` files for building installers. The file contains scripts for packaging `(pack:*)` and distribution `(dist:*)`.
@@ -155,12 +137,6 @@ Building for Mac OS x64 requires a 64-bit Mac.
 
 Building for Linux x64 requires a 64-bit Linux machine.
 
-To build the GUI installer:
-
-`npm run dist:linux:64`
-
-To build the CLI installer:
-
 `npm run dist:linux:cli:64`
 
 ### 4. Deploy
@@ -169,7 +145,7 @@ The files must be deployed on the same server that is used for auto-update.
 
 ##### 4.1. Windows deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
@@ -177,7 +153,7 @@ If there is any previous version on the server, create a directory named as the 
 - Go.Data-Setup.exe.blockmap
 - latest.yml
 
-Copy the new 64-bit version files on the server `x64` directory:
+Copy the new 64-bit version files on the server directory:
 
 - Go.Data-Setup.exe
 - Go.Data-Setup.exe.blockmap
@@ -185,46 +161,48 @@ Copy the new 64-bit version files on the server `x64` directory:
 
 ##### 4.2. Mac deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
 - Go.Data-Setup.zip
+- Go.Data-Setup.zip.blockmap
 - Go.Data-Setup.dmg
+- Go.Data-Setup.dmg.blockmap
 - latest-mac.yml
 
-Copy the new version files on the server `x64` directory:
+Copy the new version files on the server directory:
 
 - Go.Data-Setup.zip
+- Go.Data-Setup.zip.blockmap
 - Go.Data-Setup.dmg
+- Go.Data-Setup.dmg.blockmap
 - latest-mac.yml
 
 ##### 4.3. Linux deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following file in the directory:
 
 - Go.Data-Setup.tar.gz
 
-Copy the new 64-bit version file on the server `x64` directory:
+Copy the new 64-bit version file on the server directory:
 
 - Go.Data-Setup.tar.gz
 
 ##### 4.4. Overview
 
-The `x64` folder structure should be the following:
+The folder structure should be the following:
 
     .
-    ├── old-version-directory-1                                 # i.e. 48.0.0
-    ├── old-version-directory-2                                 # i.e. 48.0.1
-    ├── old-version-directory-3                                 # i.e. 48.0.2
-    ├── old-version-directory-4                                 # i.e. 48.0.3
     ├── Go.Data-Setup.tar.gz                                    # Linux 64-bit  CLI installer
     ├── Go.Data-Setup.exe                                       # Windows 64-bit installer
     ├── Go.Data-Setup.exe.blockmap                              # file used by Windows auto-updater
     ├── Go.Data-Setup.zip                                       # file used by Mac auto-updater
+    ├── Go.Data-Setup.zip.blockmap                              # file used by Mac auto-updater
     ├── Go.Data-Setup.dmg                                       # Mac installer
+    ├── Go.Data-Setup.dmg.blockmap                              # Mac installer
     ├── latest-mac.yml                                          # file used by Mac auto-updater
     └── latest.yml                                              # file used by Windows auto-updater
 
@@ -261,11 +239,6 @@ The `x64` folder structure should be the following:
 ### 6. Auto-updater
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml`.
-
-To publish a new update, increase the version number in `package.json` and in `go-data/build/package.json`, build the app for distribution and upload the following files on the update server:
-- for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
-- for Windows: `.exe` and `latest.yml` files
-- for Linux: Not available
 
 ### 7. Uninstall
 
