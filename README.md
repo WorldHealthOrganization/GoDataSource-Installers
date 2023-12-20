@@ -145,7 +145,7 @@ The files must be deployed on the same server that is used for auto-update.
 
 ##### 4.1. Windows deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
@@ -153,7 +153,7 @@ If there is any previous version on the server, create a directory named as the 
 - Go.Data-Setup.exe.blockmap
 - latest.yml
 
-Copy the new 64-bit version files on the server `x64` directory:
+Copy the new 64-bit version files on the server directory:
 
 - Go.Data-Setup.exe
 - Go.Data-Setup.exe.blockmap
@@ -161,18 +161,22 @@ Copy the new 64-bit version files on the server `x64` directory:
 
 ##### 4.2. Mac deployment
 
-Go to the `x64` directory on the server.
+Go to the directory on the server.
 
 If there is any previous version on the server, create a directory named as the existing version (i.e. `48.0.0`) and move the following files in the directory:
 
 - Go.Data-Setup.zip
+- Go.Data-Setup.zip.blockmap
 - Go.Data-Setup.dmg
+- Go.Data-Setup.dmg.blockmap
 - latest-mac.yml
 
-Copy the new version files on the server `x64` directory:
+Copy the new version files on the server directory:
 
 - Go.Data-Setup.zip
+- Go.Data-Setup.zip.blockmap
 - Go.Data-Setup.dmg
+- Go.Data-Setup.dmg.blockmap
 - latest-mac.yml
 
 ##### 4.3. Linux deployment
@@ -189,18 +193,16 @@ Copy the new 64-bit version file on the server `x64` directory:
 
 ##### 4.4. Overview
 
-The `x64` folder structure should be the following:
+The folder structure should be the following:
 
     .
-    ├── old-version-directory-1                                 # i.e. 48.0.0
-    ├── old-version-directory-2                                 # i.e. 48.0.1
-    ├── old-version-directory-3                                 # i.e. 48.0.2
-    ├── old-version-directory-4                                 # i.e. 48.0.3
     ├── Go.Data-Setup.tar.gz                                    # Linux 64-bit  CLI installer
     ├── Go.Data-Setup.exe                                       # Windows 64-bit installer
     ├── Go.Data-Setup.exe.blockmap                              # file used by Windows auto-updater
     ├── Go.Data-Setup.zip                                       # file used by Mac auto-updater
+    ├── Go.Data-Setup.zip.blockmap                              # file used by Mac auto-updater
     ├── Go.Data-Setup.dmg                                       # Mac installer
+    ├── Go.Data-Setup.dmg.blockmap                              # Mac installer
     ├── latest-mac.yml                                          # file used by Mac auto-updater
     └── latest.yml                                              # file used by Windows auto-updater
 
@@ -237,11 +239,6 @@ The `x64` folder structure should be the following:
 ### 6. Auto-updater
 
 The auto-updater is based on the `package.json`version number and the files `updater/app-update-x64.yml`.
-
-To publish a new update, increase the version number in `package.json` and in `go-data/build/package.json`, build the app for distribution and upload the following files on the update server:
-- for OSX: `.dmg` `.zip` and `lastest-mac.yml` files
-- for Windows: `.exe` and `latest.yml` files
-- for Linux: Not available
 
 ### 7. Uninstall
 
