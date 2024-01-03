@@ -1,6 +1,6 @@
 [submodule "go-data/api"]
 	path = go-data/api
-	url = https://github.com/ClarisoftTechnologies/Go.Data-API.git
+	url = https://github.com/WorldHealthOrganization/GoDataSource-API.git
 [submodule "go-data/frontend"]
 	path = go-data/frontend
-	url = https://github.com/ClarisoftTechnologies/Go.Data-Front-End.git
+	url = https://github.com/WorldHealthOrganization/GoDataSource-FrontEnd.git
