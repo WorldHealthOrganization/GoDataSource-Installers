@@ -55,7 +55,8 @@ const initSettingsEvents = (events) => {
         const apiSettings = settings.retrieveAPISettings() || {};
         event.sender.send('getPublicInfo-reply', {
             enableConfigRewrite: apiSettings.enableConfigRewrite,
-            public: apiSettings.public
+            public: apiSettings.public,
+            apiKey: apiSettings.apiKey || ''
         });
     });
 

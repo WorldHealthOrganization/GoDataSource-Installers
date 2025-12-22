@@ -18,7 +18,8 @@ function setButtonFunctionality() {
             !document.getElementById('goDataPort').value || (
                 !document.getElementById('enableConfigRewriteSwitch').checked && (
                     !document.getElementById('publicProtocol').value ||
-                    !document.getElementById('publicHost').value
+                    !document.getElementById('publicHost').value ||
+                    !document.getElementById('apiKey').value
                 )
             )
         ) {
@@ -40,6 +41,7 @@ function setButtonFunctionality() {
                 encryption: document.getElementById('encryptionSwitch').checked,
                 apiSettings: {
                     enableConfigRewrite: document.getElementById('enableConfigRewriteSwitch').checked,
+                    apiKey: document.getElementById('apiKey').value,
                     public: {
                         protocol: document.getElementById('publicProtocol').value,
                         host: document.getElementById('publicHost').value,
@@ -98,6 +100,7 @@ ipcRenderer.on('getPublicInfo-reply', (event, apiSettings) => {
     document.getElementById('enableConfigRewriteSwitch').checked = apiSettings.enableConfigRewrite;
     document.getElementById('enableConfigRewriteSwitch').style.display = 'block';
     apiPublicSettings = apiSettings.public || {};
+    settings = apiSettings || {};
     document.getElementById('publicProtocol').value = apiPublicSettings.protocol ?
         apiPublicSettings.protocol :
         'http';
@@ -106,6 +109,9 @@ ipcRenderer.on('getPublicInfo-reply', (event, apiSettings) => {
         '';
     document.getElementById('publicPort').value = apiPublicSettings.port ?
         apiPublicSettings.port :
+        '';
+    document.getElementById('apiKey').value = settings.apiKey ?
+        settings.apiKey :
         '';
     configRewriteSwitchChanged();
 });
