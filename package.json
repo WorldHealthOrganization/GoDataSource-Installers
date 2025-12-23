@@ -88,7 +88,7 @@
     "codepage": "1.15.0",
     "electron-context-menu": "3.6.1",
     "electron-log": "4.4.8",
-    "electron-updater": "6.1.4",
+    "electron-updater": "6.3.0",
     "find-process": "1.4.7",
     "fs-extra": "11.1.1",
     "get-folder-size": "2.0.1",
