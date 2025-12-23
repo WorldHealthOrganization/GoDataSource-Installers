@@ -114,6 +114,7 @@ const configureIPCMain = () => {
                     (callback) => {
                         // retrieve again api settings
                         const currentApiSettings = settingsController.retrieveAPISettings();
+                        const currentClientSettings = settingsController.retrieveClientSettings();
 
                         // enable config rewrite
                         currentApiSettings.enableConfigRewrite = apiSettings.enableConfigRewrite;
@@ -125,11 +126,22 @@ const configureIPCMain = () => {
                             currentApiSettings.public.port = apiSettings.public.port ?
                                 parseInt(apiSettings.public.port) :
                                 '';
+                            const url = `${apiSettings.public.protocol}://${apiSettings.public.host}${apiSettings.public.port ? ':' + apiSettings.public.port : ''}`;
+
+                                // Ensure it's not already in the whitelist before adding
+                                if (!currentApiSettings.cors.whitelist.includes(url)) {
+                                    currentApiSettings.cors.whitelist.push(url);
+                                }
+                            currentApiSettings.apiKey = apiSettings.apiKey;
+                            currentClientSettings.apiKey = apiSettings.apiKey;
                         }
 
                         // save settings
                         if (!settingsController.updateAPISettings(currentApiSettings)) {
                             return callback('Error updating api settings...');
+                        }
+                        if (!settingsController.updateClientSettings(currentClientSettings)) {
+                            return callback('Error updating client settings...');
                         }
 
                         // finished

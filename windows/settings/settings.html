@@ -6,11 +6,13 @@
     <link rel="stylesheet" type="text/css" href="settings.css">
     <script>
         var apiPublicSettings = {};
+        var settings = {};
         function configRewriteSwitchChanged() {
             const enableConfigRewriteSwitch = document.getElementById('enableConfigRewriteSwitch').checked;
             document.getElementById('publicProtocol').disabled = enableConfigRewriteSwitch;
             document.getElementById('publicHost').disabled = enableConfigRewriteSwitch;
             document.getElementById('publicPort').disabled = enableConfigRewriteSwitch;
+            document.getElementById('apiKey').disabled = enableConfigRewriteSwitch;
 
             // reset values back to what they were ?
             if (enableConfigRewriteSwitch) {
@@ -22,6 +24,9 @@
                     '';
                 document.getElementById('publicPort').value = apiPublicSettings.port ?
                     apiPublicSettings.port :
+                    '';
+                document.getElementById('apiKey').value = settings.apiKey ?
+                    settings.apiKey :
                     '';
             }
         }
@@ -91,7 +96,11 @@
             <input type="number" id="publicPort">
         </div>
     </div>
-
+    <!-- API Key -->
+<div>
+    <label>API Key</label>
+    <input type="text" id="apiKey" placeholder="Enter API Key">
+</div>
     <button id="settingsButton"></button>
 
     <div id="productVersoinHolder">

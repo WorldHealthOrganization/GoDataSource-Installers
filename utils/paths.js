@@ -31,6 +31,7 @@ let backupScript = undefined;
 let configScript = undefined;
 let winCfgPath;
 let apiConfigPath;
+let clientConfigPath;
 let apiDataSourcePath;
 let winOldNewApiCfgPath;
 let winOldNewDatasourceCfgPath;
@@ -50,6 +51,7 @@ if (process.env.NODE_ENV === 'development') {
     winCfgPath = path.join(__dirname, './../winCfg.cfg');
     apiConfigPath = path.join(__dirname, './../go-data/build/server/config.json');
     apiDataSourcePath = path.join(__dirname, './../go-data/build/server/datasources.json');
+    clientConfigPath = path.join(process.resourcesPath, './go-data/build/client/dist/assets/runtime-config.json');
     winOldNewApiCfgPath = path.join(__dirname, './../config.json.backup_new');
     winOldNewDatasourceCfgPath = path.join(__dirname, './../datasources.json.backup_new');
 } else {
@@ -67,6 +69,7 @@ if (process.env.NODE_ENV === 'development') {
     configScript = path.join(process.resourcesPath, './go-data/build/installer/common/config.js');
     winCfgPath = path.join(process.resourcesPath, './../winCfg.cfg');
     apiConfigPath = path.join(process.resourcesPath, './go-data/build/server/config.json');
+    clientConfigPath = path.join(process.resourcesPath, './go-data/build/client/dist/assets/runtime-config.json');
     apiDataSourcePath = path.join(process.resourcesPath, './go-data/build/server/datasources.json');
     winOldNewApiCfgPath = path.join(process.resourcesPath, './../../config.json.backup_new');
     winOldNewDatasourceCfgPath = path.join(process.resourcesPath, './../../datasources.json.backup_new');
@@ -114,5 +117,6 @@ module.exports = {
     windowsDirectory: windowsDirectory,
     testEncryptionDirectory: testEnctryptionDirectory,
     apiConfigPath: apiConfigPath,                   // Path to api config.json file
+    clientConfigPath: clientConfigPath,             // Path to client runtime-config.json file
     apiDataSourcePath: apiDataSourcePath            // Path to api datasource.json file
 };

@@ -10,6 +10,7 @@ const AppPaths = require('./../utils/paths');
 const settingsFile = AppPaths.desktopApp.settingsFile;
 const winCfgPath = AppPaths.desktopApp.winCfgPath;
 const apiConfigPath = AppPaths.apiConfigPath;
+const clientConfigPath = AppPaths.clientConfigPath;
 
 const encryptionController = require('./encryption');
 
@@ -255,6 +256,32 @@ const retrieveWinSettings = () => {
 };
 
 /**
+ * Retrieve client settings ( runtime-config.json )
+ */
+const retrieveClientSettings = () => {
+    // no api settings ?
+    if (!clientConfigPath) {
+        return {};
+    }
+
+    // load settings
+    let clientConfig = {};
+    try {
+        // check if api config file exists and
+        if (fs.existsSync(clientConfigPath)) {
+            // read api settings
+            const clientConfigData = fs.readFileSync(clientConfigPath, 'utf8');
+            clientConfig = JSON.parse(clientConfigData);
+        }
+    } catch (e) {
+        // NOTHING
+    }
+
+    // finished loading api settings
+    return clientConfig;
+};
+
+/**
  * Retrieve api settings ( config.json )
  */
 const retrieveAPISettings = () => {
@@ -278,6 +305,36 @@ const retrieveAPISettings = () => {
 
     // finished loading api settings
     return apiConfig;
+};
+
+/**
+ * Update client settings ( runtime-config.json )
+ * @return {boolean} True if saved with success, false otherwise
+ */
+const updateClientSettings = (settings) => {
+    // no  settings ?
+    if (!clientConfigPath) {
+        return false;
+    }
+
+    // convert settings to string if necessary
+    settings = typeof settings === 'string' ?
+        settings :
+        JSON.stringify(settings, null, 2);
+
+    // save settings
+    try {
+        fs.writeFileSync(clientConfigPath, settings);
+    } catch (e) {
+        // log error
+        logger.error(`Error saving client settings: ${e}`);
+
+        // an error occurred
+        return false;
+    }
+
+    // settings saved
+    return true;
 };
 
 /**
@@ -355,7 +412,9 @@ module.exports = {
     getEncryptionCapability,
     retrieveWinSettings,
     retrieveAPISettings,
+    retrieveClientSettings,
     updateAPISettings,
+    updateClientSettings,
     runMongoAsAService,
     runGoDataAPIAsAService
 };

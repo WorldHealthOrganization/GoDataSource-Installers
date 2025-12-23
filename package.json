@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.49.0",
+  "version": "2.50.3",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
@@ -78,7 +78,7 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "27.0.0",
-    "electron-builder": "24.6.4",
+    "electron-builder": "25.1.7",
     "xml-js": "1.6.11"
   },
   "dependencies": {
