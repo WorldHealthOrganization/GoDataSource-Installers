@@ -1,6 +1,6 @@
 {
   "name": "Go.Data",
-  "version": "2.51",
+  "version": "2.51.0",
   "description": "Go.Data",
   "main": "main.js",
   "scripts": {
