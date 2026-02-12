@@ -108,7 +108,7 @@ const configureUpdater = (events, callback) => {
             );
 
             // start the backup process
-            fs.exists(updateBackupPath)
+            fs.pathExists(updateBackupPath)
                 .then((exists) => {
                     // something went wrong with old backup, not perfect, but we need to call the cleanup crew
                     if (exists) {

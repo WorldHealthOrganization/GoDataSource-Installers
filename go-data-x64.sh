@@ -130,10 +130,10 @@ if [[ -f "$VERSION_PATH" ]]; then
     # - In UPGRADE mode: if OpenSSL is 1.x, upgrade target should be MongoDB 8 (default bin).
     #                  else (OpenSSL !=1) upgrade target should be MongoDB 5 (bin5).
     if [[ "$OPENSSL_VERSION" -eq 1 ]]; then
-        TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin5"
+        TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
         echo "OpenSSL 1.x detected → Upgrading to MongoDB 5 (using ${TARGET_BIN})."
     else
-        TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
+        TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin8"
         echo "OpenSSL != 1.x detected → Upgrading to MongoDB 8 (using ${TARGET_BIN})."
     fi
 
@@ -195,11 +195,11 @@ fi
 # -----------------------------------------------
 
 if [[ "$OPENSSL_VERSION" -eq 1 ]]; then
-    FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin5"
-    echo "OpenSSL 1.x detected -> final mongo binary will be: ${FINAL_BIN}"
-else
     FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
-    echo "OpenSSL != 1.x detected -> final mongo binary will be: ${FINAL_BIN}"
+    echo "OpenSSL 1.x detected -> final mongo binary will be: ${FINAL_BIN} (MongoDB 5)"
+else
+    FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin8"
+    echo "OpenSSL != 1.x detected -> final mongo binary will be: ${FINAL_BIN} (MongoDB 8)"
 fi
 
 echo "Using FINAL MongoDB binary: $FINAL_BIN"
@@ -308,11 +308,11 @@ done
 # ---------------------------------------------------
 if [[ "$OPENSSL_MAJOR" -eq 1 && "$OPENSSL_MINOR" -eq 1 ]]; then
     # Ubuntu 18.04 / 20.04
-    BIN_PATH="platforms/linux/${ARCH}/default/mongodb/bin5"
+    BIN_PATH="platforms/linux/${ARCH}/default/mongodb/bin"
     echo "Using MongoDB 5.x (OpenSSL 1.1.x detected)"
 elif [[ "$OPENSSL_MAJOR" -eq 3 ]]; then
     # Ubuntu 22.04 / 24.04
-    BIN_PATH="platforms/linux/${ARCH}/default/mongodb/bin"
+    BIN_PATH="platforms/linux/${ARCH}/default/mongodb/bin8"
     echo "Using MongoDB 8.x (OpenSSL 3.x detected)"
 else
     echo "Unsupported OpenSSL version: $OPENSSL_FULL"
@@ -404,10 +404,10 @@ if [[ -f "$VERSION_PATH" ]]; then
 
       # Decide upgrade TARGET (5 or 8)
       if [[ "$OPENSSL_MAJOR" -eq 1 && "$OPENSSL_MINOR" -eq 1 ]]; then
-          TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin5"
+          TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
           echo "Upgrading to MongoDB 5.x (OpenSSL 1.1.x)"
       else
-          TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
+          TARGET_BIN="platforms/linux/${ARCH}/default/mongodb/bin8"
           echo "Upgrading to MongoDB 8.x (OpenSSL 3.x)"
       fi
 
@@ -447,9 +447,9 @@ fi
 # FINAL MONGO BINARY SELECTOR (used after upgrade too)
 # ---------------------------------------------------
 if [[ "$OPENSSL_MAJOR" -eq 1 && "$OPENSSL_MINOR" -eq 1 ]]; then
-    FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin5"
-else
     FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin"
+else
+    FINAL_BIN="platforms/linux/${ARCH}/default/mongodb/bin8"
 fi
 
 echo "Starting final MongoDB using: ${FINAL_BIN}"

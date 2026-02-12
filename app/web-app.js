@@ -94,7 +94,7 @@ const launchGoData = (callback) => {
         );
 
         // check if we have anything to restore
-        fs.exists(updateBackupPath)
+        fs.pathExists(updateBackupPath)
             .then((exists) => {
                 // nothing to do ?
                 if (!exists) {
@@ -102,7 +102,7 @@ const launchGoData = (callback) => {
                 }
 
                 // restore backups
-                return fs.exists(path.join(
+                return fs.pathExists(path.join(
                     updateBackupPath,
                     'backups'
                 )).then((bExists) => {
@@ -125,7 +125,7 @@ const launchGoData = (callback) => {
                         }
                     );
                 }).then(() => {
-                    return fs.exists(path.join(
+                    return fs.pathExists(path.join(
                         updateBackupPath,
                         'storage'
                     ));
@@ -150,7 +150,7 @@ const launchGoData = (callback) => {
                         }
                     );
                 }).then(() => {
-                    return fs.exists(path.join(
+                    return fs.pathExists(path.join(
                         updateBackupPath,
                         'config.json'
                     ));
@@ -175,7 +175,7 @@ const launchGoData = (callback) => {
                         }
                     );
                 }).then(() => {
-                    return fs.exists(path.join(
+                    return fs.pathExists(path.join(
                         updateBackupPath,
                         'datasources.json'
                     ));

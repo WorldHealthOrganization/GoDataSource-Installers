@@ -17,7 +17,7 @@ exports.default = function notarizing(context) {
         tool: 'notarytool',
         appPath: `${appOutDir}/${context.packager.appInfo.productFilename}.app`,
         appleId: process.env.APPLE_ID,
-        appleIdPassword: process.env.APPLE_ID_PASSWORD,
+        appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
         teamId: process.env.APPLE_TEAM_ID
     }).then(() => {
         // finished
